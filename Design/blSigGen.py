@@ -8,8 +8,9 @@ import math
 
 threshold = 2**-32
 
-def blit(n, f):
-    M = 2*math.trunc(0.5/f) + 1
+def msinc(n: np.ndarray, f: float, M: int)->np.ndarray:
+    ''' Calculates the periodic sinc function'''
+    n = n + 2
     top = np.sin(np.pi*M*f*n)
     topc = np.cos(np.pi*M*f*n)
     bottom = M*np.sin(np.pi*f*n)
@@ -22,44 +23,48 @@ def blit(n, f):
     y[~smallbottom] = ysin[~smallbottom]
     return y
 
-def bpblit(n, f):
-    M = 2*math.trunc(0.25/f)
-    top = np.sin(2*np.pi*M*f*n)
-    topc = np.cos(2*np.pi*M*f*n)
-    bottom = M*np.sin(2*np.pi*f*n)
-    bottomc = np.cos(2*np.pi*f*n)
-    y = np.empty_like(top)
-    smallbottom = (bottom<threshold)*(bottom>-threshold)
-    ysin = top/bottom
-    ycos = topc/bottomc
-    y[smallbottom] = ycos[smallbottom]
-    y[~smallbottom] = ysin[~smallbottom]
+def blit(n: np.ndarray, f: float)->np.ndarray:
+    ''' Band limited impulse train '''
+    M = 2*math.trunc(0.5/f) + 1
+    y = msinc(n, f, M)
     return y
 
-def blSawtooth(n, f):
-    x = blit(n, f)
+def bpblit(n: np.ndarray, f:float)->np.ndarray:
+    ''' Bi-polar Band Limited Impulse Train'''
+    M = 2*math.trunc(0.25/f)
+    y = msinc(n, 2*f, M)
+    return y
+
+def blSawtooth(n: np.ndarray, f: float)->np.ndarray:
+    ''' Band Limited Sawtooth Wave '''
+    x = 2*blit(n, f)
     y = leakyIntegrator(x)
     return y
 
-def blSquare(n, f):
+def blSquare(n: np.ndarray, f: float)->np.ndarray:
+    ''' Band limited Square Wave '''
     x = 2*bpblit(n, f)
     y = leakyIntegrator(x)
     return y
 
-def blTriangle(n, f):
-    x = 2*f*blSquare(n, f)
+def blTriangle(n: np.ndarray, f: float)->np.ndarray:
+    ''' Band Limited Triangle wave '''
+    x = 4*f*blSquare(n, f)
     y = leakyIntegrator(x)
     return y
 
-def leakyIntegrator(x):
-    r = 0.9999
-    b = [1]
-    a = [1, -r]
+def leakyIntegrator(x: np.ndarray, r:float=0.999)->np.ndarray:
+    ''' A leaky integrator combined with a low pass filter,
+     r controls the radius of the zeros, r closer to one will
+     lower the cutoff frequency, but increase the size and duration
+      of initial transients '''
+    b = [1, -1]
+    a = [1, -2*r, r**2]
     y = s.lfilter(b, a, x) # figure out some good filter coefficients to remove dc
     return y
 
 def main():
-    N = 2**18
+    N = 2**16
     n = np.arange(N)
     fs = 44100
 
@@ -79,8 +84,6 @@ def main():
         for (leg, generator) in combos:
             fnorm = f/fs
             y = generator(n, fnorm)
-
-            print(f'{leg} average: {np.mean(y)}')
 
             max = np.max(np.abs(y))
             io.wavfile.write(f'{leg}_({int(f)}).wav', fs, y/max)
