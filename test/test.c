@@ -2,13 +2,13 @@
 #include "Oscillator.h"
 #include "Constants.h"
 
-void test_oscillator(const float f, const uint8_t n, float * sinOut, float * cosOut)
+void test_oscillator(const float f, const unsigned int n, float * sinOut, float * cosOut)
 {
     // parameters: f: normalised frequency (i.e. fraction of fs)
     //             n: number of samples to iterate over.
     //                 if n is not a multiple of block_size, the last fraction of a block won't be filled in
     //             sinOut/cosOut: sin/cos output of the oscillator
-    uint32_t i;
+    unsigned int i;
 
     Oscillator osc;
     osc_init(&osc, f);

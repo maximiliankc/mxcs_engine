@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include <stdint.h>
 #include <math.h>
+#include <stdio.h>
 
 
 void osc_init(Oscillator * self, float f) {
@@ -17,12 +18,15 @@ void osc_setF(Oscillator * self, float f) {
 
 void osc_step(Oscillator * self, float * yr, float * yj) {
     // thinking of it as a complex exponential
-    // y[n] = e^j*theta*y[n-1]
+    // y[n] = e^(j*theta)*y[n-1]
+    // alternatively, like a matrix:
+    // (yr[n]  = (cos(theta) -sin(theta) (yr[n-1]
+    //  yi[n]) =  sin(theta)  cos(theta)) yi[n-1])
     uint8_t i;
 
     // use the state to calculate the first samples in the block
-    yr[0] = self->c*self->yrPrev - self->s*self->yrPrev;
-    yj[0] = self->s*self->yrPrev + self->c*self->yrPrev;
+    yr[0] = self->c*self->yrPrev - self->s*self->yjPrev;
+    yj[0] = self->s*self->yrPrev + self->c*self->yjPrev;
 
     // calculate the rest of the block
     for(i = 1; i < BLOCK_SIZE; i++)
