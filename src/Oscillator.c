@@ -2,7 +2,6 @@
 #include "Constants.h"
 #include <stdint.h>
 #include <math.h>
-#include <stdio.h>
 
 
 void osc_init(Oscillator * self, float f) {
