@@ -11,6 +11,7 @@ void osc_init(Oscillator * self, float f) {
 }
 
 void osc_setF(Oscillator * self, float f) {
+    // f should be relative to fs,
     self->c = cosf(2*M_PI*f);
     self->s = sinf(2*M_PI*f);
 }
