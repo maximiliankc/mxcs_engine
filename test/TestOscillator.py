@@ -24,6 +24,7 @@ class TestOscillator(unittest.TestCase):
     debug = False # controls whether plots will be made
     fs = 48000
     test_frequencies = 440*2**((np.arange(21, 109)-69)/12)
+    accuracy = 0.5 # cents
 
     def setUp(self) -> None:
         self.implementation = OscillatorInterface()
@@ -31,34 +32,32 @@ class TestOscillator(unittest.TestCase):
     def testSineFrequency(self) -> None:
 
         for f in self.test_frequencies:
-            # +/- half a cent
-            fu = f*2**(0.5/1200)
-            fl = f*2**(-0.5/1200)
-            precision = (fu-fl)
-            N = int(2**math.ceil(math.log2((self.fs/precision))))
+            with self.subTest(f'{f:.2f} Hz'):
+                fu = f*2**(self.accuracy/1200)
+                fl = f*2**(-self.accuracy/1200)
+                precision = (fu-fl)
+                # precision is FS/N
+                # convert the precision to an fft length
+                N = int(2**math.ceil(math.log2((self.fs/precision))))
+                freqs = np.fft.fftshift(np.fft.fftfreq(N))*self.fs
+                vector = self.implementation.run(f/self.fs, N) # TODO pick a length based on required certainty?
+                f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/N)
+                pkidx, _  = sig.find_peaks(f_vector, height=-96, prominence=1)
+                f_measured = freqs[pkidx]
 
-            print(N)
-            freqs = np.fft.fftshift(np.fft.fftfreq(N))*self.fs
-            # precision is FS/N
-            # convert the precision to an fft length
-            vector = self.implementation.run(f/self.fs, N) # TODO pick a length based on required certainty?
-            f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/N)
-            pkidx, _  = sig.find_peaks(f_vector, height=-96, prominence=1)
-            f_measured = freqs[pkidx]
+                if self.debug:
+                    _, fax = plt.subplots()
+                    fax.plot(freqs, f_vector, label='Data')
+                    fax.scatter(freqs[pkidx], f_vector[pkidx], label='Peak')
+                    fax.grid(True)
+                    fax.legend()
+                    fax.set_xlabel('Frequency (Hz)')
+                    fax.set_title(f'Frequency Domain (f_0 = {f:.2f} Hz)')
+                    plt.show()
 
-            if self.debug:
-                _, fax = plt.subplots()
-                fax.plot(freqs, f_vector, label='Data')
-                fax.scatter(freqs[pkidx], f_vector[pkidx], label='Peak')
-                fax.grid(True)
-                fax.legend()
-                fax.set_xlabel('Frequency (Hz)')
-                fax.set_title(f'Frequency Domain (f_0 = {f:.2f} Hz)')
-                plt.show()
-
-            self.assertEqual(1, len(f_measured))
-            cents = 1200*np.log2(f_measured/f)
-            self.assertLess(cents, 0.5)
+                self.assertEqual(1, len(f_measured))
+                cents = 1200*np.log2(f_measured/f)
+                self.assertLess(cents, self.accuracy)
 
     def testSineAmplitude(self):
         N = self.implementation.block_size*2**8
