@@ -8,13 +8,8 @@ jobs:
     strategy:
       max-parallel: 5
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: synth
-          environment-file: env.yml
-          auto-activate-base: false
-      - run: |
-          conda info
-          conda list
+  steps:
+    - uses: actions/checkout@v1
+    - uses: ricardochaves/python-lint@v1.4.0
+      with:
+        use-black: true

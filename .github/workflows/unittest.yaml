@@ -1,0 +1,22 @@
+name: Unit Tests
+
+on: [push]
+
+jobs:
+  unittest:
+    runs-on: macos-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+      - uses: actions/checkout@v2
+      - run:
+        make
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: synth
+          environment-file: env.yml
+          auto-activate-base: false
+      - run:
+        conda activate synth
+        conda info
