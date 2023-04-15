@@ -40,7 +40,7 @@ class TestOscillator(unittest.TestCase):
                 # convert the precision to an fft length
                 N = int(2**math.ceil(math.log2((self.fs/precision))))
                 freqs = np.fft.fftshift(np.fft.fftfreq(N))*self.fs
-                vector = self.implementation.run(f/self.fs, N) # TODO pick a length based on required certainty?
+                vector = self.implementation.run(f/self.fs, N)
                 f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/N)
                 pkidx, _  = sig.find_peaks(f_vector, height=-96, prominence=1)
                 f_measured = freqs[pkidx]
@@ -60,22 +60,24 @@ class TestOscillator(unittest.TestCase):
                 self.assertLess(cents, self.accuracy)
 
     def testSineAmplitude(self):
-        N = self.implementation.block_size*2**8
-        for f in [100, 120]:
-            vector = self.implementation.run(2*np.pi*f/self.fs, N) # TODO pick a length based on required certainty?
-            power = np.abs(vector)**2
-            if self.debug:
-                t = np.arange(N)/self.fs
-                _, tax = plt.subplots()
-                tax.plot(t, np.real(vector), label='Real')
-                tax.plot(t, np.imag(vector), label='Imaginary')
-                tax.plot(t, power, label='Power')
-                tax.legend()
-                tax.set_xlabel('Time')
-                tax.set_title('Time Domain')
-                tax.grid()
+        N = self.fs*30
+        f = 1000
+        vector = self.implementation.run(2*np.pi*f/self.fs, N) # TODO pick a length based on required certainty?
+        power = np.abs(vector)**2
+        if self.debug:
+            t = np.arange(N)/self.fs
+            _, tax = plt.subplots()
+            tax.plot(t, np.real(vector), label='Real')
+            tax.plot(t, np.imag(vector), label='Imaginary')
+            tax.plot(t, power, label='Power')
+            tax.legend()
+            tax.set_xlabel('Time')
+            tax.set_title('Time Domain')
+            tax.grid()
 
-                plt.show()
+            plt.show()
+        self.assertAlmostEqual(np.min(power), 1., delta=0.001)
+        self.assertAlmostEqual(np.max(power), 1., delta=0.001)
 
 def main():
     ''' For debugging/plotting '''
