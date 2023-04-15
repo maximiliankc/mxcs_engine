@@ -9,13 +9,14 @@ jobs:
       max-parallel: 5
     defaults:
       run:
-        shell: zsh {0}
+        shell: bash -el {0}
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: synth
           environment-file: env.yml
+          auto-activate-base: false
       - run: make
       - run: conda info
       - run: python -m unittest test.TestOscillator
