@@ -16,7 +16,6 @@ jobs:
         with:
           activate-environment: synth
           environment-file: env.yml
-          auto-activate-base: false
       - run: make
       - run: conda info
       - run: python -m unittest test.TestOscillator
