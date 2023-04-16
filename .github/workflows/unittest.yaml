@@ -19,4 +19,4 @@ jobs:
           auto-activate-base: false
       - run: make
       - run: conda info
-      - run: python -m unittest test.TestOscillator
+      - run: python -m unittest
