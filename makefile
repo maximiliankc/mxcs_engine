@@ -4,10 +4,10 @@ CFLAGS=-I$(IDIR) -Werror -Wall
 
 TEST_TARGET=test.so
 
-_OBJ = Oscillator.o
+_OBJ = Oscillator.o Envelope.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-_DEPS = Constants.h Oscillator.h
+_DEPS = Constants.h Oscillator.h Envelope.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 ODIR=obj
