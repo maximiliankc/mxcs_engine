@@ -4,19 +4,19 @@
 #include <math.h>
 
 
-void osc_init(Oscillator * self, float f) {
+void osc_init(Oscillator_t * self, float f) {
     osc_setF(self, f);
     self->yrPrev = 1.0;
     self->yjPrev = 0.0;
 }
 
-void osc_setF(Oscillator * self, float f) {
+void osc_setF(Oscillator_t * self, float f) {
     // f should be relative to fs,
     self->c = cosf(2*M_PI*f);
     self->s = sinf(2*M_PI*f);
 }
 
-void osc_step(Oscillator * self, float * yr, float * yj) {
+void osc_step(Oscillator_t * self, float * yr, float * yj) {
     // thinking of it as a complex exponential
     // y[n] = e^(j*theta)*y[n-1]
     // alternatively, like a matrix:

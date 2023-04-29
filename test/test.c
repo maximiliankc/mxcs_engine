@@ -10,7 +10,7 @@ void test_oscillator(const float f, const unsigned int n, float * cosOut, float 
     //             sinOut/cosOut: sin/cos output of the oscillator
     unsigned int i;
 
-    Oscillator osc;
+    Oscillator_t osc;
     osc_init(&osc, f);
     for(i=0; i<n; i+= BLOCK_SIZE) {
         osc_step(&osc, cosOut+i, sinOut+i);
