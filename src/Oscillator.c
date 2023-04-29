@@ -1,7 +1,7 @@
+#include <math.h>
+#include <stdint.h>
 #include "Oscillator.h"
 #include "Constants.h"
-#include <stdint.h>
-#include <math.h>
 
 
 void osc_init(Oscillator_t * self, float f) {
@@ -22,7 +22,6 @@ void osc_step(Oscillator_t * self, float * yr, float * yj) {
     // alternatively, like a matrix:
     // (yr[n]  = (cos(theta) -sin(theta) (yr[n-1]
     //  yj[n]) =  sin(theta)  cos(theta)) yj[n-1])
-    uint8_t i;
     float pwr;
     float scale;
 
@@ -39,7 +38,7 @@ void osc_step(Oscillator_t * self, float * yr, float * yj) {
     yj[0] = scale*yj[0];
 
     // calculate the rest of the block
-    for (i = 1; i < BLOCK_SIZE; i++) {
+    for (uint8_t i = 1; i < BLOCK_SIZE; i++) {
         yr[i] = self->c*yr[i-1] - self->s*yj[i-1];
         yj[i] = self->s*yr[i-1] + self->c*yj[i-1];
     }
