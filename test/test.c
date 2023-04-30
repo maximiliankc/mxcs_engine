@@ -12,15 +12,15 @@ void test_oscillator(const float f, const unsigned int n, float * cosOut, float 
 
     Oscillator_t osc;
     osc_init(&osc, f);
-    for(unsigned int i=0; i<n; i+= BLOCK_SIZE) {
+    for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         osc_step(&osc, cosOut+i, sinOut+i);
     }
 }
 
 
 void test_envelope(const float a, const float d, const float s, const float r,\
-                   const unsigned int pressNs[], const unsigned int presses,\
-                   const unsigned int releaseNs[], const unsigned int releases,\
+                   const unsigned int presses, unsigned int pressNs[],\
+                   const unsigned int releases, unsigned int releaseNs[],\
                    const unsigned int n, float envOut[]) {
     // parameters:  a: attack time (in samples)
     //              d: decay time (in samples)
@@ -37,7 +37,7 @@ void test_envelope(const float a, const float d, const float s, const float r,\
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
     env_init(&env, a, d, s, r);
-    for(unsigned int i=0; i<n; i+= BLOCK_SIZE) {
+    for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         if(pressCount < presses && n >= pressNs[pressCount]) {
             env_press(&env);
             pressCount++;

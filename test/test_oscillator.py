@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sig
 
+
 class OscillatorInterface:
     ''' ctypes wrapper around test shared object file'''
     def __init__(self):
@@ -23,9 +24,10 @@ class OscillatorInterface:
         self.testlib.test_oscillator(ctypes.c_float(f), ctypes.c_int(n), cosOut, sinOut)
         return np.array(cosOut) + 1j*np.array(sinOut)
 
+
 class TestOscillator(unittest.TestCase):
-    ''' Test Suite for Oscillator, checks freuqency accuracy and amplitude accuracy/consistency.
-        Uses an interface tot the OscillatorInterface '''
+    ''' Test Suite for Oscillator, checks frequency accuracy and amplitude accuracy/consistency.
+        Uses an interface to the OscillatorInterface '''
     debug = False # controls whether plots will be made
     fs = 48000 # Hz
     test_frequencies = 440*2**((np.arange(21, 109)-69)/12)
