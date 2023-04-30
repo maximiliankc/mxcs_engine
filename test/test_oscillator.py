@@ -18,10 +18,12 @@ class OscillatorInterface:
 
     def run(self, f: float, n: int) -> np.ndarray:
         ''' Run the Oscillator. Output is a complex exponential at frequency f with length n'''
-        cosOut = (n*ctypes.c_float)(*n*[0])
-        sinOut = (n*ctypes.c_float)(*n*[0])
-        self.testlib.test_oscillator(ctypes.c_float(f), ctypes.c_int(n), cosOut, sinOut)
-        return np.array(cosOut) + 1j*np.array(sinOut)
+        cosOut = np.zeros(n, dtype=np.single)
+        cosOut_p = cosOut.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        sinOut = np.zeros(n, dtype=np.single)
+        sinOut_p = sinOut.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        self.testlib.test_oscillator(ctypes.c_float(f), ctypes.c_int(n), cosOut_p, sinOut_p)
+        return cosOut + 1j*sinOut
 
 
 class TestOscillator(unittest.TestCase):
