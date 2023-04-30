@@ -11,7 +11,6 @@ class OscillatorInterface:
     ''' ctypes wrapper around test shared object file'''
     def __init__(self):
         ''' Load in the test object file and define the function '''
-        self.block_size = 16
         self.testlib = ctypes.CDLL('test.so')
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
