@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include "Constants.h"
 #include "Oscillator.h"
 #include "Envelope.h"
@@ -37,14 +38,18 @@ void test_envelope(const float a, const float d, const float s, const float r,\
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
     env_init(&env, a, d, s, r);
+    printf("press Ns: %d\n", pressNs[0]);
+    printf("release Ns: %d\n", releaseNs[0]);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
-        if(pressCount < presses && n >= pressNs[pressCount]) {
+        if(pressCount < presses && i >= pressNs[pressCount]) {
             env_press(&env);
             pressCount++;
+            printf("i at press: %d\n", i);
         }
-        if(releaseCount < releases && n >= releaseNs[releaseCount]) {
+        if(releaseCount < releases && i >= releaseNs[releaseCount]) {
             env_release(&env);
             releaseCount++;
+            printf("i at release: %d\n", i);
         }
         env_step(&env, envOut + i);
     }
