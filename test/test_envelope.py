@@ -40,7 +40,7 @@ class TestEnvelope(unittest.TestCase):
         N = 1*self.fs # s
         a = 0.1*self.fs # s
         d = 0.05*self.fs # s
-        s = 0.5*self.fs # magnitude
+        s = 0.5 # magnitude
         r = 0.1*self.fs # s
         vector = self.implementation.run(a, d, s, r, np.array([int(0.1*self.fs)], dtype=np.uint32), np.array([int(0.4*self.fs)], dtype=np.uint32), N)
         if self.debug:

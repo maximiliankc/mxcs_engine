@@ -11,6 +11,10 @@ typedef enum EnvelopeState_t {
 typedef struct Envelope_t {
     EnvelopeState_t state;
     float amp;
+    float a_increment;
+    float d_increment;
+    float s_level;
+    float r_increment;
 } Envelope_t;
 
 
