@@ -59,7 +59,7 @@ class TestOscillator(unittest.TestCase):
                     _, fax = plt.subplots()
                     fax.plot(freqs, f_vector, label='Data')
                     fax.scatter(freqs[pkidx], f_vector[pkidx], label='Peak')
-                    fax.grid(True)
+                    fax.grid()
                     fax.legend()
                     fax.set_xlabel('Frequency (Hz)')
                     fax.set_title(f'Frequency Domain (f_0 = {f:.2f} Hz)')
