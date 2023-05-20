@@ -41,7 +41,7 @@ class TestEnvelope(unittest.TestCase):
         N = 1*self.fs # s
         a = 0.1*self.fs # s
         d = 0.05*self.fs # s
-        s = 0.5 # magnitude
+        s = 0.75 # magnitude
         r = 0.1*self.fs # s
         vector = self.implementation.run(a, d, s, r, np.array([int(0.1*self.fs)], dtype=np.uint32), np.array([int(0.4*self.fs)], dtype=np.uint32), N)
         # detect start time
@@ -69,12 +69,23 @@ class TestEnvelope(unittest.TestCase):
                 releaseIdxs.append(idx)
         # check attack gradient
         for aidx, didx in zip(attackIdxs, decayIdxs):
-            a_grad = (vector[didx] - vector[aidx])/(didx - aidx)
             # check gradient error is within 1%
-            self.assertAlmostEqual(a_grad, 1/a, delta=0.01/a)
+            a_grad = (vector[didx] - vector[aidx])/(didx - aidx)
+            self.assertAlmostEqual(a_grad, 1/a, delta=abs(0.01/a))
         # check decay gradient
+        for didx, sidx in zip(decayIdxs, sustainIdxs):
+            d_grad = (vector[sidx] - vector[didx])/(sidx - didx)
+            self.assertAlmostEqual(d_grad, (s-1)/d, delta=abs(0.01*(s-1)/d))
         # check sustain level
+        for sidx, ridx in zip(sustainIdxs, releaseIdxs):
+            s_max = np.max(vector[sidx:ridx])
+            self.assertLess(s_max, s+0.01*s)
+            s_min = np.min(vector[sidx:ridx])
+            self.assertGreater(s_min, s-0.01*s)
         # check release gradient
+        for ridx in releaseIdxs:
+            r_grad = (vector[ridx + int(r/2)] - vector[ridx])/(int(r/2))
+            self.assertAlmostEqual(r_grad, (-s)/r, delta=abs(0.01*s/r))
         if self.debug:
             t = np.arange(N)/self.fs
             attackMarkers = vector[attackIdxs]

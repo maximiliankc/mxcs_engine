@@ -70,7 +70,7 @@ void run_sustain(Envelope_t * self) {
 }
 
 void run_release(Envelope_t * self) {
-    self->amp += self->d_increment; // linear shift for now
+    self->amp += self->r_increment; // linear shift for now
     if (self->amp <= 0) {
         self->amp = 0;
         self->state = off;
