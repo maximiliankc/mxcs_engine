@@ -39,83 +39,92 @@ class TestEnvelope(unittest.TestCase):
 
     def test_basic_envelope(self):
         N = 1*self.fs # s
-        a = 0.1*self.fs # s
-        d = 0.05*self.fs # s
-        s = 0.75 # magnitude
-        r = 0.1*self.fs # s
-        vector = self.implementation.run(a, d, s, r, np.array([int(0.1*self.fs)], dtype=np.uint32), np.array([int(0.4*self.fs)], dtype=np.uint32), N)
-        # detect start time
-        # on press is the only time the note should start increasing
-        derivative = np.diff(vector, prepend=[0])
-        secondDerivative = np.diff(derivative, prepend=[0])
-        threshold = max(derivative)/10
-        attackIdxs = []
-        decayIdxs = []
-        sustainIdxs = []
-        releaseIdxs = []
-        # find state transition point from peaks of second derivative:
-        ptIdxs, _  = sig.find_peaks(secondDerivative, height=threshold)
-        for idx in ptIdxs:
-            if derivative[idx+1] > threshold:
-                attackIdxs.append(idx)
-            elif derivative[idx-1] < -threshold:
-                if vector[idx+1] > 0:
-                    sustainIdxs.append(idx)
-        ntIdxs, _ = sig.find_peaks(-secondDerivative, height=threshold)
-        for idx in ntIdxs:
-            if derivative[idx-2] > threshold:
-                decayIdxs.append(idx)
-            else:
-                releaseIdxs.append(idx)
-        # check attack gradient
-        for aidx, didx in zip(attackIdxs, decayIdxs):
-            # check gradient error is within 1%
-            a_grad = (vector[didx] - vector[aidx])/(didx - aidx)
-            self.assertAlmostEqual(a_grad, 1/a, delta=abs(0.01/a))
-        # check decay gradient
-        for didx, sidx in zip(decayIdxs, sustainIdxs):
-            d_grad = (vector[sidx] - vector[didx])/(sidx - didx)
-            self.assertAlmostEqual(d_grad, (s-1)/d, delta=abs(0.01*(s-1)/d))
-        # check sustain level
-        for sidx, ridx in zip(sustainIdxs, releaseIdxs):
-            s_max = np.max(vector[sidx:ridx])
-            self.assertLess(s_max, s+0.01*s)
-            s_min = np.min(vector[sidx:ridx])
-            self.assertGreater(s_min, s-0.01*s)
-        # check release gradient
-        for ridx in releaseIdxs:
-            r_grad = (vector[ridx + int(r/2)] - vector[ridx])/(int(r/2))
-            self.assertAlmostEqual(r_grad, (-s)/r, delta=abs(0.01*s/r))
-        if self.debug:
-            t = np.arange(N)/self.fs
-            attackMarkers = vector[attackIdxs]
-            attackTimes = t[attackIdxs]
-            decayMarkers = vector[decayIdxs]
-            decayTimes = t[decayIdxs]
-            sustainMarkers = vector[sustainIdxs]
-            sustainTimes = t[sustainIdxs]
-            releaseMarkers = vector[releaseIdxs]
-            releaseTimes = t[releaseIdxs]
+        for a, d, s, r in [(0.1, 0.05, 0.75, 0.1),
+                           (0.01, 0.1, 0.8, 0.5),
+                           (0.2, 0.3, 0.1, 0.4)
+                           ]:
+            a *= self.fs
+            d *= self.fs
+            r *= self.fs
+            expectedAGrad = 1/a if a > 1 else 1
+            expectedDGrad = (s-1)/d if d > 1 else s-1
+            expectedRGrad = (-s)/r if r > 1 else -s
+            threshold = np.min(np.abs([expectedAGrad, expectedDGrad, expectedRGrad]))/3
+            print(f'threshold: {threshold}, expected grads: {[expectedAGrad, expectedDGrad, expectedRGrad]}')
 
-            _, ax = plt.subplots()
-            ax.plot(t, vector)
-            ax.scatter(attackTimes, attackMarkers)
-            ax.scatter(decayTimes, decayMarkers)
-            ax.scatter(sustainTimes, sustainMarkers)
-            ax.scatter(releaseTimes, releaseMarkers)
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('Magnitude')
-            ax.set_title('Envelope')
-            ax.grid()
-            _, ax1 = plt.subplots()
-            ax1.plot(t, derivative, label='First Derivative')
-            ax1.plot(t, secondDerivative, label='Second Derivative')
-            ax1.set_xlabel('Time (s)')
-            ax1.set_ylabel('Magnitude')
-            ax1.set_title('Derivatives')
-            ax1.legend()
-            ax1.grid()
-            plt.show()
+            vector = self.implementation.run(a, d, s, r, np.array([int(0.1*self.fs)], dtype=np.uint32), np.array([int(0.4*self.fs)], dtype=np.uint32), N)
+
+            # find derivates for use detecting state changes
+            derivative = np.diff(vector, prepend=[0])
+            secondDerivative = np.diff(derivative, prepend=[0])
+            attackIdxs = []
+            decayIdxs = []
+            sustainIdxs = []
+            releaseIdxs = []
+            # find state transition point from peaks of second derivative:
+            ptIdxs, _  = sig.find_peaks(secondDerivative, height=threshold)
+            for idx in ptIdxs:
+                if derivative[idx+1] > threshold:
+                    attackIdxs.append(idx)
+                elif derivative[idx-1] < -threshold:
+                    if vector[idx+1] > 0:
+                        sustainIdxs.append(idx)
+            ntIdxs, _ = sig.find_peaks(-secondDerivative, height=threshold)
+            for idx in ntIdxs:
+                if derivative[idx-2] > threshold:
+                    decayIdxs.append(idx)
+                else:
+                    releaseIdxs.append(idx)
+            if self.debug:
+                t = np.arange(N)/self.fs
+                attackMarkers = vector[attackIdxs]
+                attackTimes = t[attackIdxs]
+                decayMarkers = vector[decayIdxs]
+                decayTimes = t[decayIdxs]
+                sustainMarkers = vector[sustainIdxs]
+                sustainTimes = t[sustainIdxs]
+                releaseMarkers = vector[releaseIdxs]
+                releaseTimes = t[releaseIdxs]
+
+                _, ax = plt.subplots()
+                ax.plot(t, vector)
+                ax.scatter(attackTimes, attackMarkers)
+                ax.scatter(decayTimes, decayMarkers)
+                ax.scatter(sustainTimes, sustainMarkers)
+                ax.scatter(releaseTimes, releaseMarkers)
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('Magnitude')
+                ax.set_title('Envelope')
+                ax.grid()
+                _, ax1 = plt.subplots()
+                ax1.plot(t, derivative, label='First Derivative')
+                ax1.plot(t, secondDerivative, label='Second Derivative')
+                ax1.set_xlabel('Time (s)')
+                ax1.set_ylabel('Magnitude')
+                ax1.set_title('Derivatives')
+                ax1.legend()
+                ax1.grid()
+                plt.show()
+
+            # check attack gradient
+            for aidx, didx in zip(attackIdxs, decayIdxs):
+                # check gradient error is within 1%
+                aGrad = (vector[didx] - vector[aidx])/(didx - aidx)
+                self.assertAlmostEqual(aGrad, expectedAGrad, delta=abs(0.01*expectedAGrad))
+            # check decay gradient
+            for didx, sidx in zip(decayIdxs, sustainIdxs):
+                dGrad = (vector[sidx] - vector[didx])/(sidx - didx)
+                self.assertAlmostEqual(dGrad, (s-1)/d, delta=abs(0.01*expectedDGrad))
+            # check sustain level
+            for sidx, ridx in zip(sustainIdxs, releaseIdxs):
+                sMax = np.max(vector[sidx:ridx])
+                self.assertLess(sMax, s+0.01*s)
+                s_min = np.min(vector[sidx:ridx])
+                self.assertGreater(s_min, s-0.01*s)
+            # check release gradient
+            for ridx in releaseIdxs:
+                r_grad = (vector[ridx + int(r/2)] - vector[ridx])/(int(r/2))
+                self.assertAlmostEqual(r_grad, expectedRGrad, delta=abs(0.01*expectedRGrad))
 
 
 def main():
