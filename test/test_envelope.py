@@ -40,24 +40,20 @@ class TestEnvelope(unittest.TestCase):
     def test_basic_envelope(self):
         N = 1*self.fs # s
         B = 100
-        for a, d, s, r in [(0.1, 0.05, 0.75, 0.1),
-                           (0.01, 0.1, 0.8, 0.5),
-                           (0.2, 0.3, 0.1, 0.4)
+        for a, d, s, r in [(0.1, 0.05, -3., 0.1),
+                           (0.01, 0.1, -20, 0.5),
+                           (0.2, 0.3, -80, 0.4)
                            ]:
             a *= self.fs
             d *= self.fs
             r *= self.fs
 
             expectedAGrad = abs(B/a) if a > 1 else B
-            expectedDGrad = 20*np.log10(s)/d if d > 1 else 20*np.log10(s)
-            expectedRGrad = -(B+20*np.log10(s))/r if r > 1 else -(B+20*np.log10(s))
+            expectedDGrad = s/d if d > 1 else s
+            expectedRGrad = -(B+s)/r if r > 1 else -(B+s)
             threshold = np.min(np.abs([expectedAGrad, expectedDGrad, expectedRGrad]))/3
 
-            a_coef = 10**(B/(20*a))
-            d_coef = 10**(20*np.log10(s)/(20*d))
-            r_coef = 10**(-(B+20*np.log10(s))/(20*r))
-
-            vector = self.implementation.run(a_coef, d_coef, s, r_coef, np.array([int(0.1*self.fs)], dtype=np.uint32), np.array([int(0.4*self.fs)], dtype=np.uint32), N)
+            vector = self.implementation.run(a, d, s, r, np.array([int(0.1*self.fs)], dtype=np.uint32), np.array([int(0.4*self.fs)], dtype=np.uint32), N)
             vector = 20*np.log10(vector)
             vector[vector<-100] = -100
 
@@ -101,14 +97,14 @@ class TestEnvelope(unittest.TestCase):
                 ax.scatter(releaseTimes, releaseMarkers)
                 ax.set_xlabel('Time (s)')
                 ax.set_ylabel('Magnitude (dB)')
-                ax.set_title('Envelope')
+                ax.set_title(f'Envelope ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
                 ax.grid()
                 _, ax1 = plt.subplots()
                 ax1.plot(t, derivative, label='First Derivative')
                 ax1.plot(t, secondDerivative, label='Second Derivative')
                 ax1.set_xlabel('Time (s)')
                 ax1.set_ylabel('Magnitude (dB)')
-                ax1.set_title('Derivatives')
+                ax1.set_title(f'Derivatives ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
                 ax1.legend()
                 ax1.grid()
                 plt.show()
@@ -123,7 +119,6 @@ class TestEnvelope(unittest.TestCase):
                 dGrad = (vector[sidx] - vector[didx])/(sidx - didx)
                 self.assertAlmostEqual(dGrad, expectedDGrad, delta=abs(0.01*expectedDGrad))
             # check sustain level
-            s = 20*np.log10(s) # put s in dB
             for sidx, ridx in zip(sustainIdxs, releaseIdxs):
                 sMax = np.max(vector[sidx:ridx])
                 self.assertLess(sMax, s+1)

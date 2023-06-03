@@ -3,6 +3,7 @@
 #include "Constants.h"
 #include "Oscillator.h"
 #include "Envelope.h"
+#include "Utils.h"
 
 
 void test_oscillator(const float f, const unsigned int n, float * cosOut, float * sinOut) {
@@ -52,5 +53,13 @@ void test_envelope(const float a, const float d, const float s, const float r,\
             printf("i at release: %d\n", i);
         }
         env_step(&env, envOut + i);
+    }
+}
+
+void test_db2mag(float inOut[], const unsigned int n) {
+    // parameters: inOut: input/output array
+    //             n: number of values in input/output array
+    for(unsigned int i = 0; i<n; i++) {
+        inOut[i] = db2mag(inOut[i]);
     }
 }

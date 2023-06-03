@@ -1,6 +1,10 @@
 #include <stdint.h>
 #include "Envelope.h"
 #include "Constants.h"
+#include "Utils.h"
+
+#define BASE_LEVEL (100)
+
 
 void run_off(Envelope_t * self);
 void run_attack(Envelope_t * self);
@@ -40,10 +44,10 @@ void env_release(Envelope_t * self) {
 }
 
 void env_set_adsr(Envelope_t * self, float a, float d, float s, float r) {
-    self->a_increment = a;           // a is a number of samples
-    self->d_increment = d;     // d is a number of samples
-    self->s_level = s;                   // s is a level
-    self->r_increment = r;            // r is a number of samples
+    self->a_increment = db2mag(BASE_LEVEL/a);      // a is the number of samples per 100 dB
+    self->d_increment = db2mag(s/d);               // d is a number of samples per 100 dB
+    self->s_level = db2mag(s);                       // s is a level in dBFS
+    self->r_increment = db2mag(-(BASE_LEVEL+s)/r); // r is a number of samples
 }
 
 void run_off(Envelope_t * self) {
