@@ -39,24 +39,20 @@ void test_envelope(const float a, const float d, const float s, const float r,\
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
     env_init(&env, a, d, s, r);
-    printf("press Ns: %d\n", pressNs[0]);
-    printf("release Ns: %d\n", releaseNs[0]);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         if(pressCount < presses && i >= pressNs[pressCount]) {
             env_press(&env);
             pressCount++;
-            printf("i at press: %d\n", i);
         }
         if(releaseCount < releases && i >= releaseNs[releaseCount]) {
             env_release(&env);
             releaseCount++;
-            printf("i at release: %d\n", i);
         }
         env_step(&env, envOut + i);
     }
 }
 
-void test_db2mag(float inOut[], const unsigned int n) {
+void test_db2mag(const unsigned int n, float inOut[]) {
     // parameters: inOut: input/output array
     //             n: number of values in input/output array
     for(unsigned int i = 0; i<n; i++) {
