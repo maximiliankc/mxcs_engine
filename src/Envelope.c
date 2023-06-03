@@ -31,6 +31,7 @@ void env_step(Envelope_t * self, float * envelope) {
 }
 
 void env_press(Envelope_t * self) {
+    self->amp = 0.00001; // -100 dB, and initial value
     self->state = attack;
 }
 
@@ -39,10 +40,10 @@ void env_release(Envelope_t * self) {
 }
 
 void env_set_adsr(Envelope_t * self, float a, float d, float s, float r) {
-    self->a_increment = 1.0/a;           // a is a number of samples
-    self->d_increment = (s - 1.0)/d;     // d is a number of samples
+    self->a_increment = a;           // a is a number of samples
+    self->d_increment = d;     // d is a number of samples
     self->s_level = s;                   // s is a level
-    self->r_increment = -s/r;            // r is a number of samples
+    self->r_increment = r;            // r is a number of samples
 }
 
 void run_off(Envelope_t * self) {
@@ -50,7 +51,7 @@ void run_off(Envelope_t * self) {
 }
 
 void run_attack(Envelope_t * self) {
-    self->amp += self->a_increment; // linear shift for now
+    self->amp *= self->a_increment; // linear shift for now
     if (self->amp >= 1.0) {
         self->amp = 1.0;
         self->state = decay;
@@ -58,7 +59,7 @@ void run_attack(Envelope_t * self) {
 }
 
 void run_decay(Envelope_t * self) {
-    self->amp += self->d_increment; // linear shift for now
+    self->amp *= self->d_increment; // linear shift for now
     if (self->amp <= self->s_level) {
         self->amp = self->s_level;
         self->state = sustain;
@@ -70,9 +71,5 @@ void run_sustain(Envelope_t * self) {
 }
 
 void run_release(Envelope_t * self) {
-    self->amp += self->r_increment; // linear shift for now
-    if (self->amp <= 0) {
-        self->amp = 0;
-        self->state = off;
-    }
+    self->amp *= self->r_increment; // linear shift for now
 }
