@@ -36,7 +36,9 @@ void env_step(Envelope_t * self, float * envelope) {
 }
 
 void env_press(Envelope_t * self) {
-    self->amp = BASE_LEVEL; // -100 dB, and initial value
+    if (self->amp < BASE_LEVEL) {
+        self->amp = BASE_LEVEL; // -100 dB, and initial value
+    }
     self->state = attack;
 }
 
@@ -45,10 +47,10 @@ void env_release(Envelope_t * self) {
 }
 
 void env_set_adsr(Envelope_t * self, float a, float d, float s, float r) {
-    self->a_increment = db2mag(BASE_LEVEL/a);      // a is the number of samples per 100 dB
+    self->a_increment = db2mag(BASE_LEVEL_DB/a);      // a is the number of samples per 100 dB
     self->d_increment = db2mag(s/d);               // d is a number of samples per 100 dB
     self->s_level = db2mag(s);                     // s is a level in dBFS
-    self->r_increment = db2mag(-(BASE_LEVEL+s)/r); // r is a number of samples
+    self->r_increment = db2mag(-(BASE_LEVEL_DB+s)/r); // r is a number of samples
 }
 
 void run_off(Envelope_t * self) {
