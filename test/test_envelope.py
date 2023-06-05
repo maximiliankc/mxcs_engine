@@ -33,6 +33,8 @@ class TestEnvelope(unittest.TestCase):
     ''' Test for envelope generator '''
     debug = False
     fs = 48000 # Hz
+    B = 100
+    blockSize = 16
 
     def setUp(self) -> None:
         self.implementation = EnvelopeInterface()
@@ -40,7 +42,6 @@ class TestEnvelope(unittest.TestCase):
     def test_basic_envelope(self):
         ''' Tests a basic single envelope '''
         N = 1*self.fs # s
-        B = 100
         for a, d, s, r in [(0.1, 0.05, -3., 0.1),
                            (0.01, 0.1, -20, 0.5),
                            (0.2, 0.3, -80, 0.4)
@@ -49,9 +50,9 @@ class TestEnvelope(unittest.TestCase):
             d *= self.fs
             r *= self.fs
 
-            expectedAGrad = abs(B/a) if a > 1 else B
+            expectedAGrad = abs(self.B/a) if a > 1 else self.B
             expectedDGrad = s/d if d > 1 else s
-            expectedRGrad = -(B+s)/r if r > 1 else -(B+s)
+            expectedRGrad = -(self.B+s)/r if r > 1 else -(self.B+s)
             threshold = np.min(np.abs([expectedAGrad, expectedDGrad, expectedRGrad]))/3
 
             vector = self.implementation.run(a, d, s, r, np.array([int(0.1*self.fs)], dtype=np.uint32), np.array([int(0.4*self.fs)], dtype=np.uint32), N)
@@ -130,13 +131,46 @@ class TestEnvelope(unittest.TestCase):
                 r_grad = (vector[ridx + int(r/2)] - vector[ridx])/(int(r/2))
                 self.assertAlmostEqual(r_grad, expectedRGrad, delta=abs(0.01*expectedRGrad))
 
+    def test_double_press(self):
+        ''' Check that level increases after a note is pressed '''
+        N = 2*self.fs
+        a, d, s, r = (0.1, 0.1, -20, 0.2)
+        s_len = 0.5*self.fs
+        a *= self.fs
+        d *= self.fs
+        r *= self.fs
+
+        # all relative to the first
+        # during attack, during decay, during sustain, during release
+        firstPress = 0.1*self.fs
+        secondPresses = np.array([a/2, a + d/2, a + d + s_len/2, a + d + s_len + r/2]) + firstPress
+        releases = np.array([a + d + s_len, a + d + s_len + 1*self.fs]) + firstPress
+
+        for secondPress in secondPresses:
+            presses = np.array([firstPress, secondPress])
+            vector = self.implementation.run(a, d, s, r, presses.astype(np.uint32), releases.astype(np.uint32), N)
+            self.assertGreater(vector[int(secondPress+self.blockSize)],vector[int(secondPress-self.blockSize)])
+            if self.debug:
+                vector = 20*np.log10(vector)
+                t = np.arange(N)/self.fs
+                _, ax = plt.subplots()
+                ax.axvline(secondPress/self.fs)
+                ax.axvline((secondPress + self.blockSize)/self.fs)
+                ax.axvline((secondPress - self.blockSize)/self.fs)
+                ax.plot(t, vector)
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('Magnitude (dB)')
+                ax.set_title(f'Envelope ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
+                ax.grid()
+                plt.show()
 
 def main():
     ''' For Debugging/Testing '''
     env_test = TestEnvelope()
     env_test.setUp()
     env_test.debug = True
-    env_test.test_basic_envelope()
+    # env_test.test_basic_envelope()
+    env_test.test_double_press()
 
 if __name__=='__main__':
     main()
