@@ -44,7 +44,7 @@ class TestEnvelope(unittest.TestCase):
         N = 1*self.fs # s
         for a, d, s, r in [(0.1, 0.05, -3., 0.1),
                            (0.01, 0.1, -20, 0.5),
-                           (0.2, 0.3, -80, 0.4)
+                           (0.05, 0.2, -80, 0.4)
                            ]:
             a *= self.fs
             d *= self.fs
@@ -54,8 +54,10 @@ class TestEnvelope(unittest.TestCase):
             expectedDGrad = s/d if d > 1 else s
             expectedRGrad = -(self.B+s)/r if r > 1 else -(self.B+s)
             threshold = np.min(np.abs([expectedAGrad, expectedDGrad, expectedRGrad]))/3
+            pressTime = int(0.1*self.fs)
+            releaseTime = int(0.4*self.fs)
 
-            vector = self.implementation.run(a, d, s, r, np.array([int(0.1*self.fs)], dtype=np.uint32), np.array([int(0.4*self.fs)], dtype=np.uint32), N)
+            vector = self.implementation.run(a, d, s, r, np.array([pressTime], dtype=np.uint32), np.array([releaseTime], dtype=np.uint32), N)
             vector = 20*np.log10(vector)
             vector[vector<-100] = -100
 
@@ -72,7 +74,7 @@ class TestEnvelope(unittest.TestCase):
                 if derivative[idx+1] > threshold:
                     attackIdxs.append(idx)
                 elif derivative[idx-1] < -threshold:
-                    if vector[idx+1] > -B:
+                    if vector[idx+1] > -self.B:
                         sustainIdxs.append(idx)
             ntIdxs, _ = sig.find_peaks(-secondDerivative, height=threshold)
             for idx in ntIdxs:
@@ -111,21 +113,40 @@ class TestEnvelope(unittest.TestCase):
                 ax1.grid()
                 plt.show()
 
+            # envelope should never exceed 0 dBFS
+            self.assertLessEqual(np.max(vector), 0)
+
+            # check there was an attack
+            self.assertEqual(1, len(attackIdxs))
+            # check when the attack occured
+            self.assertAlmostEqual(pressTime, attackIdxs[0], delta=self.blockSize)
             # check attack gradient
             for aidx, didx in zip(attackIdxs, decayIdxs):
                 # check gradient error is within 1%
                 aGrad = (vector[didx] - vector[aidx])/(didx - aidx)
                 self.assertAlmostEqual(aGrad, expectedAGrad, delta=abs(0.01*expectedAGrad))
+            # check there was a decay
+            self.assertEqual(1, len(decayIdxs))
+            # check when the attack occured
+            self.assertAlmostEqual(pressTime+int(a), decayIdxs[0], delta=self.blockSize)
             # check decay gradient
             for didx, sidx in zip(decayIdxs, sustainIdxs):
                 dGrad = (vector[sidx] - vector[didx])/(sidx - didx)
                 self.assertAlmostEqual(dGrad, expectedDGrad, delta=abs(0.01*expectedDGrad))
+            # check there was a sustain
+            self.assertEqual(1, len(sustainIdxs))
+            # check when the sustain occured
+            self.assertAlmostEqual(pressTime+int(a)+int(d), sustainIdxs[0], delta=self.blockSize)
             # check sustain level
             for sidx, ridx in zip(sustainIdxs, releaseIdxs):
                 sMax = np.max(vector[sidx:ridx])
                 self.assertLess(sMax, s+1)
                 s_min = np.min(vector[sidx:ridx])
                 self.assertGreater(s_min, s-1)
+            # check there was a release
+            self.assertEqual(1, len(releaseIdxs))
+            # check when the release occured
+            self.assertAlmostEqual(releaseTime, releaseIdxs[0], delta=self.blockSize)
             # check release gradient
             for ridx in releaseIdxs:
                 r_grad = (vector[ridx + int(r/2)] - vector[ridx])/(int(r/2))
@@ -149,7 +170,6 @@ class TestEnvelope(unittest.TestCase):
         for secondPress in secondPresses:
             presses = np.array([firstPress, secondPress])
             vector = self.implementation.run(a, d, s, r, presses.astype(np.uint32), releases.astype(np.uint32), N)
-            self.assertGreater(vector[int(secondPress+self.blockSize)],vector[int(secondPress-self.blockSize)])
             if self.debug:
                 vector = 20*np.log10(vector)
                 t = np.arange(N)/self.fs
@@ -163,13 +183,15 @@ class TestEnvelope(unittest.TestCase):
                 ax.set_title(f'Envelope ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
                 ax.grid()
                 plt.show()
+            self.assertGreater(vector[int(secondPress+self.blockSize)], vector[int(secondPress-self.blockSize)])
+
 
 def main():
     ''' For Debugging/Testing '''
     env_test = TestEnvelope()
     env_test.setUp()
     env_test.debug = True
-    # env_test.test_basic_envelope()
+    env_test.test_basic_envelope()
     env_test.test_double_press()
 
 if __name__=='__main__':
