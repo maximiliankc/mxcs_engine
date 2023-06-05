@@ -30,7 +30,7 @@ class EnvelopeInterface:
 
 
 class TestEnvelope(unittest.TestCase):
-    ''' '''
+    ''' Test for envelope generator '''
     debug = False
     fs = 48000 # Hz
 
@@ -38,6 +38,7 @@ class TestEnvelope(unittest.TestCase):
         self.implementation = EnvelopeInterface()
 
     def test_basic_envelope(self):
+        ''' Tests a basic single envelope '''
         N = 1*self.fs # s
         B = 100
         for a, d, s, r in [(0.1, 0.05, -3., 0.1),

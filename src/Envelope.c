@@ -3,7 +3,8 @@
 #include "Constants.h"
 #include "Utils.h"
 
-#define BASE_LEVEL (100)
+#define BASE_LEVEL (0.00001)
+#define BASE_LEVEL_DB (100)
 
 
 void run_off(Envelope_t * self);
@@ -35,7 +36,7 @@ void env_step(Envelope_t * self, float * envelope) {
 }
 
 void env_press(Envelope_t * self) {
-    self->amp = 0.00001; // -100 dB, and initial value
+    self->amp = BASE_LEVEL; // -100 dB, and initial value
     self->state = attack;
 }
 
@@ -46,7 +47,7 @@ void env_release(Envelope_t * self) {
 void env_set_adsr(Envelope_t * self, float a, float d, float s, float r) {
     self->a_increment = db2mag(BASE_LEVEL/a);      // a is the number of samples per 100 dB
     self->d_increment = db2mag(s/d);               // d is a number of samples per 100 dB
-    self->s_level = db2mag(s);                       // s is a level in dBFS
+    self->s_level = db2mag(s);                     // s is a level in dBFS
     self->r_increment = db2mag(-(BASE_LEVEL+s)/r); // r is a number of samples
 }
 
@@ -55,7 +56,7 @@ void run_off(Envelope_t * self) {
 }
 
 void run_attack(Envelope_t * self) {
-    self->amp *= self->a_increment; // linear shift for now
+    self->amp *= self->a_increment;
     if (self->amp >= 1.0) {
         self->amp = 1.0;
         self->state = decay;
@@ -63,7 +64,7 @@ void run_attack(Envelope_t * self) {
 }
 
 void run_decay(Envelope_t * self) {
-    self->amp *= self->d_increment; // linear shift for now
+    self->amp *= self->d_increment;
     if (self->amp <= self->s_level) {
         self->amp = self->s_level;
         self->state = sustain;

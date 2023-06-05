@@ -16,7 +16,6 @@ class UtilsInterface:
     def run_db2mag(self, data: np.ndarray) -> None:
         ''' Run the Envelope Generator. Output is a float'''
         io_p = data.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        print('Calling implementation')
         self.testlib.test_db2mag(ctypes.c_uint(len(data)), io_p)
 
 

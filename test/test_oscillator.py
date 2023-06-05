@@ -70,7 +70,7 @@ class TestOscillator(unittest.TestCase):
                 self.assertLess(cents, self.freq_accuracy)
 
     def test_sine_amplitude(self):
-        ''' Checks that the amplitude of the sinusoid is '''
+        ''' Checks that the amplitude of the sinusoid is correct '''
         N = self.fs*30
         f = 1000
         vector = self.implementation.run(2*np.pi*f/self.fs, N)
