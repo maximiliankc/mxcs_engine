@@ -1,3 +1,4 @@
+''' Tests for utility functions '''
 import ctypes
 import unittest
 import matplotlib.pyplot as plt

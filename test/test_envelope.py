@@ -1,3 +1,4 @@
+''' Tests for envelope generator '''
 import ctypes
 import unittest
 import matplotlib.pyplot as plt
@@ -12,20 +13,25 @@ class EnvelopeInterface:
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
         # a, d, s, r, presses, pressNs, releases, releaseNs, n, envOut
-        self.testlib.test_envelope.argtypes = [ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float,
+        self.testlib.test_envelope.argtypes = [ctypes.c_float, ctypes.c_float,
+                                               ctypes.c_float, ctypes.c_float,
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, float_pointer]
 
-    def run(self, a: float, d: float, s: float, r: float, presses: np.ndarray, releases: np.ndarray, n: int) -> np.ndarray:
+    def run(self, a: float, d: float, s: float, r: float,
+            presses: np.ndarray, releases: np.ndarray, n: int) -> np.ndarray:
         ''' Run the Envelope Generator. Output is a float'''
+        p_uint = ctypes.POINTER(ctypes.c_uint)
         out = np.zeros(n, dtype=np.single)
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        presses_p = presses.astype(np.uintc, casting='safe').ctypes.data_as(ctypes.POINTER(ctypes.c_uint))
-        releases_p = releases.astype(np.uintc, casting='safe').ctypes.data_as(ctypes.POINTER(ctypes.c_uint))
-        self.testlib.test_envelope(ctypes.c_float(a), ctypes.c_float(d), ctypes.c_float(s), ctypes.c_float(r),
-                                   ctypes.c_uint(len(presses)), presses_p, ctypes.c_uint(len(releases)), releases_p,
-                                   ctypes.c_uint(len(out)), out_p)
+        presses_p = presses.astype(np.uintc, casting='safe').ctypes.data_as(p_uint)
+        releases_p = releases.astype(np.uintc, casting='safe').ctypes.data_as(p_uint)
+        self.testlib.test_envelope(ctypes.c_float(a), ctypes.c_float(d),
+                                    ctypes.c_float(s), ctypes.c_float(r),
+                                    ctypes.c_uint(len(presses)), presses_p,
+                                    ctypes.c_uint(len(releases)), releases_p,
+                                    ctypes.c_uint(len(out)), out_p)
         return out
 
 
@@ -51,14 +57,15 @@ class TestEnvelope(unittest.TestCase):
                 d *= self.fs
                 r *= self.fs
 
-                expectedAGrad = abs(self.B/a) if a > 1 else self.B
-                expectedDGrad = s/d if d > 1 else s
-                expectedRGrad = -(self.B+s)/r if r > 1 else -(self.B+s)
-                threshold = np.min(np.abs([expectedAGrad, expectedDGrad, expectedRGrad]))/3
+                expected_a_grad = abs(self.B/a) if a > 1 else self.B
+                expected_d_grad = s/d if d > 1 else s
+                expected_r_grad = -(self.B+s)/r if r > 1 else -(self.B+s)
+                threshold = np.min(np.abs([expected_a_grad, expected_d_grad, expected_r_grad]))/3
                 pressTime = int(0.1*self.fs)
                 releaseTime = int(0.4*self.fs)
 
-                vector = self.implementation.run(a, d, s, r, np.array([pressTime], dtype=np.uint32), np.array([releaseTime], dtype=np.uint32), N)
+                vector = self.implementation.run(a, d, s, r, np.array([pressTime], dtype=np.uint32),
+                                                  np.array([releaseTime], dtype=np.uint32), N)
                 vector = 20*np.log10(vector)
                 vector[vector<-100] = -100
 
@@ -85,21 +92,21 @@ class TestEnvelope(unittest.TestCase):
                         releaseIdxs.append(idx)
                 if self.debug:
                     t = np.arange(N)/self.fs
-                    attackMarkers = vector[attackIdxs]
-                    attackTimes = t[attackIdxs]
-                    decayMarkers = vector[decayIdxs]
-                    decayTimes = t[decayIdxs]
-                    sustainMarkers = vector[sustainIdxs]
-                    sustainTimes = t[sustainIdxs]
-                    releaseMarkers = vector[releaseIdxs]
-                    releaseTimes = t[releaseIdxs]
+                    attack_markers = vector[attackIdxs]
+                    attack_times = t[attackIdxs]
+                    decay_markers = vector[decayIdxs]
+                    decay_times = t[decayIdxs]
+                    sustain_markers = vector[sustainIdxs]
+                    sustain_times = t[sustainIdxs]
+                    release_markers = vector[releaseIdxs]
+                    release_times = t[releaseIdxs]
 
                     _, ax = plt.subplots()
                     ax.plot(t, vector)
-                    ax.scatter(attackTimes, attackMarkers)
-                    ax.scatter(decayTimes, decayMarkers)
-                    ax.scatter(sustainTimes, sustainMarkers)
-                    ax.scatter(releaseTimes, releaseMarkers)
+                    ax.scatter(attack_times, attack_markers)
+                    ax.scatter(decay_times, decay_markers)
+                    ax.scatter(sustain_times, sustain_markers)
+                    ax.scatter(release_times, release_markers)
                     ax.set_xlabel('Time (s)')
                     ax.set_ylabel('Magnitude (dB)')
                     ax.set_title(f'Envelope ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
@@ -124,24 +131,25 @@ class TestEnvelope(unittest.TestCase):
                 # check attack gradient
                 for aidx, didx in zip(attackIdxs, decayIdxs):
                     # check gradient error is within 1%
-                    aGrad = (vector[didx] - vector[aidx])/(didx - aidx)
-                    self.assertAlmostEqual(aGrad, expectedAGrad, delta=abs(0.01*expectedAGrad))
+                    a_grad = (vector[didx] - vector[aidx])/(didx - aidx)
+                    self.assertAlmostEqual(a_grad, expected_a_grad, delta=abs(0.01*expected_a_grad))
                 # check there was a decay
                 self.assertEqual(1, len(decayIdxs))
                 # check when the attack occured
                 self.assertAlmostEqual(pressTime+int(a), decayIdxs[0], delta=self.blockSize)
                 # check decay gradient
                 for didx, sidx in zip(decayIdxs, sustainIdxs):
-                    dGrad = (vector[sidx] - vector[didx])/(sidx - didx)
-                    self.assertAlmostEqual(dGrad, expectedDGrad, delta=abs(0.01*expectedDGrad))
+                    d_grad = (vector[sidx] - vector[didx])/(sidx - didx)
+                    self.assertAlmostEqual(d_grad, expected_d_grad, delta=abs(0.01*expected_d_grad))
                 # check there was a sustain
                 self.assertEqual(1, len(sustainIdxs))
                 # check when the sustain occured
-                self.assertAlmostEqual(pressTime+int(a)+int(d), sustainIdxs[0], delta=self.blockSize)
+                self.assertAlmostEqual(pressTime+int(a)+int(d), sustainIdxs[0],
+                                        delta=self.blockSize)
                 # check sustain level
                 for sidx, ridx in zip(sustainIdxs, releaseIdxs):
-                    sMax = np.max(vector[sidx:ridx])
-                    self.assertLess(sMax, s+1)
+                    s_max = np.max(vector[sidx:ridx])
+                    self.assertLess(s_max, s+1)
                     s_min = np.min(vector[sidx:ridx])
                     self.assertGreater(s_min, s-1)
                 # check there was a release
@@ -151,7 +159,7 @@ class TestEnvelope(unittest.TestCase):
                 # check release gradient
                 for ridx in releaseIdxs:
                     r_grad = (vector[ridx + int(r/2)] - vector[ridx])/(int(r/2))
-                    self.assertAlmostEqual(r_grad, expectedRGrad, delta=abs(0.01*expectedRGrad))
+                    self.assertAlmostEqual(r_grad, expected_r_grad, delta=abs(0.01*expected_r_grad))
 
     def test_double_press(self):
         ''' Check that level increases after a note is pressed '''
@@ -163,29 +171,32 @@ class TestEnvelope(unittest.TestCase):
         r *= self.fs
 
         # all relative to the first
-        firstPress = 0.1*self.fs
-        testIds = ['Attack', 'Decay', 'Sustain', 'Release']
-        secondPresses = np.array([a/2, a + d/2, a + d + s_len/2, a + d + s_len + r/2]) + firstPress
-        releases = np.array([a + d + s_len, a + d + s_len + 1*self.fs]) + firstPress
+        first_press = 0.1*self.fs
+        test_ids = ['Attack', 'Decay', 'Sustain', 'Release']
+        second_presses = np.array([a/2, a + d/2, a + d + s_len/2, a + d + s_len + r/2])\
+            + first_press
+        releases = np.array([a + d + s_len, a + d + s_len + 1*self.fs]) + first_press
 
-        for secondPress, testId in zip(secondPresses, testIds):
-            with self.subTest(testId):
-                presses = np.array([firstPress, secondPress])
-                vector = self.implementation.run(a, d, s, r, presses.astype(np.uint32), releases.astype(np.uint32), N)
+        for second_press, test_id in zip(second_presses, test_ids):
+            with self.subTest(test_id):
+                presses = np.array([first_press, second_press])
+                vector = self.implementation.run(a, d, s, r, presses.astype(np.uint32),
+                                                  releases.astype(np.uint32), N)
                 if self.debug:
                     vector = 20*np.log10(vector)
                     t = np.arange(N)/self.fs
                     _, ax = plt.subplots()
-                    ax.axvline(secondPress/self.fs)
-                    ax.axvline((secondPress + self.blockSize)/self.fs)
-                    ax.axvline((secondPress - self.blockSize)/self.fs)
+                    ax.axvline(second_press/self.fs)
+                    ax.axvline((second_press + self.blockSize)/self.fs)
+                    ax.axvline((second_press - self.blockSize)/self.fs)
                     ax.plot(t, vector)
                     ax.set_xlabel('Time (s)')
                     ax.set_ylabel('Magnitude (dB)')
                     ax.set_title(f'Envelope ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
                     ax.grid()
                     plt.show()
-                self.assertGreater(vector[int(secondPress+self.blockSize)], vector[int(secondPress-self.blockSize)])
+                self.assertGreater(vector[int(second_press+self.blockSize)],
+                                    vector[int(second_press-self.blockSize)])
 
 
 def main():
