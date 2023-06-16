@@ -1,6 +1,5 @@
 #ifndef ENVELOPE_H_
 #define ENVELOPE_H_
-#define LOG10 (2.302585092994046)
 
 typedef enum EnvelopeState_t {
     off = 0,
