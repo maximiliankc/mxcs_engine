@@ -41,6 +41,77 @@ class TestEnvelope(unittest.TestCase):
     fs = 48000 # Hz
     B = 100
     blockSize = 16
+    a = 0
+    d = 0
+    s = 0
+    r = 0
+
+    def set_adsr(self, a: float, d: float, s: float, r: float):
+        ''' Configure adsr values '''
+        self.a = a*self.fs
+        self.d = d*self.fs
+        self.s = s
+        self.r = r*self.fs
+
+    def calculate_gradients(self):
+        a_grad = abs(self.B/self.a) if self.a > 1 else self.B
+        d_grad = self.s/self.d if self.d > 1 else self.s
+        r_grad = -(self.B+self.s)/self.r if self.r > 1 else -(self.B+self.s)
+        return a_grad, d_grad, r_grad
+
+    def run_implementation(self, presses, releases, N):
+        ''' Run the implementation '''
+        vector = self.implementation.run(self.a, self.d, self.s, self.r,
+                                          presses.astype(np.uint32), releases.astype(np.uint32), N)
+        return vector
+
+    def check_attack(self, vector, attackIdxs, decayIdxs, pressTime):
+        exp_a_grad, _, _ = self.calculate_gradients()
+        # check there was an attack
+        self.assertEqual(1, len(attackIdxs))
+        # check when the attack occured
+        self.assertAlmostEqual(pressTime, attackIdxs[0], delta=self.blockSize)
+        # check attack gradient
+        for aidx, didx in zip(attackIdxs, decayIdxs):
+            # check gradient error is within 1%
+            a_grad = (vector[didx] - vector[aidx])/(didx - aidx)
+            self.assertAlmostEqual(a_grad, exp_a_grad, delta=abs(0.01*exp_a_grad))
+
+    def check_decay(self, vector, decayIdxs, sustainIdxs, pressTime):
+        _, exp_d_grad, _ = self.calculate_gradients()
+        # check there was a decay
+        self.assertEqual(1, len(decayIdxs))
+        # check when the attack occured
+        self.assertAlmostEqual(pressTime+int(self.a), decayIdxs[0], delta=self.blockSize)
+        # check decay gradient
+        for didx, sidx in zip(decayIdxs, sustainIdxs):
+            d_grad = (vector[sidx] - vector[didx])/(sidx - didx)
+            self.assertAlmostEqual(d_grad, exp_d_grad, delta=abs(0.01*exp_d_grad))
+
+    def check_sustain(self, vector, sustainIdxs, releaseIdxs, pressTime):
+        # check there was a sustain
+        self.assertEqual(1, len(sustainIdxs))
+        # check when the sustain occured
+        self.assertAlmostEqual(pressTime+int(self.a)+int(self.d), sustainIdxs[0],
+                                delta=self.blockSize)
+        # check sustain level
+        for sidx, ridx in zip(sustainIdxs, releaseIdxs):
+            s_max = np.max(vector[sidx:ridx])
+            self.assertLess(s_max, self.s+1)
+            s_min = np.min(vector[sidx:ridx])
+            self.assertGreater(s_min, self.s-1)
+
+    def check_release(self, vector, releaseIdxs, releaseTime):
+        _, _, exp_r_grad = self.calculate_gradients()
+        # check there was a release
+        self.assertEqual(1, len(releaseIdxs))
+        # check when the release occured
+        self.assertAlmostEqual(releaseTime, releaseIdxs[0], delta=self.blockSize)
+        # check release gradient
+        for ridx in releaseIdxs:
+            r_grad = (vector[ridx + int(self.r/2)] - vector[ridx])/(int(self.r/2))
+            self.assertAlmostEqual(r_grad, exp_r_grad, delta=abs(0.01*exp_r_grad))
+
 
     def setUp(self) -> None:
         self.implementation = EnvelopeInterface()
@@ -53,19 +124,13 @@ class TestEnvelope(unittest.TestCase):
                            (0.05, 0.2, -80, 0.4)
                            ]:
             with self.subTest(f'{a},{d},{s},{r}'):
-                a *= self.fs
-                d *= self.fs
-                r *= self.fs
-
-                expected_a_grad = abs(self.B/a) if a > 1 else self.B
-                expected_d_grad = s/d if d > 1 else s
-                expected_r_grad = -(self.B+s)/r if r > 1 else -(self.B+s)
-                threshold = np.min(np.abs([expected_a_grad, expected_d_grad, expected_r_grad]))/3
+                self.set_adsr(a, d, s, r)
+                exp_a_grad, exp_d_grad, exp_r_grad = self.calculate_gradients()
+                threshold = np.min(np.abs([exp_a_grad, exp_d_grad, exp_r_grad]))/3
                 pressTime = int(0.1*self.fs)
                 releaseTime = int(0.4*self.fs)
 
-                vector = self.implementation.run(a, d, s, r, np.array([pressTime], dtype=np.uint32),
-                                                  np.array([releaseTime], dtype=np.uint32), N)
+                vector = self.run_implementation(np.array([pressTime]), np.array([releaseTime]), N)
                 vector = 20*np.log10(vector)
                 vector[vector<-100] = -100
 
@@ -109,14 +174,14 @@ class TestEnvelope(unittest.TestCase):
                     ax.scatter(release_times, release_markers)
                     ax.set_xlabel('Time (s)')
                     ax.set_ylabel('Magnitude (dB)')
-                    ax.set_title(f'Envelope ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
+                    ax.set_title(f'Envelope ({a}, {d}, {s}, {r})')
                     ax.grid()
                     _, ax1 = plt.subplots()
                     ax1.plot(t, derivative, label='First Derivative')
                     ax1.plot(t, secondDerivative, label='Second Derivative')
                     ax1.set_xlabel('Time (s)')
                     ax1.set_ylabel('Magnitude (dB)')
-                    ax1.set_title(f'Derivatives ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
+                    ax1.set_title(f'Derivatives ({a}, {d}, {s}, {r})')
                     ax1.legend()
                     ax1.grid()
                     plt.show()
@@ -124,64 +189,31 @@ class TestEnvelope(unittest.TestCase):
                 # envelope should never exceed 0 dBFS
                 self.assertLessEqual(np.max(vector), 0)
 
-                # check there was an attack
-                self.assertEqual(1, len(attackIdxs))
-                # check when the attack occured
-                self.assertAlmostEqual(pressTime, attackIdxs[0], delta=self.blockSize)
-                # check attack gradient
-                for aidx, didx in zip(attackIdxs, decayIdxs):
-                    # check gradient error is within 1%
-                    a_grad = (vector[didx] - vector[aidx])/(didx - aidx)
-                    self.assertAlmostEqual(a_grad, expected_a_grad, delta=abs(0.01*expected_a_grad))
-                # check there was a decay
-                self.assertEqual(1, len(decayIdxs))
-                # check when the attack occured
-                self.assertAlmostEqual(pressTime+int(a), decayIdxs[0], delta=self.blockSize)
-                # check decay gradient
-                for didx, sidx in zip(decayIdxs, sustainIdxs):
-                    d_grad = (vector[sidx] - vector[didx])/(sidx - didx)
-                    self.assertAlmostEqual(d_grad, expected_d_grad, delta=abs(0.01*expected_d_grad))
-                # check there was a sustain
-                self.assertEqual(1, len(sustainIdxs))
-                # check when the sustain occured
-                self.assertAlmostEqual(pressTime+int(a)+int(d), sustainIdxs[0],
-                                        delta=self.blockSize)
-                # check sustain level
-                for sidx, ridx in zip(sustainIdxs, releaseIdxs):
-                    s_max = np.max(vector[sidx:ridx])
-                    self.assertLess(s_max, s+1)
-                    s_min = np.min(vector[sidx:ridx])
-                    self.assertGreater(s_min, s-1)
-                # check there was a release
-                self.assertEqual(1, len(releaseIdxs))
-                # check when the release occured
-                self.assertAlmostEqual(releaseTime, releaseIdxs[0], delta=self.blockSize)
-                # check release gradient
-                for ridx in releaseIdxs:
-                    r_grad = (vector[ridx + int(r/2)] - vector[ridx])/(int(r/2))
-                    self.assertAlmostEqual(r_grad, expected_r_grad, delta=abs(0.01*expected_r_grad))
+                self.check_attack(vector, attackIdxs, decayIdxs, pressTime)
+                self.check_decay(vector, decayIdxs, sustainIdxs, pressTime)
+                self.check_sustain(vector, sustainIdxs, releaseIdxs, pressTime)
+                self.check_release(vector, releaseIdxs, releaseTime)
 
     def test_double_press(self):
         ''' Check that level increases after a note is pressed '''
         N = 2*self.fs
         a, d, s, r = (0.1, 0.1, -20, 0.2)
         s_len = 0.5*self.fs
-        a *= self.fs
-        d *= self.fs
-        r *= self.fs
-
+        self.set_adsr(a, d, s, r)
         # all relative to the first
         first_press = 0.1*self.fs
         test_ids = ['Attack', 'Decay', 'Sustain', 'Release']
-        second_presses = np.array([a/2, a + d/2, a + d + s_len/2, a + d + s_len + r/2])\
-            + first_press
-        releases = np.array([a + d + s_len, a + d + s_len + 1*self.fs]) + first_press
+        second_presses = np.array([self.a/2, self.a + self.d/2,
+                                    self.a + self.d + s_len/2,
+                                    self.a + self.d + s_len + self.r/2])\
+                        + first_press
+        releases = np.array([self.a + self.d + s_len,
+                             self.a + self.d + s_len + 1*self.fs]) + first_press
 
         for second_press, test_id in zip(second_presses, test_ids):
             with self.subTest(test_id):
                 presses = np.array([first_press, second_press])
-                vector = self.implementation.run(a, d, s, r, presses.astype(np.uint32),
-                                                  releases.astype(np.uint32), N)
+                vector = self.run_implementation(presses, releases, N)
                 if self.debug:
                     vector = 20*np.log10(vector)
                     t = np.arange(N)/self.fs
@@ -192,7 +224,7 @@ class TestEnvelope(unittest.TestCase):
                     ax.plot(t, vector)
                     ax.set_xlabel('Time (s)')
                     ax.set_ylabel('Magnitude (dB)')
-                    ax.set_title(f'Envelope ({a/self.fs}, {d/self.fs}, {s}, {r/self.fs})')
+                    ax.set_title(f'Envelope ({self.a/self.fs}, {self.d/self.fs}, {self.s}, {self.r/self.fs})')
                     ax.grid()
                     plt.show()
                 self.assertGreater(vector[int(second_press+self.blockSize)],
