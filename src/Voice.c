@@ -19,3 +19,12 @@ void voice_step(Voice_t * self, float * out) {
         out[i] *= sinOut[i];
     }
 }
+
+void voice_press(Voice_t * self, float f) {
+    env_press(&(self->envelope));
+    osc_setF(&(self->osc), f);
+}
+
+void voice_release(Voice_t * self) {
+    env_release(&(self->envelope));
+}
