@@ -2,7 +2,7 @@
 import ctypes
 import numpy as np
 import scipy.signal as sig
-from test_envelope import TestEnvelope
+from .test_envelope import TestEnvelope
 
 
 class VoiceInterface:
