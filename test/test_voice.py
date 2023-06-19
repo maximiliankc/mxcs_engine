@@ -1,8 +1,9 @@
 ''' Tests for voice '''
 import ctypes
+import unittest
 import numpy as np
 import scipy.signal as sig
-from .test_envelope import TestEnvelope
+from .test_envelope import EnvelopeTools, EnvelopeInterface
 
 
 class VoiceInterface:
@@ -36,10 +37,11 @@ class VoiceInterface:
                                     ctypes.c_uint(len(out)), out_p)
         return out
 
-class TestVoice(TestEnvelope):
+class TestVoice(unittest.TestCase, EnvelopeTools):
     f = 1000
+    fs = 48000
 
-    def run_implementation(self, presses, releases, N):
+    def run_v_implementation(self, presses, releases, N):
         ''' Run the implementation '''
         f = self.f/self.fs
         vector = self.implementation.run(self.a, self.d, self.s, self.r, f,
@@ -48,16 +50,18 @@ class TestVoice(TestEnvelope):
         return np.abs(vector)
 
     def setUp(self) -> None:
-        self.implementation = VoiceInterface()
+        self.v_implementation = VoiceInterface()
+        self.e_implementation = EnvelopeInterface()
 
+    def test_envelope(self):
+        pass
 
 def main():
     ''' For Debugging/Testing '''
     voice_test = TestVoice()
     voice_test.setUp()
     voice_test.debug = True
-    voice_test.test_basic_envelope()
-    voice_test.test_double_press()
+    voice_test.test_envelope()
 
 if __name__=='__main__':
     main()

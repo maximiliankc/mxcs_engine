@@ -34,13 +34,11 @@ class EnvelopeInterface:
                                     ctypes.c_uint(len(out)), out_p)
         return out
 
-
-class TestEnvelope(unittest.TestCase):
-    ''' Test for envelope generator '''
-    debug = False
+class EnvelopeTools:
+    ''' Basic tools for testing envelope '''
+    blockSize = 16
     fs = 48000 # Hz
     B = 100
-    blockSize = 16
     a = 0
     d = 0
     s = 0
@@ -54,6 +52,7 @@ class TestEnvelope(unittest.TestCase):
         self.r = r*self.fs
 
     def calculate_gradients(self):
+        ''' Calculate gradients from adsr values '''
         a_grad = abs(self.B/self.a) if self.a > 1 else self.B
         d_grad = self.s/self.d if self.d > 1 else self.s
         r_grad = -(self.B+self.s)/self.r if self.r > 1 else -(self.B+self.s)
@@ -64,6 +63,11 @@ class TestEnvelope(unittest.TestCase):
         vector = self.implementation.run(self.a, self.d, self.s, self.r,
                                           presses.astype(np.uint32), releases.astype(np.uint32), N)
         return vector
+
+
+class TestEnvelope(unittest.TestCase, EnvelopeTools):
+    ''' Test for envelope generator '''
+    debug = False
 
     def check_attack(self, vector, attackIdxs, decayIdxs, pressTime):
         exp_a_grad, _, _ = self.calculate_gradients()
@@ -111,7 +115,6 @@ class TestEnvelope(unittest.TestCase):
         for ridx in releaseIdxs:
             r_grad = (vector[ridx + int(self.r/2)] - vector[ridx])/(int(self.r/2))
             self.assertAlmostEqual(r_grad, exp_r_grad, delta=abs(0.01*exp_r_grad))
-
 
     def setUp(self) -> None:
         self.implementation = EnvelopeInterface()
