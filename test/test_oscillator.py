@@ -9,34 +9,36 @@ import scipy.signal as sig
 
 class OscillatorInterface:
     ''' ctypes wrapper around test shared object file'''
-    def __init__(self):
+    fs = 48000 # Hz
+    freq = 0
+    testlib = ctypes.CDLL('test.so')
+
+    def setUp(self):
         ''' Load in the test object file and define the function '''
-        self.testlib = ctypes.CDLL('test.so')
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
                                                  float_pointer, float_pointer]
 
-    def run(self, freq: float, n: int) -> np.ndarray:
+    def run_osc(self, n: int) -> np.ndarray:
         ''' Run the Oscillator. Output is a complex exponential at frequency f with length n'''
         cos_out = np.zeros(n, dtype=np.single)
         cos_out_p = cos_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         sin_out = np.zeros(n, dtype=np.single)
         sin_out_p = sin_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_oscillator(ctypes.c_float(freq), ctypes.c_int(n), cos_out_p, sin_out_p)
+        self.testlib.test_oscillator(ctypes.c_float(self.freq), ctypes.c_int(n), cos_out_p, sin_out_p)
         return cos_out + 1j*sin_out
 
+    def set_f(self, freq: float):
+        self.freq = freq/self.fs
 
-class TestOscillator(unittest.TestCase):
+
+class TestOscillator(unittest.TestCase, OscillatorInterface):
     ''' Test Suite for Oscillator, checks frequency accuracy and amplitude accuracy/consistency.
         Uses an interface to the OscillatorInterface '''
     debug = False # controls whether plots will be made
-    fs = 48000 # Hz
     test_frequencies = 440*2**((np.arange(21, 109)-69)/12)
     freq_accuracy = 0.5 # cents
     power_accuracy = 0.001
-
-    def setUp(self) -> None:
-        self.implementation = OscillatorInterface()
 
     def test_sine_frequency(self) -> None:
         ''' Checks that the oscillator produces a range of test frequencies.
@@ -50,7 +52,8 @@ class TestOscillator(unittest.TestCase):
                 # convert the precision to an fft length
                 N = int(2**math.ceil(math.log2((self.fs/precision))))
                 freqs = np.fft.fftshift(np.fft.fftfreq(N))*self.fs
-                vector = self.implementation.run(freq/self.fs, N)
+                self.set_f(freq)
+                vector = self.run_osc(N)
                 f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/N)
                 pkidx, _  = sig.find_peaks(f_vector, height=-96, prominence=1)
                 f_measured = freqs[pkidx]
@@ -73,7 +76,8 @@ class TestOscillator(unittest.TestCase):
         ''' Checks that the amplitude of the sinusoid is correct '''
         N = self.fs*30
         freq = 1000
-        vector = self.implementation.run(2*np.pi*freq/self.fs, N)
+        self.set_f(freq)
+        vector = self.run_osc(N)
         power = np.abs(vector)**2
         if self.debug:
             t = np.arange(N)/self.fs
