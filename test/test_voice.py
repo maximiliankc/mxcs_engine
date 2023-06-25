@@ -38,14 +38,18 @@ class VoiceInterface(EnvelopeInterface):
                                     ctypes.c_uint(len(out)), out_p)
         return out
 
-    def set_f(self, freq: float):
-        self.f = freq/self.fs
+
 
 class TestVoice(unittest.TestCase, VoiceInterface):
     f = 1000
+    f_expected = 1000
     test_frequencies = [100, 400, 1000, 4000]
     fs = 48000
     debug = False
+
+    def set_f(self, freq: float):
+        self.f = freq/self.fs
+        self.f_expected = freq
 
     def run_self(self, presses: list, releases: list, N: int):
         ''' Run the '''
@@ -96,7 +100,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
             with self.subTest(f'{freq}'):
                 press_time = 0
                 release_time = int(self.fs)
-                vector = self.run_voice([press_time], [release_time], N)
+                vector = self.run_self([press_time], [release_time], N)
                 f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/N)[:N//2]
                 pkidx = np.argmax(f_vector)
                 freqs = self.fs*np.fft.fftfreq(N)[:N//2]
@@ -106,7 +110,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                     t = np.arange(N)/self.fs
                     ax.plot(t, vector)
                     ax.grid()
-                    ax.set_title(f'Output f={freq}')
+                    ax.set_title(f'Output f={self.f_expected}')
                     ax.set_ylabel('Magnitude')
                     ax.set_xlabel('Time (s)')
 
@@ -116,10 +120,10 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                     ax2.legend()
                     ax2.set_xlabel('Frequency (Hz)')
                     ax2.set_ylabel('Magnitude')
-                    ax2.set_title(f'Target: {freq}, Measured: {f_measured:.1f}')
+                    ax2.set_title(f'Target: {self.f_expected}, Measured: {f_measured:.1f}')
                     ax2.grid()
                     plt.show()
-                self.assertAlmostEqual(f_measured, freq, delta=0.01)
+                self.assertAlmostEqual(f_measured, self.f_expected, delta=0.01)
 
 
 def main():

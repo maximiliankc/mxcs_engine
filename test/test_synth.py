@@ -35,8 +35,14 @@ class SynthInterface(VoiceInterface):
         return out
 
 
+
 class TestSynth(TestVoice, SynthInterface):
     note = 64
+    test_frequencies = [12, 45, 69, 128]
+
+    def set_f(self, freq: int):
+        self.note = freq
+        self.f_expected = 440*2**((freq-69)/12)
 
     def run_self(self, presses: list, releases: list, N: int):
         notes = len(presses)*[self.note]
@@ -48,7 +54,7 @@ def main():
     synth_test = TestSynth()
     synth_test.debug = True
     synth_test.test_envelope()
-    # synth_test.test_frequency()
+    synth_test.test_frequency()
 
 if __name__=='__main__':
     main()
