@@ -6,10 +6,18 @@ import numpy as np
 import scipy.signal as sig
 
 class EnvelopeInterface:
-    ''' ctypes wrapper around test shared object file'''
-    def __init__(self):
+    ''' ctypes wrapper around test function and tools for interacting with it'''
+    blockSize = 16
+    fs = 48000 # Hz
+    B = 100
+    a = 0
+    d = 0
+    s = 0
+    r = 0
+    testlib = ctypes.CDLL('test.so')
+
+    def setUp(self):
         ''' Load in the test object file and define the function '''
-        self.testlib = ctypes.CDLL('test.so')
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
         # a, d, s, r, presses, pressNs, releases, releaseNs, n, envOut
@@ -19,30 +27,19 @@ class EnvelopeInterface:
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, float_pointer]
 
-    def run(self, a: float, d: float, s: float, r: float,
-            presses: np.ndarray, releases: np.ndarray, n: int) -> np.ndarray:
+    def run_implementation(self, presses: list, releases: list, n: int) -> np.ndarray:
         ''' Run the Envelope Generator. Output is a float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         out = np.zeros(n, dtype=np.single)
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        presses_p = presses.astype(np.uintc, casting='safe').ctypes.data_as(p_uint)
-        releases_p = releases.astype(np.uintc, casting='safe').ctypes.data_as(p_uint)
-        self.testlib.test_envelope(ctypes.c_float(a), ctypes.c_float(d),
-                                    ctypes.c_float(s), ctypes.c_float(r),
+        presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
+        releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
+        self.testlib.test_envelope(ctypes.c_float(self.a), ctypes.c_float(self.d),
+                                    ctypes.c_float(self.s), ctypes.c_float(self.r),
                                     ctypes.c_uint(len(presses)), presses_p,
                                     ctypes.c_uint(len(releases)), releases_p,
                                     ctypes.c_uint(len(out)), out_p)
         return out
-
-class EnvelopeTools:
-    ''' Basic tools for testing envelope '''
-    blockSize = 16
-    fs = 48000 # Hz
-    B = 100
-    a = 0
-    d = 0
-    s = 0
-    r = 0
 
     def set_adsr(self, a: float, d: float, s: float, r: float):
         ''' Configure adsr values '''
@@ -58,14 +55,8 @@ class EnvelopeTools:
         r_grad = -(self.B+self.s)/self.r if self.r > 1 else -(self.B+self.s)
         return a_grad, d_grad, r_grad
 
-    def run_implementation(self, presses, releases, N):
-        ''' Run the implementation '''
-        vector = self.implementation.run(self.a, self.d, self.s, self.r,
-                                          presses.astype(np.uint32), releases.astype(np.uint32), N)
-        return vector
 
-
-class TestEnvelope(unittest.TestCase, EnvelopeTools):
+class TestEnvelope(unittest.TestCase, EnvelopeInterface):
     ''' Test for envelope generator '''
     debug = False
 
@@ -116,9 +107,6 @@ class TestEnvelope(unittest.TestCase, EnvelopeTools):
             r_grad = (vector[ridx + int(self.r/2)] - vector[ridx])/(int(self.r/2))
             self.assertAlmostEqual(r_grad, exp_r_grad, delta=abs(0.01*exp_r_grad))
 
-    def setUp(self) -> None:
-        self.implementation = EnvelopeInterface()
-
     def test_basic_envelope(self):
         ''' Tests a basic single envelope '''
         N = 1*self.fs # s
@@ -133,7 +121,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeTools):
                 pressTime = int(0.1*self.fs)
                 releaseTime = int(0.4*self.fs)
 
-                vector = self.run_implementation(np.array([pressTime]), np.array([releaseTime]), N)
+                vector = self.run_implementation([pressTime], [releaseTime], N)
                 vector = 20*np.log10(vector)
                 vector[vector<-100] = -100
 
