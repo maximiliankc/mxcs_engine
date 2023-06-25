@@ -65,4 +65,4 @@ void test_voice(const float a, const float d, const float s, const float r, cons
         voice_step(&voice, envOut + i);
     }
 }
-#endif // TEST
+#endif // SYNTH_TEST_

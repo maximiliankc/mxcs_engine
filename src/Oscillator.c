@@ -63,4 +63,4 @@ void test_oscillator(const float f, const unsigned int n, float * cosOut, float 
         osc_step(&osc, cosOut+i, sinOut+i);
     }
 }
-#endif // TEST
+#endif // SYNTH_TEST_

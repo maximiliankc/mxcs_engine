@@ -114,4 +114,4 @@ void test_envelope(const float a, const float d, const float s, const float r,\
         env_step(&env, envOut + i);
     }
 }
-#endif // TEST
+#endif // SYNTH_TEST_

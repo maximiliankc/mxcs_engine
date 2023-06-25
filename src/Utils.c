@@ -13,4 +13,4 @@ void test_db2mag(const unsigned int n, float inOut[]) {
         inOut[i] = db2mag(inOut[i]);
     }
 }
-#endif // TEST
+#endif // SYNTH_TEST_
