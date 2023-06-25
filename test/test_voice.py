@@ -12,6 +12,7 @@ class VoiceInterface(EnvelopeInterface):
     ''' ctypes wrapper around test shared object file'''
     def __init__(self):
         ''' Load in the test object file and define the function '''
+        super().__init__()
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
         # a, d, s, r, f, presses, pressNs, releases, releaseNs, n, envOut
@@ -42,8 +43,13 @@ class VoiceInterface(EnvelopeInterface):
 
 class TestVoice(unittest.TestCase, VoiceInterface):
     f = 1000
+    test_frequencies = [100, 400, 1000, 4000]
     fs = 48000
     debug = False
+
+    def run_self(self, presses: list, releases: list, N: int):
+        ''' Run the '''
+        return self.run_voice(presses, releases, N)
 
     def test_envelope(self):
         ''' Check that the envelope is being applied '''
@@ -57,7 +63,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                 self.set_f(440)
                 press_time = int(0.1*self.fs)
                 release_time = int(0.4*self.fs)
-                voice_vector = np.abs(sig.hilbert(self.run_voice([press_time], [release_time], N)))
+                voice_vector = np.abs(sig.hilbert(self.run_self([press_time], [release_time], N)))
                 env_vector = self.run_env([press_time], [release_time], N)
                 rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
                 if self.debug:
@@ -85,7 +91,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
         ''' Check the frequency of the voice '''
         N = self.fs
         self.set_adsr(0.001, 0.01, 1, 0.01)
-        for freq in [100, 400, 1000, 4000]:
+        for freq in self.test_frequencies:
             self.set_f(freq)
             with self.subTest(f'{freq}'):
                 press_time = 0
@@ -119,7 +125,6 @@ class TestVoice(unittest.TestCase, VoiceInterface):
 def main():
     ''' For Debugging/Testing '''
     voice_test = TestVoice()
-    voice_test.setUp()
     voice_test.debug = True
     voice_test.test_envelope()
     voice_test.test_frequency()

@@ -2,6 +2,9 @@
 
 void synth_init(Synth_t * self) {
     // TODO calculate frequency table
+    for(uint8_t i = 0; i < NOTES; i++) {
+        self->frequency_table[i] = 0.01;
+    }
     voice_init(&(self->voice));
 }
 
@@ -17,6 +20,7 @@ void synth_press(Synth_t * self, uint8_t note) {
 void synth_release(Synth_t * self) {
     voice_release(&(self->voice));
 }
+
 void synth_step(Synth_t * self, float * out) {
     voice_step(&(self->voice), out);
 }

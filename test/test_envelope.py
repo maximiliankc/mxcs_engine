@@ -16,7 +16,7 @@ class EnvelopeInterface:
     r = 0
     testlib = ctypes.CDLL('test.so')
 
-    def setUp(self):
+    def __init__(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
@@ -225,7 +225,6 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
 def main():
     ''' For Debugging/Testing '''
     env_test = TestEnvelope()
-    env_test.setUp()
     env_test.debug = True
     env_test.test_basic_envelope()
     env_test.test_double_press()

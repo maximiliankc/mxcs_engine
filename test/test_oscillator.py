@@ -13,7 +13,7 @@ class OscillatorInterface:
     freq = 0
     testlib = ctypes.CDLL('test.so')
 
-    def setUp(self):
+    def __init__(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
@@ -97,7 +97,6 @@ class TestOscillator(unittest.TestCase, OscillatorInterface):
 def main():
     ''' For debugging/plotting '''
     osc_test = TestOscillator()
-    osc_test.setUp()
     osc_test.debug = True
     osc_test.test_sine_frequency()
     osc_test.test_sine_amplitude()
