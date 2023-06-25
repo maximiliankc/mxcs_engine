@@ -15,7 +15,7 @@ SRCDIR=src
 
 all: $(TEST_TARGET)
 
-$(TEST_TARGET): test/test.c $(OBJ)
+$(TEST_TARGET): $(OBJ)
 	$(CC) -o $@ -shared -Wl,-install_name,$@ -fPIC $^ $(CFLAGS)
 
 $(ODIR)/%.o: $(SRCDIR)/%.c $(DEPS)

@@ -28,3 +28,36 @@ void voice_press(Voice_t * self, float f) {
 void voice_release(Voice_t * self) {
     env_release(&(self->envelope));
 }
+
+void test_voice(const float a, const float d, const float s, const float r, const float f,\
+                   const unsigned int presses, unsigned int pressNs[],\
+                   const unsigned int releases, unsigned int releaseNs[],\
+                   const unsigned int n, float envOut[]) {
+    // parameters:  a: attack time (in samples)
+    //              d: decay time (in samples)
+    //              s: sustain level (amplitude between 0 and 1)
+    //              r: release time (in samples)
+    //              f: frequency to run at (normalised)
+    //              pressNs: times at which to press
+    //              presses: number of presses
+    //              releaseNs: times at which to release
+    //              releaseNs: number of releases
+    //              n: number of samples to iterate over.
+    //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
+    //              envOut: generated envelope
+    Voice_t voice;
+    unsigned int pressCount = 0;
+    unsigned int releaseCount = 0;
+    voice_init(&voice, a, d, s, r, f);
+    for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+        if(pressCount < presses && i >= pressNs[pressCount]) {
+            voice_press(&voice, f);
+            pressCount++;
+        }
+        if(releaseCount < releases && i >= releaseNs[releaseCount]) {
+            voice_release(&voice);
+            releaseCount++;
+        }
+        voice_step(&voice, envOut + i);
+    }
+}
