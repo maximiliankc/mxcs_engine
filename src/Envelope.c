@@ -81,6 +81,7 @@ void run_release(Envelope_t * self) {
     self->amp *= self->r_increment; // linear shift for now
 }
 
+#ifdef SYNTH_TEST_
 void test_envelope(const float a, const float d, const float s, const float r,\
                    const unsigned int presses, unsigned int pressNs[],\
                    const unsigned int releases, unsigned int releaseNs[],\
@@ -112,3 +113,4 @@ void test_envelope(const float a, const float d, const float s, const float r,\
         env_step(&env, envOut + i);
     }
 }
+#endif // TEST

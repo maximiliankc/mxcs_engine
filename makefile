@@ -1,6 +1,6 @@
 IDIR = ./include
 CC=gcc
-CFLAGS=-I$(IDIR) -Werror -Wall
+CFLAGS=-I$(IDIR) -Werror -Wall -DSYNTH_TEST_
 
 TEST_TARGET=test.so
 

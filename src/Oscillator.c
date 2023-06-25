@@ -49,6 +49,7 @@ void osc_step(Oscillator_t * self, float * yr, float * yj) {
 }
 
 
+#ifdef SYNTH_TEST_
 void test_oscillator(const float f, const unsigned int n, float * cosOut, float * sinOut) {
     // parameters:  f: normalised frequency (i.e. fraction of fs)
     //              n: number of samples to iterate over.
@@ -61,3 +62,4 @@ void test_oscillator(const float f, const unsigned int n, float * cosOut, float 
         osc_step(&osc, cosOut+i, sinOut+i);
     }
 }
+#endif // TEST

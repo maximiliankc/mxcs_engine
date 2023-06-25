@@ -29,6 +29,8 @@ void voice_release(Voice_t * self) {
     env_release(&(self->envelope));
 }
 
+
+#ifdef SYNTH_TEST_
 void test_voice(const float a, const float d, const float s, const float r, const float f,\
                    const unsigned int presses, unsigned int pressNs[],\
                    const unsigned int releases, unsigned int releaseNs[],\
@@ -61,3 +63,4 @@ void test_voice(const float a, const float d, const float s, const float r, cons
         voice_step(&voice, envOut + i);
     }
 }
+#endif // TEST
