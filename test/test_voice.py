@@ -81,6 +81,39 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                     plt.show()
                 self.assertLess(rms_error, 0.01)
 
+    def test_frequency(self):
+        ''' Check the frequency of the voice '''
+        N = self.fs
+        self.set_adsr(0.001, 0.01, 1, 0.01)
+        for freq in [100, 400, 1000, 4000]:
+            self.set_f(freq)
+            with self.subTest(f'{freq}'):
+                press_time = 0
+                release_time = int(self.fs)
+                vector = self.run_voice([press_time], [release_time], N)
+                f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/N)[:N//2]
+                pkidx = np.argmax(f_vector)
+                freqs = self.fs*np.fft.fftfreq(N)[:N//2]
+                f_measured = freqs[pkidx]
+                if self.debug:
+                    _, ax = plt.subplots()
+                    t = np.arange(N)/self.fs
+                    ax.plot(t, vector)
+                    ax.grid()
+                    ax.set_title(f'Output f={freq}')
+                    ax.set_ylabel('Magnitude')
+                    ax.set_xlabel('Time (s)')
+
+                    _, ax2 = plt.subplots()
+                    ax2.plot(freqs, f_vector, label='Frequency Response')
+                    ax2.scatter(freqs[pkidx], f_vector[pkidx], label='Peak')
+                    ax2.legend()
+                    ax2.set_xlabel('Frequency (Hz)')
+                    ax2.set_ylabel('Magnitude')
+                    ax2.set_title(f'Target: {freq}, Measured: {f_measured:.1f}')
+                    ax2.grid()
+                    plt.show()
+                self.assertAlmostEqual(f_measured, freq, delta=0.01)
 
 
 def main():
@@ -89,6 +122,7 @@ def main():
     voice_test.setUp()
     voice_test.debug = True
     voice_test.test_envelope()
+    voice_test.test_frequency()
 
 if __name__=='__main__':
     main()
