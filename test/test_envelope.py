@@ -27,7 +27,7 @@ class EnvelopeInterface:
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, float_pointer]
 
-    def run_implementation(self, presses: list, releases: list, n: int) -> np.ndarray:
+    def run_env(self, presses: list, releases: list, n: int) -> np.ndarray:
         ''' Run the Envelope Generator. Output is a float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         out = np.zeros(n, dtype=np.single)
@@ -121,7 +121,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
                 pressTime = int(0.1*self.fs)
                 releaseTime = int(0.4*self.fs)
 
-                vector = self.run_implementation([pressTime], [releaseTime], N)
+                vector = self.run_env([pressTime], [releaseTime], N)
                 vector = 20*np.log10(vector)
                 vector[vector<-100] = -100
 
@@ -203,8 +203,8 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
 
         for second_press, test_id in zip(second_presses, test_ids):
             with self.subTest(test_id):
-                presses = np.array([first_press, second_press])
-                vector = self.run_implementation(presses, releases, N)
+                presses = [first_press, second_press]
+                vector = self.run_env(presses, releases, N)
                 if self.debug:
                     vector = 20*np.log10(vector)
                     t = np.arange(N)/self.fs
