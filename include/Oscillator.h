@@ -9,7 +9,7 @@ typedef struct Oscillator_t {
     float yjPrev;   // yj[n-1]
 } Oscillator_t;
 
-void osc_init(Oscillator_t * self, float f);
+void osc_init(Oscillator_t * self);
 void osc_setF(Oscillator_t * self, float f);
 void osc_step(Oscillator_t * self, float * cosOut, float * sinOut);
 

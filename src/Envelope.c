@@ -22,10 +22,10 @@ const run_state_t run_state[] = {run_off,
                                  run_sustain,
                                  run_release};
 
-void env_init(Envelope_t * self, float a, float d, float s, float r) {
+void env_init(Envelope_t * self) {
     self->state = release;
     self->amp = 0;
-    env_set_adsr(self, a, d, s, r);
+    env_set_adsr(self, 0, 0, 0, 0);
 };
 
 void env_step(Envelope_t * self, float * envelope) {
@@ -100,7 +100,8 @@ void test_envelope(const float a, const float d, const float s, const float r,\
     Envelope_t env;
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
-    env_init(&env, a, d, s, r);
+    env_init(&env);
+    env_set_adsr(&env, a, d, s, r);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         if(pressCount < presses && i >= pressNs[pressCount]) {
             env_press(&env);

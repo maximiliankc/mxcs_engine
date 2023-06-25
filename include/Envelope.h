@@ -18,7 +18,7 @@ typedef struct Envelope_t {
 } Envelope_t;
 
 
-void env_init(Envelope_t * self, float a, float d, float s, float r);
+void env_init(Envelope_t * self);
 void env_step(Envelope_t * self, float * envelope);
 void env_press(Envelope_t * self);
 void env_release(Envelope_t * self);
