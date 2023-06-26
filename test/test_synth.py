@@ -109,6 +109,12 @@ class TestSynth(TestVoice, SynthInterface):
             ax1.pcolormesh(time, freq, Sxx)
             ax1.set_xlabel('Time (s)')
             ax1.set_ylabel('Frequency (Hz)')
+            _, ax2 = plt.subplots()
+            time = np.arange(n_samples)/self.fs
+            ax2.plot(time[:4*self.fs], out[:4*self.fs], label='signal')
+            ax2.plot(time[:4*self.fs], np.abs(sig.hilbert(out[:4*self.fs])), label='envelope')
+            ax2.set_xlabel('Time (s)')
+            ax2.set_ylabel('Magnitude')
             plt.show()
 
 
