@@ -19,19 +19,21 @@ class OscillatorInterface:
         self.testlib.test_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
                                                  float_pointer, float_pointer]
 
-    def run_osc(self, n: int) -> np.ndarray:
+    def run_osc(self, n_samples: int) -> np.ndarray:
         ''' Run the Oscillator. Output is a complex exponential at frequency f with length n'''
-        cos_out = np.zeros(n, dtype=np.single)
+        cos_out = np.zeros(n_samples, dtype=np.single)
         cos_out_p = cos_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        sin_out = np.zeros(n, dtype=np.single)
+        sin_out = np.zeros(n_samples, dtype=np.single)
         sin_out_p = sin_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_oscillator(ctypes.c_float(self.freq), ctypes.c_int(n), cos_out_p, sin_out_p)
+        self.testlib.test_oscillator(ctypes.c_float(self.freq), ctypes.c_int(n_samples), cos_out_p, sin_out_p)
         return cos_out + 1j*sin_out
 
     def set_f(self, freq: float):
+        ''' set the frequency to freq '''
         self.freq = freq/self.fs
 
-    def calculate_length(self, precision):
+    def calculate_length(self, precision: float):
+        ''' Calculate the length of sample required for a particular frequency resolution '''
         return int(2**math.ceil(math.log2((self.fs/precision))))
 
 
@@ -51,13 +53,13 @@ class TestOscillator(unittest.TestCase, OscillatorInterface):
                 f_u = freq*2**(self.freq_accuracy/1200)
                 f_l = freq*2**(-self.freq_accuracy/1200)
                 precision = f_u-f_l
-                # precision is FS/N
+                # precision is FS/n_samples
                 # convert the precision to an fft length
-                N = self.calculate_length(precision)
-                freqs = np.fft.fftshift(np.fft.fftfreq(N))*self.fs
+                n_samples = self.calculate_length(precision)
+                freqs = np.fft.fftshift(np.fft.fftfreq(n_samples))*self.fs
                 self.set_f(freq)
-                vector = self.run_osc(N)
-                f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/N)
+                vector = self.run_osc(n_samples)
+                f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/n_samples)
                 pkidx, _  = sig.find_peaks(f_vector, height=-96, prominence=1)
                 f_measured = freqs[pkidx]
 
@@ -77,23 +79,23 @@ class TestOscillator(unittest.TestCase, OscillatorInterface):
 
     def test_sine_amplitude(self):
         ''' Checks that the amplitude of the sinusoid is correct '''
-        N = self.fs*30
+        n_samples = self.fs*30
         freq = 1000
         self.set_f(freq)
-        vector = self.run_osc(N)
+        vector = self.run_osc(n_samples)
         power = np.abs(vector)**2
         if self.debug:
-            t = np.arange(N)/self.fs
+            time = np.arange(n_samples)/self.fs
             _, tax = plt.subplots()
-            tax.plot(t, np.real(vector), label='Real')
-            tax.plot(t, np.imag(vector), label='Imaginary')
-            tax.plot(t, power, label='Power')
+            tax.plot(time, np.real(vector), label='Real')
+            tax.plot(time, np.imag(vector), label='Imaginary')
+            tax.plot(time, power, label='Power')
             tax.legend()
             tax.set_xlabel('Time')
             tax.set_title('Time Domain')
             tax.grid()
-
             plt.show()
+
         self.assertAlmostEqual(np.min(power), 1., delta=self.power_accuracy)
         self.assertAlmostEqual(np.max(power), 1., delta=self.power_accuracy)
 

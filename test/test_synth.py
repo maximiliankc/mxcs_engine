@@ -1,3 +1,4 @@
+''' Test and interface classes for synthesiser module '''
 import ctypes
 import numpy as np
 import scipy.signal as sig
@@ -32,8 +33,8 @@ class SynthInterface(VoiceInterface):
         p_notes_p = np.array(p_notes, dtype=np.uint8).ctypes.data_as(p_uint8)
         r_notes_p = np.array(r_notes, dtype=np.uint8).ctypes.data_as(p_uint8)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_synth(ctypes.c_float(self.a), ctypes.c_float(self.d),
-                                    ctypes.c_float(self.s), ctypes.c_float(self.r),
+        self.testlib.test_synth(ctypes.c_float(self.attack), ctypes.c_float(self.decay),
+                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release),
                                     ctypes.c_uint(len(presses)), presses_p, p_notes_p,
                                     ctypes.c_uint(len(releases)), releases_p, r_notes_p,
                                     ctypes.c_uint(len(out)), out_p)
@@ -62,9 +63,9 @@ class TestSynth(TestVoice, SynthInterface):
         self.note = freq
         self.f_expected = self.midi_to_freq(freq)
 
-    def run_self(self, presses: list, releases: list, N: int):
+    def run_self(self, presses: list, releases: list, n_samples: int):
         notes = len(presses)*[self.note]
-        return self.run_synth(presses, notes, releases, notes, N)
+        return self.run_synth(presses, notes, releases, notes, n_samples)
 
     def test_frequency_table(self):
         ''' Check the accuracy of the frequeny table '''
@@ -78,7 +79,7 @@ class TestSynth(TestVoice, SynthInterface):
             ax1.legend()
             ax1.grid(True)
             ax1.set_xlabel('MIDI note')
-            ax1.set_ylabel('Error (cents)')
+            ax1.set_ylabel('Frequency (Hz)')
             ax1.set_title('Error')
 
             _, ax2 = plt.subplots()
@@ -104,9 +105,9 @@ class TestSynth(TestVoice, SynthInterface):
             out = self.run_synth(presses, notes, releases, notes, n_samples)
             wav.write(f'Test_Signal_{release_delay}.wav', self.fs, out)
             out = sig.resample_poly(out, 1, 4)
-            freq, time, Sxx = sig.spectrogram(out, fs=self.fs/4, nperseg=2**12, noverlap=2**10)
+            freq, time, s_xx = sig.spectrogram(out, fs=self.fs/4, nperseg=2**12, noverlap=2**10)
             _, ax1 = plt.subplots()
-            ax1.pcolormesh(time, freq, Sxx)
+            ax1.pcolormesh(time, freq, s_xx)
             ax1.set_xlabel('Time (s)')
             ax1.set_ylabel('Frequency (Hz)')
             _, ax2 = plt.subplots()
@@ -115,6 +116,8 @@ class TestSynth(TestVoice, SynthInterface):
             ax2.plot(time[:4*self.fs], np.abs(sig.hilbert(out[:4*self.fs])), label='envelope')
             ax2.set_xlabel('Time (s)')
             ax2.set_ylabel('Magnitude')
+            ax2.grid(True)
+            ax2.legend()
             plt.show()
 
 

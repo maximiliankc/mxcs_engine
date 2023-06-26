@@ -38,13 +38,13 @@ class TestUtils(unittest.TestCase):
         self.assertAlmostEqual(np.max(np.abs(error)), 0, delta=0.0001)
 
         if self.debug:
-            _, ax = plt.subplots()
-            ax.semilogy(data, label='Calculated')
-            ax.semilogy(ref, ls=':', label='Reference')
-            ax.grid()
-            ax.set_ylabel('Output')
-            ax.set_title('db2mag')
-            ax.legend()
+            _, ax1 = plt.subplots()
+            ax1.semilogy(data, label='Calculated')
+            ax1.semilogy(ref, ls=':', label='Reference')
+            ax1.grid()
+            ax1.set_ylabel('Output')
+            ax1.set_title('db2mag')
+            ax1.legend()
 
             _, ax2 = plt.subplots()
             ax2.plot(error)
