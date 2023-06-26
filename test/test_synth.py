@@ -1,5 +1,7 @@
 import ctypes
 import numpy as np
+import scipy.signal as sig
+import scipy.io.wavfile as wav
 import matplotlib.pyplot as plt
 
 from .test_voice import VoiceInterface, TestVoice
@@ -20,19 +22,20 @@ class SynthInterface(VoiceInterface):
                                                 ctypes.c_uint, float_pointer]
         self.testlib.test_frequency_table.argtypes = [float_pointer]
 
-    def run_synth(self, presses: list, notes: list, releases: list, n: int) -> np.ndarray:
+    def run_synth(self, presses: list, p_notes: list, releases: list, r_notes: list, n_samples: int) -> np.ndarray:
         ''' Run the Synth. Output is a float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         p_uint8 = ctypes.POINTER(ctypes.c_uint8)
-        out = np.zeros(n, dtype=np.single)
+        out = np.zeros(n_samples, dtype=np.single)
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
-        press_notes_p = np.array(notes, dtype=np.uint8).ctypes.data_as(p_uint8)
+        p_notes_p = np.array(p_notes, dtype=np.uint8).ctypes.data_as(p_uint8)
+        r_notes_p = np.array(r_notes, dtype=np.uint8).ctypes.data_as(p_uint8)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
         self.testlib.test_synth(ctypes.c_float(self.a), ctypes.c_float(self.d),
                                     ctypes.c_float(self.s), ctypes.c_float(self.r),
-                                    ctypes.c_uint(len(presses)), presses_p, press_notes_p,
-                                    ctypes.c_uint(len(releases)), releases_p,
+                                    ctypes.c_uint(len(presses)), presses_p, p_notes_p,
+                                    ctypes.c_uint(len(releases)), releases_p, r_notes_p,
                                     ctypes.c_uint(len(out)), out_p)
         return out
 
@@ -45,6 +48,7 @@ class SynthInterface(VoiceInterface):
 
 
 class TestSynth(TestVoice, SynthInterface):
+    ''' Test suite for synthesiser module'''
     note = 64
     test_notes = [13*n for n in range(9)] + [127]
     env_test_note = 69
@@ -60,7 +64,7 @@ class TestSynth(TestVoice, SynthInterface):
 
     def run_self(self, presses: list, releases: list, N: int):
         notes = len(presses)*[self.note]
-        return self.run_synth(presses, notes, releases, N)
+        return self.run_synth(presses, notes, releases, notes, N)
 
     def test_frequency_table(self):
         ''' Check the accuracy of the frequeny table '''
@@ -87,6 +91,27 @@ class TestSynth(TestVoice, SynthInterface):
         # check the frequency is within half a cent of the desired note
         self.assertLess(np.max(np.abs(error_cents)), 0.5)
 
+    def play_notes(self):
+        ''' Play a series of notes, show a spectrogram, save as a wav '''
+        n_samples = self.fs*60
+        for release_delay in [0.5, 1.5]:
+            self.set_adsr(0.1, 0.1, -10, 0.1)
+            presses = list(range(50))
+            releases = [x+release_delay for x in presses]
+            notes = [(2*p) % 24 + 50 for p in presses]
+            presses = [p*self.fs for p in presses]
+            releases = [r*self.fs for r in releases]
+            out = self.run_synth(presses, notes, releases, notes, n_samples)
+            wav.write(f'Test_Signal_{release_delay}.wav', self.fs, out)
+            out = sig.resample_poly(out, 1, 4)
+            freq, time, Sxx = sig.spectrogram(out, fs=self.fs/4, nperseg=2**12, noverlap=2**10)
+            _, ax1 = plt.subplots()
+            ax1.pcolormesh(time, freq, Sxx)
+            ax1.set_xlabel('Time (s)')
+            ax1.set_ylabel('Frequency (Hz)')
+            plt.show()
+
+
 
 def main():
     ''' For Debugging/Testing '''
@@ -95,6 +120,7 @@ def main():
     synth_test.test_envelope()
     synth_test.test_frequency()
     synth_test.test_frequency_table()
+    synth_test.play_notes()
 
 if __name__=='__main__':
     main()

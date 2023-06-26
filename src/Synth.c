@@ -35,8 +35,8 @@ void synth_step(Synth_t * self, float * out) {
 
 #ifdef SYNTH_TEST_
 void test_synth(const float a, const float d, const float s, const float r,\
-                   const unsigned int presses, unsigned int pressNs[], uint8_t notes[],\
-                   const unsigned int releases, unsigned int releaseNs[],\
+                   const unsigned int presses, unsigned int pressNs[], uint8_t pressNotes[],\
+                   const unsigned int releases, unsigned int releaseNs[], uint8_t releaseNotes[],\
                    const unsigned int n, float envOut[]) {
     // parameters:  a: attack time (in samples)
     //              d: decay time (in samples)
@@ -53,17 +53,15 @@ void test_synth(const float a, const float d, const float s, const float r,\
     Synth_t synth;
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
-    uint8_t note = 0;
     synth_init(&synth);
     synth_set_adsr(&synth, a, d, s, r);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         if(pressCount < presses && i >= pressNs[pressCount]) {
-            note = notes[pressCount];
-            synth_press(&synth, note);
+            synth_press(&synth, pressNotes[pressCount]);
             pressCount++;
         }
         if(releaseCount < releases && i >= releaseNs[releaseCount]) {
-            synth_release(&synth, note);
+            synth_release(&synth, releaseNotes[releaseCount]);
             releaseCount++;
         }
         synth_step(&synth, envOut + i);
