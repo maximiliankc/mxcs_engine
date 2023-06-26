@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
 from .test_envelope import EnvelopeInterface
+from .test_oscillator import OscillatorInterface
 
 
-class VoiceInterface(EnvelopeInterface):
+class VoiceInterface(EnvelopeInterface, OscillatorInterface):
     f = 0
     ''' ctypes wrapper around test shared object file'''
     def __init__(self):
@@ -43,28 +44,31 @@ class VoiceInterface(EnvelopeInterface):
 class TestVoice(unittest.TestCase, VoiceInterface):
     f = 1000
     f_expected = 1000
-    test_frequencies = [100, 400, 1000, 4000]
+    test_notes = [100, 400, 1000, 4000]
+    env_test_note = 440
     fs = 48000
     debug = False
+    freq_precision = 0.1
 
     def set_f(self, freq: float):
+        ''' Set the expected frequency '''
         self.f = freq/self.fs
         self.f_expected = freq
 
     def run_self(self, presses: list, releases: list, N: int):
-        ''' Run the '''
+        ''' Run the implementation for the test '''
         return self.run_voice(presses, releases, N)
 
     def test_envelope(self):
         ''' Check that the envelope is being applied '''
         N = 1*self.fs # s
+        self.set_f(self.env_test_note)
         for a, d, s, r in [(0.1, 0.05, -3., 0.1),
                            (0.01, 0.1, -20, 0.5),
                            (0.05, 0.2, -80, 0.4)
                            ]:
             with self.subTest(f'{a},{d},{s},{r}'):
                 self.set_adsr(a, d, s, r)
-                self.set_f(440)
                 press_time = int(0.1*self.fs)
                 release_time = int(0.4*self.fs)
                 voice_vector = np.abs(sig.hilbert(self.run_self([press_time], [release_time], N)))
@@ -93,13 +97,13 @@ class TestVoice(unittest.TestCase, VoiceInterface):
 
     def test_frequency(self):
         ''' Check the frequency of the voice '''
-        N = self.fs
+        N = self.calculate_length(self.freq_precision)
         self.set_adsr(0.001, 0.01, 1, 0.01)
-        for freq in self.test_frequencies:
+        for freq in self.test_notes:
             self.set_f(freq)
             with self.subTest(f'{freq}'):
                 press_time = 0
-                release_time = int(self.fs)
+                release_time = int(N)
                 vector = self.run_self([press_time], [release_time], N)
                 f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/N)[:N//2]
                 pkidx = np.argmax(f_vector)
@@ -110,7 +114,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                     t = np.arange(N)/self.fs
                     ax.plot(t, vector)
                     ax.grid()
-                    ax.set_title(f'Output f={self.f_expected}')
+                    ax.set_title(f'Output f={self.f_expected:.2f}')
                     ax.set_ylabel('Magnitude')
                     ax.set_xlabel('Time (s)')
 
@@ -120,10 +124,10 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                     ax2.legend()
                     ax2.set_xlabel('Frequency (Hz)')
                     ax2.set_ylabel('Magnitude')
-                    ax2.set_title(f'Target: {self.f_expected}, Measured: {f_measured:.1f}')
+                    ax2.set_title(f'Target: {self.f_expected:.2f}, Measured: {f_measured:.2f}')
                     ax2.grid()
                     plt.show()
-                self.assertAlmostEqual(f_measured, self.f_expected, delta=0.01)
+                self.assertAlmostEqual(f_measured, self.f_expected, delta=self.freq_precision)
 
 
 def main():

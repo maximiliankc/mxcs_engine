@@ -8,7 +8,7 @@
 // Defining a monophonic synth for now
 typedef struct Synth_t {
     Voice_t voice;
-    float frequency_table[NOTES];
+    float frequencyTable[NOTES];
 } Synth_t;
 
 void synth_init(Synth_t * self);

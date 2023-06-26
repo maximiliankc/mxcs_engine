@@ -1,9 +1,13 @@
 #include "Synth.h"
 
+#define SEMITONE (1.0594630943592953)
+#define C_MINUS_1 (0.00017032914407591056) // for fs = 48000
+
 void synth_init(Synth_t * self) {
     // TODO calculate frequency table
-    for(uint8_t i = 0; i < NOTES; i++) {
-        self->frequency_table[i] = 0.01;
+    self->frequencyTable[0] = C_MINUS_1;
+    for(uint8_t i = 1; i < NOTES; i++) {
+        self->frequencyTable[i] = SEMITONE*(self->frequencyTable[i-1]);
     }
     voice_init(&(self->voice));
 }
@@ -13,7 +17,7 @@ void synth_set_adsr(Synth_t * self, float a, float d, float s, float r) {
 }
 
 void synth_press(Synth_t * self, uint8_t note) {
-    float f = self->frequency_table[note];
+    float f = self->frequencyTable[note];
     voice_press(&(self->voice), f);
 }
 
@@ -59,4 +63,14 @@ void test_synth(const float a, const float d, const float s, const float r,\
         synth_step(&synth, envOut + i);
     }
 }
+
+void test_frequency_table(float freqs[]) {
+    // parameters:
+    Synth_t synth;
+    synth_init(&synth);
+    for(unsigned int i = 0; i<NOTES; i++) {
+        freqs[i] = synth.frequencyTable[i];
+    }
+}
+
 #endif // SYNTH_TEST_

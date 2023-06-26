@@ -31,6 +31,9 @@ class OscillatorInterface:
     def set_f(self, freq: float):
         self.freq = freq/self.fs
 
+    def calculate_length(self, precision):
+        return int(2**math.ceil(math.log2((self.fs/precision))))
+
 
 class TestOscillator(unittest.TestCase, OscillatorInterface):
     ''' Test Suite for Oscillator, checks frequency accuracy and amplitude accuracy/consistency.
@@ -50,7 +53,7 @@ class TestOscillator(unittest.TestCase, OscillatorInterface):
                 precision = f_u-f_l
                 # precision is FS/N
                 # convert the precision to an fft length
-                N = int(2**math.ceil(math.log2((self.fs/precision))))
+                N = self.calculate_length(precision)
                 freqs = np.fft.fftshift(np.fft.fftfreq(N))*self.fs
                 self.set_f(freq)
                 vector = self.run_osc(N)
