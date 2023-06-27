@@ -9,34 +9,41 @@ import scipy.signal as sig
 
 class OscillatorInterface:
     ''' ctypes wrapper around test shared object file'''
+    fs = 48000 # Hz
+    freq = 0
+    testlib = ctypes.CDLL('test.so')
+
     def __init__(self):
         ''' Load in the test object file and define the function '''
-        self.testlib = ctypes.CDLL('test.so')
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
                                                  float_pointer, float_pointer]
 
-    def run(self, freq: float, n: int) -> np.ndarray:
+    def run_osc(self, n_samples: int) -> np.ndarray:
         ''' Run the Oscillator. Output is a complex exponential at frequency f with length n'''
-        cos_out = np.zeros(n, dtype=np.single)
+        cos_out = np.zeros(n_samples, dtype=np.single)
         cos_out_p = cos_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        sin_out = np.zeros(n, dtype=np.single)
+        sin_out = np.zeros(n_samples, dtype=np.single)
         sin_out_p = sin_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_oscillator(ctypes.c_float(freq), ctypes.c_int(n), cos_out_p, sin_out_p)
+        self.testlib.test_oscillator(ctypes.c_float(self.freq), ctypes.c_int(n_samples), cos_out_p, sin_out_p)
         return cos_out + 1j*sin_out
 
+    def set_f(self, freq: float):
+        ''' set the frequency to freq '''
+        self.freq = freq/self.fs
 
-class TestOscillator(unittest.TestCase):
+    def calculate_length(self, precision: float):
+        ''' Calculate the length of sample required for a particular frequency resolution '''
+        return int(2**math.ceil(math.log2((self.fs/precision))))
+
+
+class TestOscillator(unittest.TestCase, OscillatorInterface):
     ''' Test Suite for Oscillator, checks frequency accuracy and amplitude accuracy/consistency.
         Uses an interface to the OscillatorInterface '''
     debug = False # controls whether plots will be made
-    fs = 48000 # Hz
     test_frequencies = 440*2**((np.arange(21, 109)-69)/12)
     freq_accuracy = 0.5 # cents
     power_accuracy = 0.001
-
-    def setUp(self) -> None:
-        self.implementation = OscillatorInterface()
 
     def test_sine_frequency(self) -> None:
         ''' Checks that the oscillator produces a range of test frequencies.
@@ -46,12 +53,13 @@ class TestOscillator(unittest.TestCase):
                 f_u = freq*2**(self.freq_accuracy/1200)
                 f_l = freq*2**(-self.freq_accuracy/1200)
                 precision = f_u-f_l
-                # precision is FS/N
+                # precision is FS/n_samples
                 # convert the precision to an fft length
-                N = int(2**math.ceil(math.log2((self.fs/precision))))
-                freqs = np.fft.fftshift(np.fft.fftfreq(N))*self.fs
-                vector = self.implementation.run(freq/self.fs, N)
-                f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/N)
+                n_samples = self.calculate_length(precision)
+                freqs = np.fft.fftshift(np.fft.fftfreq(n_samples))*self.fs
+                self.set_f(freq)
+                vector = self.run_osc(n_samples)
+                f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/n_samples)
                 pkidx, _  = sig.find_peaks(f_vector, height=-96, prominence=1)
                 f_measured = freqs[pkidx]
 
@@ -71,29 +79,29 @@ class TestOscillator(unittest.TestCase):
 
     def test_sine_amplitude(self):
         ''' Checks that the amplitude of the sinusoid is correct '''
-        N = self.fs*30
+        n_samples = self.fs*30
         freq = 1000
-        vector = self.implementation.run(2*np.pi*freq/self.fs, N)
+        self.set_f(freq)
+        vector = self.run_osc(n_samples)
         power = np.abs(vector)**2
         if self.debug:
-            t = np.arange(N)/self.fs
+            time = np.arange(n_samples)/self.fs
             _, tax = plt.subplots()
-            tax.plot(t, np.real(vector), label='Real')
-            tax.plot(t, np.imag(vector), label='Imaginary')
-            tax.plot(t, power, label='Power')
+            tax.plot(time, np.real(vector), label='Real')
+            tax.plot(time, np.imag(vector), label='Imaginary')
+            tax.plot(time, power, label='Power')
             tax.legend()
             tax.set_xlabel('Time')
             tax.set_title('Time Domain')
             tax.grid()
-
             plt.show()
+
         self.assertAlmostEqual(np.min(power), 1., delta=self.power_accuracy)
         self.assertAlmostEqual(np.max(power), 1., delta=self.power_accuracy)
 
 def main():
     ''' For debugging/plotting '''
     osc_test = TestOscillator()
-    osc_test.setUp()
     osc_test.debug = True
     osc_test.test_sine_frequency()
     osc_test.test_sine_amplitude()

@@ -4,8 +4,8 @@
 #include "Constants.h"
 
 
-void osc_init(Oscillator_t * self, float f) {
-    osc_setF(self, f);
+void osc_init(Oscillator_t * self) {
+    osc_setF(self, 0);
     self->yrPrev = 1.0;
     self->yjPrev = 0.0;
 }
@@ -47,3 +47,20 @@ void osc_step(Oscillator_t * self, float * yr, float * yj) {
     self->yrPrev = yr[BLOCK_SIZE-1];
     self->yjPrev = yj[BLOCK_SIZE-1];
 }
+
+
+#ifdef SYNTH_TEST_
+void test_oscillator(const float f, const unsigned int n, float * cosOut, float * sinOut) {
+    // parameters:  f: normalised frequency (i.e. fraction of fs)
+    //              n: number of samples to iterate over.
+    //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
+    //              sinOut/cosOut: sin/cos output of the oscillator
+
+    Oscillator_t osc;
+    osc_init(&osc);
+    osc_setF(&osc, f);
+    for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+        osc_step(&osc, cosOut+i, sinOut+i);
+    }
+}
+#endif // SYNTH_TEST_

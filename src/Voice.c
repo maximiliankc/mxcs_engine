@@ -1,26 +1,37 @@
 #include <stdint.h>
-#include <stdio.h>
+#include "Voice.h"
 #include "Constants.h"
-#include "Oscillator.h"
-#include "Envelope.h"
-#include "Utils.h"
 
+void voice_init(Voice_t * self) {
+    osc_init(&(self->osc));
+    env_init(&(self->envelope));
+}
 
-void test_oscillator(const float f, const unsigned int n, float * cosOut, float * sinOut) {
-    // parameters:  f: normalised frequency (i.e. fraction of fs)
-    //              n: number of samples to iterate over.
-    //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
-    //              sinOut/cosOut: sin/cos output of the oscillator
+void voice_step(Voice_t * self, float * out) {
+    float cosOut[BLOCK_SIZE];
+    float sinOut[BLOCK_SIZE];
 
-    Oscillator_t osc;
-    osc_init(&osc, f);
-    for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
-        osc_step(&osc, cosOut+i, sinOut+i);
+    env_step(&(self->envelope), out);
+    osc_step(&(self->osc), cosOut, sinOut);
+
+    // apply envelope to sine out
+    for (uint8_t i=0; i < BLOCK_SIZE; i++) {
+        out[i] *= sinOut[i];
     }
 }
 
+void voice_press(Voice_t * self, float f) {
+    env_press(&(self->envelope));
+    osc_setF(&(self->osc), f);
+}
 
-void test_envelope(const float a, const float d, const float s, const float r,\
+void voice_release(Voice_t * self) {
+    env_release(&(self->envelope));
+}
+
+
+#ifdef SYNTH_TEST_
+void test_voice(const float a, const float d, const float s, const float r, const float f,\
                    const unsigned int presses, unsigned int pressNs[],\
                    const unsigned int releases, unsigned int releaseNs[],\
                    const unsigned int n, float envOut[]) {
@@ -28,6 +39,7 @@ void test_envelope(const float a, const float d, const float s, const float r,\
     //              d: decay time (in samples)
     //              s: sustain level (amplitude between 0 and 1)
     //              r: release time (in samples)
+    //              f: frequency to run at (normalised)
     //              pressNs: times at which to press
     //              presses: number of presses
     //              releaseNs: times at which to release
@@ -35,27 +47,22 @@ void test_envelope(const float a, const float d, const float s, const float r,\
     //              n: number of samples to iterate over.
     //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
     //              envOut: generated envelope
-    Envelope_t env;
+    Voice_t voice;
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
-    env_init(&env, a, d, s, r);
+    voice_init(&voice);
+    env_set_adsr(&voice.envelope, a, d, s, r);
+    osc_setF(&voice.osc, f);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         if(pressCount < presses && i >= pressNs[pressCount]) {
-            env_press(&env);
+            voice_press(&voice, f);
             pressCount++;
         }
         if(releaseCount < releases && i >= releaseNs[releaseCount]) {
-            env_release(&env);
+            voice_release(&voice);
             releaseCount++;
         }
-        env_step(&env, envOut + i);
+        voice_step(&voice, envOut + i);
     }
 }
-
-void test_db2mag(const unsigned int n, float inOut[]) {
-    // parameters: inOut: input/output array
-    //             n: number of values in input/output array
-    for(unsigned int i = 0; i<n; i++) {
-        inOut[i] = db2mag(inOut[i]);
-    }
-}
+#endif // SYNTH_TEST_

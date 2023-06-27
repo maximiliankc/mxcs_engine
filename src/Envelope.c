@@ -22,10 +22,10 @@ const run_state_t run_state[] = {run_off,
                                  run_sustain,
                                  run_release};
 
-void env_init(Envelope_t * self, float a, float d, float s, float r) {
+void env_init(Envelope_t * self) {
     self->state = release;
     self->amp = 0;
-    env_set_adsr(self, a, d, s, r);
+    env_set_adsr(self, 0, 0, 0, 0);
 };
 
 void env_step(Envelope_t * self, float * envelope) {
@@ -80,3 +80,38 @@ void run_sustain(Envelope_t * self) {
 void run_release(Envelope_t * self) {
     self->amp *= self->r_increment; // linear shift for now
 }
+
+#ifdef SYNTH_TEST_
+void test_envelope(const float a, const float d, const float s, const float r,\
+                   const unsigned int presses, unsigned int pressNs[],\
+                   const unsigned int releases, unsigned int releaseNs[],\
+                   const unsigned int n, float envOut[]) {
+    // parameters:  a: attack time (in samples)
+    //              d: decay time (in samples)
+    //              s: sustain level (amplitude between 0 and 1)
+    //              r: release time (in samples)
+    //              pressNs: times at which to press
+    //              presses: number of presses
+    //              releaseNs: times at which to release
+    //              releaseNs: number of releases
+    //              n: number of samples to iterate over.
+    //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
+    //              envOut: generated envelope
+    Envelope_t env;
+    unsigned int pressCount = 0;
+    unsigned int releaseCount = 0;
+    env_init(&env);
+    env_set_adsr(&env, a, d, s, r);
+    for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+        if(pressCount < presses && i >= pressNs[pressCount]) {
+            env_press(&env);
+            pressCount++;
+        }
+        if(releaseCount < releases && i >= releaseNs[releaseCount]) {
+            env_release(&env);
+            releaseCount++;
+        }
+        env_step(&env, envOut + i);
+    }
+}
+#endif // SYNTH_TEST_
