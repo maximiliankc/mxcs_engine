@@ -237,7 +237,7 @@ def main():
     ''' For Debugging/Testing '''
     env_test = TestEnvelope()
     env_test.debug = True
-    # env_test.test_basic_envelope()
+    env_test.test_basic_envelope()
     env_test.test_double_press()
 
 if __name__=='__main__':
