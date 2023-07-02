@@ -6,11 +6,11 @@ import unittest
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sig
+from .constants import sampling_frequency
 
 
 class OscillatorInterface:
     ''' ctypes wrapper around test shared object file'''
-    fs = 44100 # Hz
     freq = 0
     testlib = ctypes.CDLL('test.so')
 
@@ -31,11 +31,11 @@ class OscillatorInterface:
 
     def set_f(self, freq: float):
         ''' set the frequency to freq '''
-        self.freq = freq/self.fs
+        self.freq = freq/sampling_frequency
 
     def calculate_length(self, precision: float):
         ''' Calculate the length of sample required for a particular frequency resolution '''
-        return int(2**math.ceil(math.log2((self.fs/precision))))
+        return int(2**math.ceil(math.log2((sampling_frequency/precision))))
 
 
 class TestOscillator(unittest.TestCase, OscillatorInterface):
@@ -57,7 +57,7 @@ class TestOscillator(unittest.TestCase, OscillatorInterface):
                 # precision is FS/n_samples
                 # convert the precision to an fft length
                 n_samples = self.calculate_length(precision)
-                freqs = np.fft.fftshift(np.fft.fftfreq(n_samples))*self.fs
+                freqs = np.fft.fftshift(np.fft.fftfreq(n_samples))*sampling_frequency
                 self.set_f(freq)
                 vector = self.run_osc(n_samples)
                 f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/n_samples)
@@ -80,13 +80,13 @@ class TestOscillator(unittest.TestCase, OscillatorInterface):
 
     def test_sine_amplitude(self):
         ''' Checks that the amplitude of the sinusoid is correct '''
-        n_samples = self.fs*30
+        n_samples = sampling_frequency*30
         freq = 1000
         self.set_f(freq)
         vector = self.run_osc(n_samples)
         power = np.abs(vector)**2
         if self.debug:
-            time = np.arange(n_samples)/self.fs
+            time = np.arange(n_samples)/sampling_frequency
             _, tax = plt.subplots()
             tax.plot(time, np.real(vector), label='Real')
             tax.plot(time, np.imag(vector), label='Imaginary')
@@ -104,7 +104,7 @@ def main():
     ''' For debugging/plotting '''
     osc_test = TestOscillator()
     osc_test.debug = True
-    osc_test.test_sine_frequency()
+    # osc_test.test_sine_frequency()
     osc_test.test_sine_amplitude()
 
 if __name__=='__main__':
