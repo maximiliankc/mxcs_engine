@@ -1,3 +1,7 @@
+/* MXCS Core Voice header
+   copyright Maximilian Cornwell 2023
+*/
+
 #ifndef VOICE_H_
 #define VOICE_H_
 #include "Envelope.h"

@@ -1,3 +1,6 @@
+/* MXCS Core Envelope implementation
+   copyright Maximilian Cornwell 2023
+*/
 #include <stdint.h>
 #include "Envelope.h"
 #include "Constants.h"

@@ -1,3 +1,6 @@
+/* MXCS Core Envelope header
+   copyright Maximilian Cornwell 2023
+*/
 #ifndef ENVELOPE_H_
 #define ENVELOPE_H_
 

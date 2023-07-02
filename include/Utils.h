@@ -1,3 +1,6 @@
+/* MXCS Core Utility header
+   copyright Maximilian Cornwell 2023
+*/
 #ifndef UTILS_H_
 #define UTILS_H_
 

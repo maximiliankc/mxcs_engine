@@ -1,3 +1,6 @@
+/* MXCS Core Utility implementation
+   copyright Maximilian Cornwell 2023
+*/
 #include <math.h>
 #define LOG10 (2.302585092994046)
 

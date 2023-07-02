@@ -1,4 +1,5 @@
-''' Test and interface classes for synthesiser module '''
+''' Test and interface classes for synthesiser module
+    copyright Maximilian Cornwell 2023 '''
 import ctypes
 import numpy as np
 import scipy.signal as sig
@@ -56,7 +57,9 @@ class TestSynth(TestVoice, SynthInterface):
 
     @staticmethod
     def midi_to_freq(note):
-        ''' Converts a midi note to a frequency '''
+        ''' Converts a midi note to a frequency
+            formula from:
+            https://newt.phys.unsw.edu.au/jw/notes.html'''
         return 440*2**((note-69)/12)
 
     def set_f(self, freq: int):

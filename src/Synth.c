@@ -1,3 +1,6 @@
+/* MXCS Core Synthesizer implementation
+   copyright Maximilian Cornwell 2023
+*/
 #include "Synth.h"
 
 #define SEMITONE (1.0594630943592953)

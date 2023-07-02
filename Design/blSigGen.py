@@ -1,5 +1,8 @@
-# see https://ccrma.stanford.edu/~stilti/papers/blit.pdf
-# and http://www.music.mcgill.ca/~gary/307/week5/node14.html
+''' Band limited signal generator file
+    copyright Maximilian Cornwell 2023
+    Band limiited impulse train code based on
+    https://ccrma.stanford.edu/~stilti/papers/blit.pdf
+    and http://www.music.mcgill.ca/~gary/307/week5/node14.html '''
 import numpy as np
 import matplotlib.pyplot as p
 import scipy.signal as s

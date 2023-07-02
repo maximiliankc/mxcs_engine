@@ -1,4 +1,5 @@
-''' Tests for voice '''
+''' Tests for voice
+    copyright Maximilian Cornwell 2023  '''
 import ctypes
 import unittest
 import matplotlib.pyplot as plt

@@ -1,3 +1,7 @@
+/* MXCS Core Voice implementation
+   copyright Maximilian Cornwell 2023
+*/
+
 #include <stdint.h>
 #include "Voice.h"
 #include "Constants.h"

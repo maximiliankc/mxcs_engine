@@ -1,4 +1,5 @@
-''' Tests for utility functions '''
+''' Tests for utility functions
+    copyright Maximilian Cornwell 2023 '''
 import ctypes
 import unittest
 import matplotlib.pyplot as plt
