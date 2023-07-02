@@ -6,7 +6,8 @@ import unittest
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sig
-from .constants import sampling_frequency
+
+from .constants import sampling_frequency, block_size
 
 
 class OscillatorInterface:
@@ -83,10 +84,10 @@ class TestOscillator(unittest.TestCase, OscillatorInterface):
         n_samples = sampling_frequency*30
         freq = 1000
         self.set_f(freq)
-        vector = self.run_osc(n_samples)
+        vector = self.run_osc(n_samples)[:-block_size]
         power = np.abs(vector)**2
         if self.debug:
-            time = np.arange(n_samples)/sampling_frequency
+            time = np.arange(n_samples-block_size)/sampling_frequency
             _, tax = plt.subplots()
             tax.plot(time, np.real(vector), label='Real')
             tax.plot(time, np.imag(vector), label='Imaginary')
@@ -104,7 +105,7 @@ def main():
     ''' For debugging/plotting '''
     osc_test = TestOscillator()
     osc_test.debug = True
-    # osc_test.test_sine_frequency()
+    osc_test.test_sine_frequency()
     osc_test.test_sine_amplitude()
 
 if __name__=='__main__':
