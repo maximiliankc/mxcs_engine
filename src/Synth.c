@@ -4,7 +4,7 @@
 #include "Synth.h"
 
 #define SEMITONE (1.0594630943592953)
-#define C_MINUS_1 (0.00017032914407591056) // for fs = 48000
+#define C_MINUS_1 (8.175798915643707/SAMPLING_FREQUENCY)
 
 void synth_init(Synth_t * self) {
     // calculate the frequency table
