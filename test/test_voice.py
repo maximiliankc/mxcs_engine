@@ -47,7 +47,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
     f_expected = 1000
     test_notes = [100, 400, 1000, 4000]
     env_test_note = 440
-    fs = 48000
+    fs = 44100
     debug = False
     freq_precision = 0.1
 
