@@ -1,4 +1,5 @@
-''' Tests for oscillator implementation '''
+''' Tests for oscillator implementation
+    copyright Maximilian Cornwell 2023 '''
 import ctypes
 import math
 import unittest
@@ -9,7 +10,7 @@ import scipy.signal as sig
 
 class OscillatorInterface:
     ''' ctypes wrapper around test shared object file'''
-    fs = 48000 # Hz
+    fs = 44100 # Hz
     freq = 0
     testlib = ctypes.CDLL('test.so')
 

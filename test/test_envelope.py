@@ -1,4 +1,5 @@
-''' Tests for envelope generator '''
+''' Tests for envelope generator
+    copyright Maximilian Cornwell 2023  '''
 import ctypes
 import unittest
 import matplotlib.pyplot as plt
@@ -8,7 +9,7 @@ import scipy.signal as sig
 class EnvelopeInterface:
     ''' ctypes wrapper around test function and tools for interacting with it '''
     block_size = 16
-    fs = 48000 # Hz
+    fs = 44100 # Hz
     base = 100
     attack = 0
     decay = 0
