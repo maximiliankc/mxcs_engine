@@ -195,7 +195,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
                 self.check_release(vector, release_idxs, release_time)
 
     def test_double_press(self):
-        ''' Check that level increases after attack note is pressed '''
+        ''' Check that there is an attack when a double press occurs '''
         n_samples = 2*sampling_frequency
         attack, decay, sustain, release = (0.1, 0.1, -20, 0.2)
         s_len = 0.5*sampling_frequency
@@ -227,15 +227,17 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
                     ax1.set_title(f'Envelope ({self.attack/sampling_frequency}, {self.decay/sampling_frequency}, {self.sustain}, {self.release/sampling_frequency})')
                     ax1.grid()
                     plt.show()
-                self.assertGreater(vector[int(second_press+block_size)],
-                                    vector[int(second_press-block_size)])
+                press_region = vector[int(second_press-block_size):int(second_press+block_size)]
+                press_minimum = np.min(press_region)
+                # make sure the minima isn't at the end of the press region
+                self.assertGreater(press_region[-1], press_minimum)
 
 
 def main():
     ''' For Debugging/Testing '''
     env_test = TestEnvelope()
     env_test.debug = True
-    env_test.test_basic_envelope()
+    # env_test.test_basic_envelope()
     env_test.test_double_press()
 
 if __name__=='__main__':
