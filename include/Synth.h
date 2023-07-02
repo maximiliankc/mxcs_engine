@@ -1,3 +1,6 @@
+/* MXCS Core Synth header
+   copyright Maximilian Cornwell 2023
+*/
 #ifndef SYNTH_H_
 #define SYNTH_H_
 

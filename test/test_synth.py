@@ -1,10 +1,12 @@
-''' Test and interface classes for synthesiser module '''
+''' Test and interface classes for synthesiser module
+    copyright Maximilian Cornwell 2023 '''
 import ctypes
 import numpy as np
 import scipy.signal as sig
 import scipy.io.wavfile as wav
 import matplotlib.pyplot as plt
 
+from .constants import sampling_frequency
 from .test_voice import VoiceInterface, TestVoice
 
 class SynthInterface(VoiceInterface):
@@ -56,7 +58,9 @@ class TestSynth(TestVoice, SynthInterface):
 
     @staticmethod
     def midi_to_freq(note):
-        ''' Converts a midi note to a frequency '''
+        ''' Converts a midi note to a frequency
+            formula from:
+            https://newt.phys.unsw.edu.au/jw/notes.html'''
         return 440*2**((note-69)/12)
 
     def set_f(self, freq: int):
@@ -70,7 +74,7 @@ class TestSynth(TestVoice, SynthInterface):
     def test_frequency_table(self):
         ''' Check the accuracy of the frequeny table '''
         reference = self.midi_to_freq(np.arange(128))
-        device = self.run_frequency_table()*self.fs
+        device = self.run_frequency_table()*sampling_frequency
         error_cents = 1200*np.log2(reference/device)
         if self.debug:
             _, ax1 = plt.subplots()
@@ -94,26 +98,26 @@ class TestSynth(TestVoice, SynthInterface):
 
     def play_notes(self):
         ''' Play a series of notes, show a spectrogram, save as a wav '''
-        n_samples = self.fs*60
+        n_samples = sampling_frequency*60
         for release_delay in [0.5, 1.5]:
             self.set_adsr(0.1, 0.1, -10, 0.1)
             presses = list(range(50))
             releases = [x+release_delay for x in presses]
             notes = [(2*p) % 24 + 50 for p in presses]
-            presses = [p*self.fs for p in presses]
-            releases = [r*self.fs for r in releases]
+            presses = [p*sampling_frequency for p in presses]
+            releases = [r*sampling_frequency for r in releases]
             out = self.run_synth(presses, notes, releases, notes, n_samples)
-            wav.write(f'Test_Signal_{release_delay}.wav', self.fs, out)
+            wav.write(f'Test_Signal_{release_delay}.wav', sampling_frequency, out)
             out = sig.resample_poly(out, 1, 4)
-            freq, time, s_xx = sig.spectrogram(out, fs=self.fs/4, nperseg=2**12, noverlap=2**10)
+            freq, time, s_xx = sig.spectrogram(out, fs=sampling_frequency/4, nperseg=2**12, noverlap=2**10)
             _, ax1 = plt.subplots()
             ax1.pcolormesh(time, freq, s_xx)
             ax1.set_xlabel('Time (s)')
             ax1.set_ylabel('Frequency (Hz)')
             _, ax2 = plt.subplots()
-            time = np.arange(n_samples)/self.fs
-            ax2.plot(time[:4*self.fs], out[:4*self.fs], label='signal')
-            ax2.plot(time[:4*self.fs], np.abs(sig.hilbert(out[:4*self.fs])), label='envelope')
+            time = np.arange(n_samples)/sampling_frequency
+            ax2.plot(time[:4*sampling_frequency], out[:4*sampling_frequency], label='signal')
+            ax2.plot(time[:4*sampling_frequency], np.abs(sig.hilbert(out[:4*sampling_frequency])), label='envelope')
             ax2.set_xlabel('Time (s)')
             ax2.set_ylabel('Magnitude')
             ax2.grid(True)

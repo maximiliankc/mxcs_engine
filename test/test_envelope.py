@@ -1,14 +1,14 @@
-''' Tests for envelope generator '''
+''' Tests for envelope generator
+    copyright Maximilian Cornwell 2023  '''
 import ctypes
 import unittest
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
+from .constants import sampling_frequency, block_size
 
 class EnvelopeInterface:
     ''' ctypes wrapper around test function and tools for interacting with it '''
-    block_size = 16
-    fs = 48000 # Hz
     base = 100
     attack = 0
     decay = 0
@@ -43,10 +43,10 @@ class EnvelopeInterface:
 
     def set_adsr(self, attack: float, decay: float, sustain: float, release: float):
         ''' Configure adsr values '''
-        self.attack = attack*self.fs
-        self.decay = decay*self.fs
+        self.attack = attack*sampling_frequency
+        self.decay = decay*sampling_frequency
         self.sustain = sustain
-        self.release = release*self.fs
+        self.release = release*sampling_frequency
 
     def calculate_gradients(self):
         ''' Calculate gradients from adsr values '''
@@ -68,7 +68,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
         # check there was an attack
         self.assertEqual(1, len(attack_idxs))
         # check when the attack occured
-        self.assertAlmostEqual(press_time, attack_idxs[0], delta=self.block_size)
+        self.assertAlmostEqual(press_time, attack_idxs[0], delta=block_size)
         # check attack gradient
         for aidx, didx in zip(attack_idxs, decay_idxs):
             # check gradient error is within 1%
@@ -82,7 +82,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
         # check there was attack decay
         self.assertEqual(1, len(decay_idxs))
         # check when the attack occured
-        self.assertAlmostEqual(press_time+int(self.attack), decay_idxs[0], delta=self.block_size)
+        self.assertAlmostEqual(press_time+int(self.attack), decay_idxs[0], delta=block_size)
         # check decay gradient
         for didx, sidx in zip(decay_idxs, sustain_idxs):
             d_grad = (vector[sidx] - vector[didx])/(sidx - didx)
@@ -95,7 +95,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
         self.assertEqual(1, len(sustain_idxs))
         # check when the sustain occured
         self.assertAlmostEqual(press_time+int(self.attack)+int(self.decay), sustain_idxs[0],
-                                delta=self.block_size)
+                                delta=block_size)
         # check sustain level
         for sidx, ridx in zip(sustain_idxs, release_idxs):
             s_max = np.max(vector[sidx:ridx])
@@ -110,7 +110,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
         # check there was attack release
         self.assertEqual(1, len(release_idxs))
         # check when the release occured
-        self.assertAlmostEqual(release_time, release_idxs[0], delta=self.block_size)
+        self.assertAlmostEqual(release_time, release_idxs[0], delta=block_size)
         # check release gradient
         for ridx in release_idxs:
             r_grad = (vector[ridx + int(self.release/2)] - vector[ridx])/(int(self.release/2))
@@ -118,7 +118,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
 
     def test_basic_envelope(self):
         ''' Tests attack basic single envelope '''
-        n_samples = 1*self.fs # sustain
+        n_samples = 1*sampling_frequency # sustain
         for attack, decay, sustain, release in [(0.1, 0.05, -3., 0.1),
                            (0.01, 0.1, -20, 0.5),
                            (0.05, 0.2, -80, 0.4)
@@ -127,8 +127,8 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
                 self.set_adsr(attack, decay, sustain, release)
                 exp_a_grad, exp_d_grad, exp_r_grad = self.calculate_gradients()
                 threshold = np.min(np.abs([exp_a_grad, exp_d_grad, exp_r_grad]))/3
-                press_time = int(0.1*self.fs)
-                release_time = int(0.4*self.fs)
+                press_time = int(0.1*sampling_frequency)
+                release_time = int(0.4*sampling_frequency)
 
                 vector = self.run_env([press_time], [release_time], n_samples)
                 vector = 20*np.log10(vector)
@@ -156,7 +156,7 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
                     else:
                         release_idxs.append(idx)
                 if self.debug:
-                    time = np.arange(n_samples)/self.fs
+                    time = np.arange(n_samples)/sampling_frequency
                     attack_markers = vector[attack_idxs]
                     attack_times = time[attack_idxs]
                     decay_markers = vector[decay_idxs]
@@ -195,20 +195,20 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
                 self.check_release(vector, release_idxs, release_time)
 
     def test_double_press(self):
-        ''' Check that level increases after attack note is pressed '''
-        n_samples = 2*self.fs
+        ''' Check that there is an attack when a double press occurs '''
+        n_samples = 2*sampling_frequency
         attack, decay, sustain, release = (0.1, 0.1, -20, 0.2)
-        s_len = 0.5*self.fs
+        s_len = 0.5*sampling_frequency
         self.set_adsr(attack, decay, sustain, release)
         # all relative to the first
-        first_press = 0.1*self.fs
+        first_press = 0.1*sampling_frequency
         test_ids = ['Attack', 'Decay', 'Sustain', 'Release']
         second_presses = np.array([self.attack/2, self.attack + self.decay/2,
                                     self.attack + self.decay + s_len/2,
                                     self.attack + self.decay + s_len + self.release/2])\
                         + first_press
         releases = np.array([self.attack + self.decay + s_len,
-                             self.attack + self.decay + s_len + 1*self.fs]) + first_press
+                             self.attack + self.decay + s_len + 1*sampling_frequency]) + first_press
 
         for second_press, test_id in zip(second_presses, test_ids):
             with self.subTest(test_id):
@@ -216,19 +216,21 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
                 vector = self.run_env(presses, releases, n_samples)
                 if self.debug:
                     vector = 20*np.log10(vector)
-                    time = np.arange(n_samples)/self.fs
+                    time = np.arange(n_samples)/sampling_frequency
                     _, ax1 = plt.subplots()
-                    ax1.axvline(second_press/self.fs)
-                    ax1.axvline((second_press + self.block_size)/self.fs)
-                    ax1.axvline((second_press - self.block_size)/self.fs)
+                    ax1.axvline(second_press/sampling_frequency)
+                    ax1.axvline((second_press + block_size)/sampling_frequency)
+                    ax1.axvline((second_press - block_size)/sampling_frequency)
                     ax1.plot(time, vector)
                     ax1.set_xlabel('Time (sustain)')
                     ax1.set_ylabel('Magnitude (dB)')
-                    ax1.set_title(f'Envelope ({self.attack/self.fs}, {self.decay/self.fs}, {self.sustain}, {self.release/self.fs})')
+                    ax1.set_title(f'Envelope ({self.attack/sampling_frequency}, {self.decay/sampling_frequency}, {self.sustain}, {self.release/sampling_frequency})')
                     ax1.grid()
                     plt.show()
-                self.assertGreater(vector[int(second_press+self.block_size)],
-                                    vector[int(second_press-self.block_size)])
+                press_region = vector[int(second_press-block_size):int(second_press+block_size)]
+                press_minimum = np.min(press_region)
+                # make sure the minima isn't at the end of the press region
+                self.assertGreater(press_region[-1], press_minimum)
 
 
 def main():

@@ -1,4 +1,5 @@
-''' inverse_sqrt - trying out a couple of approximations for oscillator normalisation '''
+''' inverse_sqrt - trying out a couple of approximations for oscillator normalisation
+    copyright Maximilian Cornwell 2023 '''
 
 import numpy as np
 import matplotlib.pyplot as plt

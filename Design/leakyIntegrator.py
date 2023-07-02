@@ -1,3 +1,6 @@
+''' Exploring leaky implemenation
+    copyright Maximilian Cornwell 2023'''
+
 import numpy as np
 import matplotlib.pyplot as p
 import scipy.signal as s

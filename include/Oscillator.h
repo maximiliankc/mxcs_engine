@@ -1,3 +1,6 @@
+/* MXCS Core Oscillator header
+   copyright Maximilian Cornwell 2023
+*/
 #ifndef OSCILLATOR_H
 #define OSCILLATOR_H
 

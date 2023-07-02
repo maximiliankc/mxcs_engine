@@ -1,3 +1,7 @@
+/* MXCS Core Oscillator implementation
+   copyright Maximilian Cornwell 2023
+*/
+
 #include <stdint.h>
 #include <math.h>
 #include "Oscillator.h"

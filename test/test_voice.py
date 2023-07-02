@@ -1,9 +1,12 @@
-''' Tests for voice '''
+''' Tests for voice
+    copyright Maximilian Cornwell 2023  '''
 import ctypes
 import unittest
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
+
+from .constants import sampling_frequency
 from .test_envelope import EnvelopeInterface
 from .test_oscillator import OscillatorInterface
 
@@ -46,13 +49,13 @@ class TestVoice(unittest.TestCase, VoiceInterface):
     f_expected = 1000
     test_notes = [100, 400, 1000, 4000]
     env_test_note = 440
-    fs = 48000
+    fs = 44100
     debug = False
     freq_precision = 0.1
 
     def set_f(self, freq: float):
         ''' Set the expected frequency '''
-        self.freq = freq/self.fs
+        self.freq = freq/sampling_frequency
         self.f_expected = freq
 
     def run_self(self, presses: list, releases: list, n_samples: int):
@@ -61,7 +64,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
 
     def test_envelope(self):
         ''' Check that the envelope is being applied '''
-        n_samples = 1*self.fs # s
+        n_samples = 1*sampling_frequency # s
         self.set_f(self.env_test_note)
         for attack, decay, sustain, release in [(0.1, 0.05, -3., 0.1),
                                                 (0.01, 0.1, -20, 0.5),
@@ -69,14 +72,14 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                                                 ]:
             with self.subTest(f'{attack},{decay},{sustain},{release}'):
                 self.set_adsr(attack, decay, sustain, release)
-                press_time = int(0.1*self.fs)
-                release_time = int(0.4*self.fs)
+                press_time = int(0.1*sampling_frequency)
+                release_time = int(0.4*sampling_frequency)
                 voice_vector = np.abs(sig.hilbert(self.run_self([press_time], [release_time], n_samples)))
                 env_vector = self.run_env([press_time], [release_time], n_samples)
                 rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
                 if self.debug:
                     _, ax1 = plt.subplots()
-                    time = np.arange(n_samples)/self.fs
+                    time = np.arange(n_samples)/sampling_frequency
                     ax1.plot(time, voice_vector, label='voice')
                     ax1.plot(time, env_vector, label='envelope')
                     ax1.legend()
@@ -107,11 +110,11 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                 vector = self.run_self([press_time], [release_time], n_samples)
                 f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/n_samples)[:n_samples//2]
                 pkidx = np.argmax(f_vector)
-                freqs = self.fs*np.fft.fftfreq(n_samples)[:n_samples//2]
+                freqs = sampling_frequency*np.fft.fftfreq(n_samples)[:n_samples//2]
                 f_measured = freqs[pkidx]
                 if self.debug:
                     _, ax1 = plt.subplots()
-                    time = np.arange(n_samples)/self.fs
+                    time = np.arange(n_samples)/sampling_frequency
                     ax1.plot(time, vector)
                     ax1.grid()
                     ax1.set_title(f'Output f={self.f_expected:.2f}')
