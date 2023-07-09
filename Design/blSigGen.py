@@ -34,8 +34,9 @@ def blit(n: np.ndarray, f: float)->np.ndarray:
 
 def bpblit(n: np.ndarray, f:float)->np.ndarray:
     ''' Bi-polar Band Limited Impulse Train'''
-    M = 2*math.trunc(0.25/f)
-    y = msinc(n, 2*f, M)
+    f = 2*f
+    M = 2*math.trunc(0.5/f)
+    y = msinc(n, f, M)
     return y
 
 def blSawtooth(n: np.ndarray, f: float)->np.ndarray:
