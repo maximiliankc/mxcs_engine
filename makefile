@@ -4,10 +4,10 @@ CFLAGS=-I$(IDIR) -Werror -Wall -DSYNTH_TEST_
 
 TEST_TARGET=test.so
 
-_OBJ = Envelope.o Oscillator.o Synth.o Voice.o Utils.o
+_OBJ = Blit.o Envelope.o Oscillator.o Synth.o Voice.o Utils.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-_DEPS = Constants.h Envelope.h Oscillator.h Synth.h Voice.h Utils.h
+_DEPS = Blit.h Constants.h Envelope.h Oscillator.h Synth.h Voice.h Utils.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 ODIR=obj
