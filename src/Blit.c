@@ -8,7 +8,7 @@
 #define THRESHOLD (0.0000000000001f) // TODO figure out the best threshold
 
 void msinc(float * out, float * lfSin, float * lfCos, float * hfSin, float * hfCos, int16_t M) {
-    for(uint8_t i; i<BLOCK_SIZE; i++) {
+    for(uint8_t i = 0; i<BLOCK_SIZE; i++) {
         if (lfSin[i] > THRESHOLD || lfSin[i] < -THRESHOLD) {
             out[i] = hfSin[i]/(M*lfSin[i]);
         } else {
