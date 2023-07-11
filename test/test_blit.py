@@ -12,7 +12,7 @@ class BlitInterface:
         self.testlib = ctypes.CDLL('test.so')
         self.float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.blit_m.argtypes = [ctypes.c_float]
-        self.testlib.blit_m.restype = ctypes.c_int16
+        self.testlib.blit_m.restype = ctypes.c_float
         self.testlib.msinc.argtypes = [self.float_pointer, self.float_pointer,
                                         self.float_pointer, self.float_pointer,
                                         self.float_pointer, ctypes.c_int16]

@@ -7,7 +7,7 @@
 
 #define THRESHOLD (0.0000000000001f) // TODO figure out the best threshold
 
-void msinc(float * out, float * lfSin, float * lfCos, float * hfSin, float * hfCos, int16_t M) {
+void msinc(float * out, float * lfSin, float * lfCos, float * hfSin, float * hfCos, float M) {
     for(uint8_t i = 0; i<BLOCK_SIZE; i++) {
         if (lfSin[i] > THRESHOLD || lfSin[i] < -THRESHOLD) {
             out[i] = hfSin[i]/(M*lfSin[i]);
@@ -17,8 +17,8 @@ void msinc(float * out, float * lfSin, float * lfCos, float * hfSin, float * hfC
     }
 }
 
-int16_t blit_m(float f) {
+float blit_m(float f) {
     int16_t period = (int16_t)(0.5f/f);
     period = 2*period + 1;
-    return period;
+    return (float)period;
 }
