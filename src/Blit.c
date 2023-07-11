@@ -20,4 +20,5 @@ void msinc(float * out, float * lfSin, float * lfCos, float * hfSin, float * hfC
 int16_t blit_m(float f) {
     int16_t period = (int16_t)(0.5f/f);
     period = 2*period + 1;
+    return period;
 }
