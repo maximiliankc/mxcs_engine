@@ -8,11 +8,13 @@ import matplotlib.pyplot as plt
 
 from .constants import sampling_frequency
 from .test_voice import VoiceInterface, TestVoice
+from .test_modulator import TestModulator
 
 class SynthInterface(VoiceInterface):
     ''' Interface for the synth '''
     mod_depth = 0
     mod_freq = 0
+
     def __init__(self):
         ''' Load in the test object file and define the function '''
         super().__init__()
@@ -58,7 +60,7 @@ class SynthInterface(VoiceInterface):
         return table
 
 
-class TestSynth(TestVoice, SynthInterface):
+class TestSynth(TestVoice, TestModulator, SynthInterface):
     ''' Test suite for synthesiser module'''
     note = 64
     test_notes = [13*n for n in range(9)] + [127]
@@ -75,9 +77,20 @@ class TestSynth(TestVoice, SynthInterface):
         self.note = freq
         self.f_expected = self.midi_to_freq(freq)
 
-    def run_self(self, presses: list, releases: list, n_samples: int):
+    def run_voice(self, presses: list, releases: list, n_samples: int):
         notes = len(presses)*[self.note]
         return self.run_synth(presses, notes, releases, notes, n_samples)
+
+    def run_mod(self, freq: float, ratio: float, n_samples: int):
+        self.mod_freq = freq
+        self.mod_depth = ratio
+        self.attack = 10**-6
+        self.decay = 10**-6
+        self.sustain = 0
+        self.release = 10**-6
+        vector = sig.hilbert(self.run_synth([0], [64], [0], [0], n_samples))
+        self.check_abs = True
+        return np.abs(vector)
 
     def test_frequency_table(self):
         ''' Check the accuracy of the frequeny table '''
@@ -137,10 +150,11 @@ def main():
     ''' For Debugging/Testing '''
     synth_test = TestSynth()
     synth_test.debug = True
-    synth_test.test_envelope()
-    synth_test.test_frequency()
-    synth_test.test_frequency_table()
-    synth_test.play_notes()
+    synth_test.test_model()
+    # synth_test.test_envelope()
+    # synth_test.test_frequency()
+    # synth_test.test_frequency_table()
+    # synth_test.play_notes()
 
 if __name__=='__main__':
     main()
