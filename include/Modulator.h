@@ -1,3 +1,6 @@
+/* MXCS Core Modulator header
+   copyright Maximilian Cornwell 2023
+*/
 #ifndef MODULATOR_H_
 #define MODULATOR_H_
 

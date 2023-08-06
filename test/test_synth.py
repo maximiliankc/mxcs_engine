@@ -11,14 +11,21 @@ from .test_voice import VoiceInterface, TestVoice
 
 class SynthInterface(VoiceInterface):
     ''' Interface for the synth '''
+    mod_depth = 0
+    mod_freq = 0
     def __init__(self):
         ''' Load in the test object file and define the function '''
         super().__init__()
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
         uint8_pointer = ctypes.POINTER(ctypes.c_uint8)
-        # a, d, s, r, presses, pressNs, pressNotes, releases, releaseNs, n, envOut
+        # a, d, s, r,
+        # modDepth, modFreq,
+        # presses, pressNs, pressNotes,
+        # releases, releaseNs,
+        # n, envOut
         self.testlib.test_synth.argtypes = [ctypes.c_float, ctypes.c_float,
+                                                ctypes.c_float, ctypes.c_float,
                                                 ctypes.c_float, ctypes.c_float,
                                                 ctypes.c_uint, uint_pointer, uint8_pointer,
                                                 ctypes.c_uint, uint_pointer,
@@ -37,6 +44,7 @@ class SynthInterface(VoiceInterface):
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
         self.testlib.test_synth(ctypes.c_float(self.attack), ctypes.c_float(self.decay),
                                     ctypes.c_float(self.sustain), ctypes.c_float(self.release),
+                                    ctypes.c_float(self.mod_depth), ctypes.c_float(self.mod_freq),
                                     ctypes.c_uint(len(presses)), presses_p, p_notes_p,
                                     ctypes.c_uint(len(releases)), releases_p, r_notes_p,
                                     ctypes.c_uint(len(out)), out_p)
@@ -123,7 +131,6 @@ class TestSynth(TestVoice, SynthInterface):
             ax2.grid(True)
             ax2.legend()
             plt.show()
-
 
 
 def main():
