@@ -13,12 +13,25 @@ void synth_init(Synth_t * self) {
     for(uint8_t i = 1; i < NOTES; i++) {
         self->frequencyTable[i] = SEMITONE*(self->frequencyTable[i-1]);
     }
-    voice_init(&(self->voice));
+    voice_init(&(self->voice), &(self->settings));
+    env_settings_init(&(self->settings));
     mod_init(&(self->mod));
 }
 
-void synth_set_adsr(Synth_t * self, float a, float d, float s, float r) {
-    env_set_adsr(&(self->voice.envelope), a, d, s, r);
+void synth_set_attack(Synth_t * self, float a) {
+    env_set_attack(&(self->settings), a);
+}
+
+void synth_set_decay(Synth_t * self, float d) {
+    env_set_decay(&(self->settings), d);
+}
+
+void synth_set_sustain(Synth_t * self, float s) {
+    env_set_sustain(&(self->settings), s);
+}
+
+void synth_set_release(Synth_t * self, float r) {
+    env_set_release(&(self->settings), r);
 }
 
 void synth_set_mod_f(Synth_t * self, float freq) {
@@ -70,7 +83,10 @@ void test_synth(const float a, const float d, const float s, const float r,\
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
     synth_init(&synth);
-    synth_set_adsr(&synth, a, d, s, r);
+    synth_set_attack(&synth, a);
+    synth_set_decay(&synth, d);
+    synth_set_sustain(&synth, s);
+    synth_set_release(&synth, r);
     synth_set_mod_depth(&synth, modDepth);
     synth_set_mod_f(&synth, modFreq);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
