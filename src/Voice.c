@@ -6,9 +6,9 @@
 #include "Voice.h"
 #include "Constants.h"
 
-void voice_init(Voice_t * self) {
+void voice_init(Voice_t * self, EnvelopeSettings_t * settings) {
     osc_init(&(self->osc));
-    env_init(&(self->envelope));
+    env_init(&(self->envelope), settings);
 }
 
 void voice_step(Voice_t * self, float * out) {
@@ -52,10 +52,14 @@ void test_voice(const float a, const float d, const float s, const float r, cons
     //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
     //              envOut: generated envelope
     Voice_t voice;
+    EnvelopeSettings_t settings;
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
-    voice_init(&voice);
-    env_set_adsr(&voice.envelope, a, d, s, r);
+    voice_init(&voice, &settings);
+    env_set_attack(&settings, a);
+    env_set_decay(&settings, d);
+    env_set_sustain(&settings, s);
+    env_set_release(&settings, r);
     osc_setF(&voice.osc, f);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         if(pressCount < presses && i >= pressNs[pressCount]) {

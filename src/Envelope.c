@@ -15,6 +15,7 @@ void run_attack(Envelope_t * self);
 void run_decay(Envelope_t * self);
 void run_sustain(Envelope_t * self);
 void run_release(Envelope_t * self);
+void set_adsr(EnvelopeSettings_t * self);
 
 typedef void (*run_state_t)(Envelope_t *);
 
@@ -25,10 +26,10 @@ const run_state_t run_state[] = {run_off,
                                  run_sustain,
                                  run_release};
 
-void env_init(Envelope_t * self) {
+void env_init(Envelope_t * self, EnvelopeSettings_t * settings) {
     self->state = release;
     self->amp = 0;
-    env_set_adsr(self, 0, 0, 0, 0);
+    self->settings = settings;
 };
 
 void env_step(Envelope_t * self, float * envelope) {
@@ -49,19 +50,12 @@ void env_release(Envelope_t * self) {
     self->state = release;
 }
 
-void env_set_adsr(Envelope_t * self, float a, float d, float s, float r) {
-    self->a_increment = db2mag(BASE_LEVEL_DB/a);      // a is the number of samples per 100 dB
-    self->d_increment = db2mag(s/d);               // d is a number of samples per 100 dB
-    self->s_level = db2mag(s);                     // s is a level in dBFS
-    self->r_increment = db2mag(-(BASE_LEVEL_DB+s)/r); // r is a number of samples
-}
-
 void run_off(Envelope_t * self) {
     self->amp = 0;
 }
 
 void run_attack(Envelope_t * self) {
-    self->amp *= self->a_increment;
+    self->amp *= self->settings->a_increment;
     if (self->amp >= 1.0) {
         self->amp = 1.0;
         self->state = decay;
@@ -69,19 +63,54 @@ void run_attack(Envelope_t * self) {
 }
 
 void run_decay(Envelope_t * self) {
-    self->amp *= self->d_increment;
-    if (self->amp <= self->s_level) {
-        self->amp = self->s_level;
+    self->amp *= self->settings->d_increment;
+    if (self->amp <= self->settings->s_level) {
+        self->amp = self->settings->s_level;
         self->state = sustain;
     }
 }
 
 void run_sustain(Envelope_t * self) {
-    self->amp = self->s_level;
+    self->amp = self->settings->s_level;
 }
 
 void run_release(Envelope_t * self) {
-    self->amp *= self->r_increment; // linear shift for now
+    self->amp *= self->settings->r_increment; // linear shift for now
+}
+
+void env_set_attack(EnvelopeSettings_t * self, float a) {
+    self->a = a;
+    set_adsr(self);
+}
+
+void env_set_decay(EnvelopeSettings_t * self, float d) {
+    self->d = d;
+    set_adsr(self);
+}
+
+void env_set_sustain(EnvelopeSettings_t * self, float s) {
+    self->s = s;
+    set_adsr(self);
+}
+
+void env_set_release(EnvelopeSettings_t * self, float r) {
+    self->r = r;
+    set_adsr(self);
+}
+
+void env_settings_init(EnvelopeSettings_t * self) {
+    self->a = 0;
+    self->d = 0;
+    self->s = 0;
+    self->r = 0;
+    set_adsr(self);
+}
+
+void set_adsr(EnvelopeSettings_t * self) {
+    self->a_increment = db2mag(BASE_LEVEL_DB/self->a);      // a is the number of samples per 100 dB
+    self->d_increment = db2mag(self->s/self->d);               // d is a number of samples per 100 dB
+    self->s_level = db2mag(self->s);                     // s is a level in dBFS
+    self->r_increment = db2mag(-(BASE_LEVEL_DB+self->s)/self->r); // r is a number of samples
 }
 
 #ifdef SYNTH_TEST_
@@ -101,10 +130,14 @@ void test_envelope(const float a, const float d, const float s, const float r,\
     //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
     //              envOut: generated envelope
     Envelope_t env;
+    EnvelopeSettings_t adsr;
     unsigned int pressCount = 0;
     unsigned int releaseCount = 0;
-    env_init(&env);
-    env_set_adsr(&env, a, d, s, r);
+    env_init(&env, &adsr);
+    env_set_attack(&adsr, a);
+    env_set_decay(&adsr, d);
+    env_set_sustain(&adsr, s);
+    env_set_release(&adsr, r);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         if(pressCount < presses && i >= pressNs[pressCount]) {
             env_press(&env);
