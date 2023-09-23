@@ -79,6 +79,8 @@ class TestSynth(TestVoice, TestModulator, SynthInterface):
 
     def run_voice(self, presses: list, releases: list, n_samples: int):
         notes = len(presses)*[self.note]
+        self.mod_freq = 0
+        self.mod_depth = 0
         return self.run_synth(presses, notes, releases, notes, n_samples)
 
     def run_mod(self, freq: float, ratio: float, n_samples: int):
@@ -120,8 +122,8 @@ class TestSynth(TestVoice, TestModulator, SynthInterface):
     def play_notes(self):
         ''' Play a series of notes, show a spectrogram, save as a wav '''
         n_samples = sampling_frequency*60
-        for release_delay, mod_depth, mod_freq in zip([0.5, 1.5], [0.5, 1], [0.5, 3]):
-            self.set_adsr(0.1, 0.1, -10, 0.1)
+        for release_delay, mod_depth, mod_freq in zip([0.5, 1.5, 1], [0.5, 1, 0.25], [0.5, 3, 1]):
+            self.set_adsr(0.1, 0.1, -5, 0.1)
             self.mod_freq = mod_freq
             self.mod_depth = mod_depth
             presses = list(range(50))
@@ -137,12 +139,14 @@ class TestSynth(TestVoice, TestModulator, SynthInterface):
             ax1.pcolormesh(time, freq, s_xx)
             ax1.set_xlabel('Time (s)')
             ax1.set_ylabel('Frequency (Hz)')
+            ax1.set_title(f'Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
             _, ax2 = plt.subplots()
             time = np.arange(n_samples)/sampling_frequency
             ax2.plot(time[:4*sampling_frequency], out[:4*sampling_frequency], label='signal')
             ax2.plot(time[:4*sampling_frequency], np.abs(sig.hilbert(out[:4*sampling_frequency])), label='envelope')
             ax2.set_xlabel('Time (s)')
             ax2.set_ylabel('Magnitude')
+            ax2.set_title(f'Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
             ax2.grid(True)
             ax2.legend()
             plt.show()

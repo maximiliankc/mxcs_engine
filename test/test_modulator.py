@@ -36,7 +36,7 @@ class TestModulator(unittest.TestCase, ModulatorInterface):
         return self.run_mod_module(freq, ratio, n_samples)
 
     def test_model(self):
-        ''' Compare modulator performance against '''
+        ''' Compare modulator performance against model '''
         n_samples = 100*block_size
         time = np.arange(n_samples)/sampling_frequency
         for freq in [0, 0.5, 1, 5, 10]:
