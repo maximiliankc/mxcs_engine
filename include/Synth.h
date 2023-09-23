@@ -5,12 +5,14 @@
 #define SYNTH_H_
 
 #include <stdint.h>
-#include "Voice.h"
 #include "Constants.h"
+#include "Voice.h"
+#include "Modulator.h"
 
 // Defining a monophonic synth for now
 typedef struct Synth_t {
     Voice_t voice;
+    Modulator_t mod;
     float frequencyTable[NOTES];
     uint8_t currentNote;
 } Synth_t;

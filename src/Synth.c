@@ -14,10 +14,19 @@ void synth_init(Synth_t * self) {
         self->frequencyTable[i] = SEMITONE*(self->frequencyTable[i-1]);
     }
     voice_init(&(self->voice));
+    mod_init(&(self->mod));
 }
 
 void synth_set_adsr(Synth_t * self, float a, float d, float s, float r) {
     env_set_adsr(&(self->voice.envelope), a, d, s, r);
+}
+
+void synth_set_mod_f(Synth_t * self, float freq) {
+    osc_setF(&(self->mod.lfo), freq/SAMPLING_FREQUENCY);
+}
+
+void synth_set_mod_depth(Synth_t * self, float depth) {
+    self->mod.modRatio = depth;
 }
 
 void synth_press(Synth_t * self, uint8_t note) {
@@ -34,10 +43,12 @@ void synth_release(Synth_t * self, uint8_t note) {
 
 void synth_step(Synth_t * self, float * out) {
     voice_step(&(self->voice), out);
+    mod_step(&(self->mod), out);
 }
 
 #ifdef SYNTH_TEST_
 void test_synth(const float a, const float d, const float s, const float r,\
+                   const float modDepth, const float modFreq,\
                    const unsigned int presses, unsigned int pressNs[], uint8_t pressNotes[],\
                    const unsigned int releases, unsigned int releaseNs[], uint8_t releaseNotes[],\
                    const unsigned int n, float envOut[]) {
@@ -45,6 +56,8 @@ void test_synth(const float a, const float d, const float s, const float r,\
     //              d: decay time (in samples)
     //              s: sustain level (amplitude between 0 and 1)
     //              r: release time (in samples)
+    //              modDepth: modulation depth
+    //              modFreq: modulation frequency
     //              presses: number of presses
     //              pressNs: times at which to press
     //              notes: MIDI notes to press at each time step
@@ -58,6 +71,8 @@ void test_synth(const float a, const float d, const float s, const float r,\
     unsigned int releaseCount = 0;
     synth_init(&synth);
     synth_set_adsr(&synth, a, d, s, r);
+    synth_set_mod_depth(&synth, modDepth);
+    synth_set_mod_f(&synth, modFreq);
     for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
         if(pressCount < presses && i >= pressNs[pressCount]) {
             synth_press(&synth, pressNotes[pressCount]);
