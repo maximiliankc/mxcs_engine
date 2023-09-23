@@ -50,9 +50,6 @@ void env_release(Envelope_t * self) {
     self->state = release;
 }
 
-
-
-
 void run_off(Envelope_t * self) {
     self->amp = 0;
 }
