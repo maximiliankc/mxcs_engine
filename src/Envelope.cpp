@@ -114,40 +114,42 @@ void set_adsr(EnvelopeSettings_t * self) {
 }
 
 #ifdef SYNTH_TEST_
-void test_envelope(const float a, const float d, const float s, const float r,\
-                const unsigned int presses, unsigned int pressNs[],\
-                const unsigned int releases, unsigned int releaseNs[],\
-                const unsigned int n, float envOut[]) {
-    // parameters:  a: attack time (in samples)
-    //              d: decay time (in samples)
-    //              s: sustain level (amplitude between 0 and 1)
-    //              r: release time (in samples)
-    //              pressNs: times at which to press
-    //              presses: number of presses
-    //              releaseNs: times at which to release
-    //              releaseNs: number of releases
-    //              n: number of samples to iterate over.
-    //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
-    //              envOut: generated envelope
-    Envelope_t env;
-    EnvelopeSettings_t adsr;
-    unsigned int pressCount = 0;
-    unsigned int releaseCount = 0;
-    env_init(&env, &adsr);
-    env_set_attack(&adsr, a);
-    env_set_decay(&adsr, d);
-    env_set_sustain(&adsr, s);
-    env_set_release(&adsr, r);
-    for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
-        if(pressCount < presses && i >= pressNs[pressCount]) {
-            env_press(&env);
-            pressCount++;
+extern "C" {
+    void test_envelope(const float a, const float d, const float s, const float r,\
+                    const unsigned int presses, unsigned int pressNs[],\
+                    const unsigned int releases, unsigned int releaseNs[],\
+                    const unsigned int n, float envOut[]) {
+        // parameters:  a: attack time (in samples)
+        //              d: decay time (in samples)
+        //              s: sustain level (amplitude between 0 and 1)
+        //              r: release time (in samples)
+        //              pressNs: times at which to press
+        //              presses: number of presses
+        //              releaseNs: times at which to release
+        //              releaseNs: number of releases
+        //              n: number of samples to iterate over.
+        //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
+        //              envOut: generated envelope
+        Envelope_t env;
+        EnvelopeSettings_t adsr;
+        unsigned int pressCount = 0;
+        unsigned int releaseCount = 0;
+        env_init(&env, &adsr);
+        env_set_attack(&adsr, a);
+        env_set_decay(&adsr, d);
+        env_set_sustain(&adsr, s);
+        env_set_release(&adsr, r);
+        for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+            if(pressCount < presses && i >= pressNs[pressCount]) {
+                env_press(&env);
+                pressCount++;
+            }
+            if(releaseCount < releases && i >= releaseNs[releaseCount]) {
+                env_release(&env);
+                releaseCount++;
+            }
+            env_step(&env, envOut + i);
         }
-        if(releaseCount < releases && i >= releaseNs[releaseCount]) {
-            env_release(&env);
-            releaseCount++;
-        }
-        env_step(&env, envOut + i);
     }
 }
 #endif // SYNTH_TEST_

@@ -21,23 +21,23 @@ void mod_step(Modulator_t * self, float * signal) {
 }
 
 #ifdef SYNTH_TEST_
+extern "C" {
+    void test_modulator(const float f, const float ratio, const unsigned int n, float * out) {
+        Modulator_t modulator;
+        float signal[BLOCK_SIZE];
 
-void test_modulator(const float f, const float ratio, const unsigned int n, float * out) {
-    Modulator_t modulator;
-    float signal[BLOCK_SIZE];
-
-    mod_init(&modulator);
-    modulator.modRatio = ratio;
-    osc_setF(&(modulator.lfo), f);
-    for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
-        for(unsigned int j = 0; j < BLOCK_SIZE; j++) {
-            signal[j] = 1;
-        }
-        mod_step(&modulator, signal);
-        for(unsigned int j = 0; j < BLOCK_SIZE; j++) {
-            out[i+j] = signal[j];
+        mod_init(&modulator);
+        modulator.modRatio = ratio;
+        osc_setF(&(modulator.lfo), f);
+        for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+            for(unsigned int j = 0; j < BLOCK_SIZE; j++) {
+                signal[j] = 1;
+            }
+            mod_step(&modulator, signal);
+            for(unsigned int j = 0; j < BLOCK_SIZE; j++) {
+                out[i+j] = signal[j];
+            }
         }
     }
 }
-
 #endif // SYNTH_TEST_
