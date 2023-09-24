@@ -6,17 +6,17 @@
 #include "Voice.h"
 #include "Constants.h"
 
-void voice_init(Voice_t * self, EnvelopeSettings_t * settings) {
-    osc_init(&(self->osc));
-    env_init(&(self->envelope), settings);
+Voice_t::Voice_t(EnvelopeSettings_t * settings) {
+    osc_init(&osc);
+    env_init(&envelope, settings);
 }
 
-void voice_step(Voice_t * self, float * out) {
+void Voice_t::step(float * out) {
     float cosOut[BLOCK_SIZE];
     float sinOut[BLOCK_SIZE];
 
-    env_step(&(self->envelope), out);
-    osc_step(&(self->osc), cosOut, sinOut);
+    env_step(&envelope, out);
+    osc_step(&osc, cosOut, sinOut);
 
     // apply envelope to sine out
     for (uint8_t i=0; i < BLOCK_SIZE; i++) {
@@ -24,13 +24,13 @@ void voice_step(Voice_t * self, float * out) {
     }
 }
 
-void voice_press(Voice_t * self, float f) {
-    env_press(&(self->envelope));
-    osc_setF(&(self->osc), f);
+void Voice_t::press(float f) {
+    env_press(&envelope);
+    osc_setF(&osc, f);
 }
 
-void voice_release(Voice_t * self) {
-    env_release(&(self->envelope));
+void Voice_t::release() {
+    env_release(&envelope);
 }
 
 
@@ -52,26 +52,24 @@ extern "C" {
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        Voice_t voice;
         EnvelopeSettings_t settings;
+        Voice_t voice(&settings);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
-        voice_init(&voice, &settings);
         env_set_attack(&settings, a);
         env_set_decay(&settings, d);
         env_set_sustain(&settings, s);
         env_set_release(&settings, r);
-        osc_setF(&voice.osc, f);
         for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
-                voice_press(&voice, f);
+                voice.press(f);
                 pressCount++;
             }
             if(releaseCount < releases && i >= releaseNs[releaseCount]) {
-                voice_release(&voice);
+                voice.release();
                 releaseCount++;
             }
-            voice_step(&voice, envOut + i);
+            voice.step(envOut + i);
         }
     }
 }

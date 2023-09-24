@@ -11,8 +11,8 @@
 
 // Defining a monophonic synth for now
 class Synth_t {
-        Voice_t voice;
         EnvelopeSettings_t settings;
+        Voice_t voice;
         Modulator_t mod;
         float frequencyTable[NOTES];
         uint8_t currentNote;

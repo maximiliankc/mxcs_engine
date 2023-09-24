@@ -6,14 +6,13 @@
 #define SEMITONE (1.0594630943592953)
 #define C_MINUS_1 (8.175798915643707/SAMPLING_FREQUENCY)
 
-Synth_t::Synth_t() {
+Synth_t::Synth_t(): voice(&settings) {
     // calculate the frequency table
     currentNote = 0;
     frequencyTable[0] = C_MINUS_1;
     for(uint8_t i = 1; i < NOTES; i++) {
         frequencyTable[i] = SEMITONE*(frequencyTable[i-1]);
     }
-    voice_init(&voice, &settings);
     env_settings_init(&settings);
     mod_init(&mod);
 }
@@ -44,18 +43,18 @@ void Synth_t::set_mod_depth(float depth) {
 
 void Synth_t::press(uint8_t note) {
     float f = frequencyTable[note];
-    voice_press(&voice, f);
+    voice.press(f);
     currentNote = note;
 }
 
 void Synth_t::release(uint8_t note) {
     if (note==currentNote) {
-        voice_release(&voice);
+        voice.release();
     }
 }
 
 void Synth_t::step(float * out) {
-    voice_step(&voice, out);
+    voice.step(out);
     mod_step(&mod, out);
 }
 
