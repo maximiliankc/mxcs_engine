@@ -7,7 +7,6 @@
 #include "Constants.h"
 
 Voice_t::Voice_t(EnvelopeSettings_t * settings) {
-    osc_init(&osc);
     env_init(&envelope, settings);
 }
 
@@ -16,7 +15,7 @@ void Voice_t::step(float * out) {
     float sinOut[BLOCK_SIZE];
 
     env_step(&envelope, out);
-    osc_step(&osc, cosOut, sinOut);
+    osc.step(cosOut, sinOut);
 
     // apply envelope to sine out
     for (uint8_t i=0; i < BLOCK_SIZE; i++) {
@@ -26,7 +25,7 @@ void Voice_t::step(float * out) {
 
 void Voice_t::press(float f) {
     env_press(&envelope);
-    osc_setF(&osc, f);
+    osc.set_freq(f);
 }
 
 void Voice_t::release() {

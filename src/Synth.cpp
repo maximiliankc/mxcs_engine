@@ -34,7 +34,7 @@ void Synth_t::set_release(float r) {
 }
 
 void Synth_t::set_mod_f(float freq) {
-    osc_setF(&(mod.lfo), freq/SAMPLING_FREQUENCY);
+    mod.lfo.set_freq(freq/SAMPLING_FREQUENCY);
 }
 
 void Synth_t::set_mod_depth(float depth) {

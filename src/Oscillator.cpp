@@ -8,19 +8,19 @@
 #include "Constants.h"
 
 
-void osc_init(Oscillator_t * self) {
-    osc_setF(self, 0);
-    self->yrPrev = 1.0;
-    self->yjPrev = 0.0;
+Oscillator_t::Oscillator_t() {
+    set_freq(0);
+    yrPrev = 1.0;
+    yjPrev = 0.0;
 }
 
-void osc_setF(Oscillator_t * self, float f) {
+void Oscillator_t::set_freq(float f) {
     // f should be relative to fs,
-    self->c = cosf(2*M_PI*f);
-    self->s = sinf(2*M_PI*f);
+    c = cosf(2*M_PI*f);
+    s = sinf(2*M_PI*f);
 }
 
-void osc_step(Oscillator_t * self, float * yr, float * yj) {
+void Oscillator_t::step(float * yr, float * yj) {
     // thinking of it as a complex exponential
     // y[n] = e^(j*theta)*y[n-1]
     // alternatively, like a matrix:
@@ -30,8 +30,8 @@ void osc_step(Oscillator_t * self, float * yr, float * yj) {
     float scale;
 
     // use the state to calculate the first samples in the block
-    yr[0] = self->c*self->yrPrev - self->s*self->yjPrev;
-    yj[0] = self->s*self->yrPrev + self->c*self->yjPrev;
+    yr[0] = c*yrPrev - s*yjPrev;
+    yj[0] = s*yrPrev + c*yjPrev;
 
     // need to normalise the power, otherwise magnitude will drift due to numerical error
     // once per block should be enough (depending on block length!)
@@ -43,13 +43,13 @@ void osc_step(Oscillator_t * self, float * yr, float * yj) {
 
     // calculate the rest of the block
     for (uint8_t i = 1; i < BLOCK_SIZE; i++) {
-        yr[i] = self->c*yr[i-1] - self->s*yj[i-1];
-        yj[i] = self->s*yr[i-1] + self->c*yj[i-1];
+        yr[i] = c*yr[i-1] - s*yj[i-1];
+        yj[i] = s*yr[i-1] + c*yj[i-1];
     }
 
     // save the last values into the oscillator state
-    self->yrPrev = yr[BLOCK_SIZE-1];
-    self->yjPrev = yj[BLOCK_SIZE-1];
+    yrPrev = yr[BLOCK_SIZE-1];
+    yjPrev = yj[BLOCK_SIZE-1];
 }
 
 
@@ -62,10 +62,9 @@ extern "C" {
         //              sinOut/cosOut: sin/cos output of the oscillator
 
         Oscillator_t osc;
-        osc_init(&osc);
-        osc_setF(&osc, f);
+        osc.set_freq(f);
         for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
-            osc_step(&osc, cosOut+i, sinOut+i);
+            osc.step(cosOut+i, sinOut+i);
         }
     }
 }
