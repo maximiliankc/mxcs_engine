@@ -115,9 +115,9 @@ void set_adsr(EnvelopeSettings_t * self) {
 
 #ifdef SYNTH_TEST_
 void test_envelope(const float a, const float d, const float s, const float r,\
-                   const unsigned int presses, unsigned int pressNs[],\
-                   const unsigned int releases, unsigned int releaseNs[],\
-                   const unsigned int n, float envOut[]) {
+                const unsigned int presses, unsigned int pressNs[],\
+                const unsigned int releases, unsigned int releaseNs[],\
+                const unsigned int n, float envOut[]) {
     // parameters:  a: attack time (in samples)
     //              d: decay time (in samples)
     //              s: sustain level (amplitude between 0 and 1)

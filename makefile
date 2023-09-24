@@ -1,5 +1,5 @@
 IDIR = ./include
-CC=gcc
+CC=g++
 CFLAGS=-I$(IDIR) -Werror -Wall -DSYNTH_TEST_
 
 TEST_TARGET=test.so
@@ -18,7 +18,7 @@ all: $(TEST_TARGET)
 $(TEST_TARGET): $(OBJ)
 	$(CC) -o $@ -shared -Wl,-install_name,$@ -fPIC $^ $(CFLAGS)
 
-$(ODIR)/%.o: $(SRCDIR)/%.c $(DEPS)
+$(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:

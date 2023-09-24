@@ -61,10 +61,10 @@ void synth_step(Synth_t * self, float * out) {
 
 #ifdef SYNTH_TEST_
 void test_synth(const float a, const float d, const float s, const float r,\
-                   const float modDepth, const float modFreq,\
-                   const unsigned int presses, unsigned int pressNs[], uint8_t pressNotes[],\
-                   const unsigned int releases, unsigned int releaseNs[], uint8_t releaseNotes[],\
-                   const unsigned int n, float envOut[]) {
+                const float modDepth, const float modFreq,\
+                const unsigned int presses, unsigned int pressNs[], uint8_t pressNotes[],\
+                const unsigned int releases, unsigned int releaseNs[], uint8_t releaseNotes[],\
+                const unsigned int n, float envOut[]) {
     // parameters:  a: attack time (in samples)
     //              d: decay time (in samples)
     //              s: sustain level (amplitude between 0 and 1)
