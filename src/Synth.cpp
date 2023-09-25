@@ -13,23 +13,22 @@ Synth_t::Synth_t(): voice(&settings) {
     for(uint8_t i = 1; i < NOTES; i++) {
         frequencyTable[i] = SEMITONE*(frequencyTable[i-1]);
     }
-    env_settings_init(&settings);
 }
 
 void Synth_t::set_attack(float a) {
-    env_set_attack(&settings, a);
+    settings.set_attack(a);
 }
 
 void Synth_t::set_decay(float d) {
-    env_set_decay(&settings, d);
+    settings.set_decay(d);
 }
 
 void Synth_t::set_sustain(float s) {
-    env_set_sustain(&settings, s);
+    settings.set_sustain(s);
 }
 
 void Synth_t::set_release(float r) {
-    env_set_release(&settings, r);
+    settings.set_release(r);
 }
 
 void Synth_t::set_mod_f(float freq) {

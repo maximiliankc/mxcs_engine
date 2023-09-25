@@ -55,10 +55,10 @@ extern "C" {
         Voice_t voice(&settings);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
-        env_set_attack(&settings, a);
-        env_set_decay(&settings, d);
-        env_set_sustain(&settings, s);
-        env_set_release(&settings, r);
+        settings.set_attack(a);
+        settings.set_decay(d);
+        settings.set_sustain(s);
+        settings.set_release(r);
         for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 voice.press(f);
