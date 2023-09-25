@@ -6,15 +6,14 @@
 #include "Voice.h"
 #include "Constants.h"
 
-Voice_t::Voice_t(EnvelopeSettings_t * settings) {
-    env_init(&envelope, settings);
+Voice_t::Voice_t(EnvelopeSettings_t * settings): envelope(settings) {
 }
 
 void Voice_t::step(float * out) {
     float cosOut[BLOCK_SIZE];
     float sinOut[BLOCK_SIZE];
 
-    env_step(&envelope, out);
+    envelope.step(out);
     osc.step(cosOut, sinOut);
 
     // apply envelope to sine out
@@ -24,12 +23,12 @@ void Voice_t::step(float * out) {
 }
 
 void Voice_t::press(float f) {
-    env_press(&envelope);
+    envelope.press();
     osc.set_freq(f);
 }
 
 void Voice_t::release() {
-    env_release(&envelope);
+    envelope.release();
 }
 
 

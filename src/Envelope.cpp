@@ -9,14 +9,6 @@
 #define BASE_LEVEL (0.00001)
 #define BASE_LEVEL_DB (100)
 
-typedef void (*run_state_t)(Envelope_t *);
-
-void run_off(Envelope_t * self);
-void run_attack(Envelope_t * self);
-void run_decay(Envelope_t * self);
-void run_sustain(Envelope_t * self);
-void run_release(Envelope_t * self);
-
 EnvelopeSettings_t::EnvelopeSettings_t() {
     a = 0;
     d = 0;
@@ -52,63 +44,56 @@ void EnvelopeSettings_t::set_release(float release) {
     set_adsr();
 }
 
-// the order here needs to be kept in sync with the EnvelopeState_t enum
-const run_state_t run_state[] = {run_off,
-                                 run_attack,
-                                 run_decay,
-                                 run_sustain,
-                                 run_release};
-
-void env_init(Envelope_t * self, EnvelopeSettings_t * settings) {
-    self->state = release;
-    self->amp = 0;
-    self->settings = settings;
+Envelope_t::Envelope_t(EnvelopeSettings_t * _settings) {
+    run_state = &Envelope_t::run_off;
+    amp = 0;
+    settings = _settings;
 };
 
-void env_step(Envelope_t * self, float * envelope) {
+void Envelope_t::step(float * envelope) {
     for(uint8_t i = 0; i < BLOCK_SIZE; i++) {
-        run_state[self->state](self);
-        envelope[i] = self->amp;
+        (this->*run_state)();
+        envelope[i] = amp;
     };
 }
 
-void env_press(Envelope_t * self) {
-    if (self->amp < BASE_LEVEL) {
-        self->amp = BASE_LEVEL; // -100 dB, and initial value
+void Envelope_t::press() {
+    if (amp < BASE_LEVEL) {
+        amp = BASE_LEVEL; // -100 dB, and initial value
     }
-    self->state = attack;
+    run_state = &Envelope_t::run_attack;
 }
 
-void env_release(Envelope_t * self) {
-    self->state = release;
+void Envelope_t::release() {
+    run_state = &Envelope_t::run_release;
 }
 
-void run_off(Envelope_t * self) {
-    self->amp = 0;
+void Envelope_t::run_off() {
+    amp = 0;
 }
 
-void run_attack(Envelope_t * self) {
-    self->amp *= self->settings->aIncrement;
-    if (self->amp >= 1.0) {
-        self->amp = 1.0;
-        self->state = decay;
-    }
-}
-
-void run_decay(Envelope_t * self) {
-    self->amp *= self->settings->dIncrement;
-    if (self->amp <= self->settings->sMag) {
-        self->amp = self->settings->sMag;
-        self->state = sustain;
+void Envelope_t::run_attack() {
+    amp *= settings->aIncrement;
+    if (amp >= 1.0) {
+        amp = 1.0;
+        run_state = &Envelope_t::run_decay;
     }
 }
 
-void run_sustain(Envelope_t * self) {
-    self->amp = self->settings->sMag;
+void Envelope_t::run_decay() {
+    amp *= settings->dIncrement;
+    if (amp <= settings->sMag) {
+        amp = settings->sMag;
+        run_state = &Envelope_t::run_sustain;
+    }
 }
 
-void run_release(Envelope_t * self) {
-    self->amp *= self->settings->rIncrement; // linear shift for now
+void Envelope_t::run_sustain() {
+    amp = settings->sMag;
+}
+
+void Envelope_t::run_release() {
+    amp *= settings->rIncrement; // linear shift for now
 }
 
 #ifdef SYNTH_TEST_
@@ -126,27 +111,26 @@ extern "C" {
         //              releaseNs: times at which to release
         //              releaseNs: number of releases
         //              n: number of samples to iterate over.
-        //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
+        //              if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        Envelope_t env;
         EnvelopeSettings_t adsr;
+        Envelope_t env(&adsr);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
-        env_init(&env, &adsr);
         adsr.set_attack(a);
         adsr.set_decay(d);
         adsr.set_sustain(s);
         adsr.set_release(r);
         for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
-                env_press(&env);
+                env.press();
                 pressCount++;
             }
             if(releaseCount < releases && i >= releaseNs[releaseCount]) {
-                env_release(&env);
+                env.release();
                 releaseCount++;
             }
-            env_step(&env, envOut + i);
+            env.step(envOut + i);
         }
     }
 }
