@@ -14,7 +14,6 @@ Synth_t::Synth_t(): voice(&settings) {
         frequencyTable[i] = SEMITONE*(frequencyTable[i-1]);
     }
     env_settings_init(&settings);
-    mod_init(&mod);
 }
 
 void Synth_t::set_attack(float a) {
@@ -55,7 +54,7 @@ void Synth_t::release(uint8_t note) {
 
 void Synth_t::step(float * out) {
     voice.step(out);
-    mod_step(&mod, out);
+    mod.step(out);
 }
 
 #ifdef SYNTH_TEST_
