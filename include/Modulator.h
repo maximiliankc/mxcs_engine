@@ -8,10 +8,11 @@
 
 class Modulator_t {
     public:
-        Oscillator_t lfo;
-        float modRatio;
-        Modulator_t();
-        void step(float * signal);
+    Oscillator_t lfo;
+    float modRatio;
+
+    Modulator_t();
+    void step(float * signal);
 };
 
 #endif // MODULATOR_H_

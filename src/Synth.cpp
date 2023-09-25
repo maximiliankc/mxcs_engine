@@ -6,6 +6,7 @@
 #define SEMITONE (1.0594630943592953)
 #define C_MINUS_1 (8.175798915643707/SAMPLING_FREQUENCY)
 
+
 Synth_t::Synth_t(): voice(&settings) {
     // calculate the frequency table
     currentNote = 0;
@@ -55,6 +56,7 @@ void Synth_t::step(float * out) {
     voice.step(out);
     mod.step(out);
 }
+
 
 #ifdef SYNTH_TEST_
 

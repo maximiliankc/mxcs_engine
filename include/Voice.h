@@ -8,8 +8,9 @@
 #include "Oscillator.h"
 
 class Voice_t {
-        Envelope_t envelope;
-        Oscillator_t osc;
+    Envelope_t envelope;
+    Oscillator_t osc;
+
     public:
     Voice_t(EnvelopeSettings_t * settings);
     void step(float * out);

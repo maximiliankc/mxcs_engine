@@ -9,6 +9,7 @@
 #define BASE_LEVEL (0.00001)
 #define BASE_LEVEL_DB (100)
 
+
 EnvelopeSettings_t::EnvelopeSettings_t() {
     a = 0;
     d = 0;
@@ -95,6 +96,7 @@ void Envelope_t::run_sustain() {
 void Envelope_t::run_release() {
     amp *= settings->rIncrement; // linear shift for now
 }
+
 
 #ifdef SYNTH_TEST_
 extern "C" {

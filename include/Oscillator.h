@@ -6,10 +6,11 @@
 
 // Two channels in and out, only control over phase/magnitude is through starting impulse
 class Oscillator_t {
-        float c;        // cos(theta)
-        float s;        // sin(theta)
-        float yrPrev;   // yr[n-1]
-        float yjPrev;   // yj[n-1]
+    float c;        // cos(theta)
+    float s;        // sin(theta)
+    float yrPrev;   // yr[n-1]
+    float yjPrev;   // yj[n-1]
+
     public:
     Oscillator_t();
     void set_freq(float f);

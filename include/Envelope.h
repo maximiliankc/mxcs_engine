@@ -5,11 +5,14 @@
 #define ENVELOPE_H_
 
 class EnvelopeSettings_t {
-    public:
     float a;
     float d;
     float s;
     float r;
+
+    void set_adsr();
+
+    public:
     float aIncrement;
     float dIncrement;
     float sMag;
@@ -20,9 +23,6 @@ class EnvelopeSettings_t {
     void set_decay(float d);
     void set_sustain(float s);
     void set_release(float r);
-
-    private:
-    void set_adsr();
 };
 
 class Envelope_t {

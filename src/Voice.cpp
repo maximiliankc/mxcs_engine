@@ -6,6 +6,7 @@
 #include "Voice.h"
 #include "Constants.h"
 
+
 Voice_t::Voice_t(EnvelopeSettings_t * settings): envelope(settings) {
 }
 
