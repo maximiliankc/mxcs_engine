@@ -44,8 +44,8 @@ class SynthInterface(VoiceInterface):
         p_notes_p = np.array(p_notes, dtype=np.uint8).ctypes.data_as(p_uint8)
         r_notes_p = np.array(r_notes, dtype=np.uint8).ctypes.data_as(p_uint8)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_synth(ctypes.c_float(self.attack), ctypes.c_float(self.decay),
-                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release),
+        self.testlib.test_synth(ctypes.c_float(self.attack_seconds), ctypes.c_float(self.decay_seconds),
+                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release_seconds),
                                     ctypes.c_float(self.mod_depth), ctypes.c_float(self.mod_freq),
                                     ctypes.c_uint(len(presses)), presses_p, p_notes_p,
                                     ctypes.c_uint(len(releases)), releases_p, r_notes_p,
@@ -86,10 +86,7 @@ class TestSynth(TestVoice, TestModulator, SynthInterface):
     def run_mod(self, freq: float, ratio: float, n_samples: int):
         self.mod_freq = freq
         self.mod_depth = ratio
-        self.attack = 10**-6
-        self.decay = 10**-6
-        self.sustain = 0
-        self.release = 10**-6
+        self.set_adsr(10**-6, 10**-6, 0, 10**-6)
         vector = sig.hilbert(self.run_synth([0], [64], [0], [0], n_samples))
         self.check_abs = True
         return np.abs(vector)

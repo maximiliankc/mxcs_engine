@@ -20,18 +20,18 @@ EnvelopeSettings_t::EnvelopeSettings_t() {
 
 void EnvelopeSettings_t::set_adsr() {
     aIncrement = db2mag(BASE_LEVEL_DB/a);      // a is the number of samples per 100 dB
-    dIncrement = db2mag(s/d);               // d is a number of samples per 100 dB
-    sMag = db2mag(s);                     // s is a level in dBFS
+    dIncrement = db2mag(s/d);                  // d is a number of samples per 100 dB
+    sMag = db2mag(s);                          // s is a level in dBFS
     rIncrement = db2mag(-(BASE_LEVEL_DB+s)/r); // r is a number of samples
 }
 
 void EnvelopeSettings_t::set_attack(float attackTime) {
-    a = attackTime;
+    a = attackTime*SAMPLING_FREQUENCY;
     set_adsr();
 }
 
 void EnvelopeSettings_t::set_decay(float decayTime) {
-    d = decayTime;
+    d = decayTime*SAMPLING_FREQUENCY;
     set_adsr();
 }
 
@@ -41,7 +41,7 @@ void EnvelopeSettings_t::set_sustain(float sustainLevel) {
 }
 
 void EnvelopeSettings_t::set_release(float release) {
-    r = release;
+    r = release*SAMPLING_FREQUENCY;
     set_adsr();
 }
 
