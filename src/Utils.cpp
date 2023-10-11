@@ -3,11 +3,11 @@
 */
 #include <math.h>
 
-#define LOG10 (2.302585092994046)
+const float c_log10 = 2.302585092994046;
 
 
 float db2mag(float x) {
-    return expf(LOG10*x/(20));
+    return expf(c_log10*x/20);
 }
 
 

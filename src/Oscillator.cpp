@@ -42,14 +42,14 @@ void Oscillator_t::step(float * yr, float * yj) {
     yj[0] = scale*yj[0];
 
     // calculate the rest of the block
-    for (uint8_t i = 1; i < BLOCK_SIZE; i++) {
+    for (uint8_t i = 1; i < blockSize; i++) {
         yr[i] = c*yr[i-1] - s*yj[i-1];
         yj[i] = s*yr[i-1] + c*yj[i-1];
     }
 
     // save the last values into the oscillator state
-    yrPrev = yr[BLOCK_SIZE-1];
-    yjPrev = yj[BLOCK_SIZE-1];
+    yrPrev = yr[blockSize-1];
+    yjPrev = yj[blockSize-1];
 }
 
 
@@ -63,7 +63,7 @@ extern "C" {
 
         Oscillator_t osc;
         osc.set_freq(f);
-        for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+        for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             osc.step(cosOut+i, sinOut+i);
         }
     }

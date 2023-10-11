@@ -14,7 +14,7 @@ class Synth_t {
     EnvelopeSettings_t settings;
     Voice_t voice;
     Modulator_t mod;
-    float frequencyTable[NOTES];
+    float frequencyTable[notes];
     uint8_t currentNote;
 
     public:

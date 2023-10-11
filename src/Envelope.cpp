@@ -6,8 +6,8 @@
 #include "Constants.h"
 #include "Utils.h"
 
-#define BASE_LEVEL (0.00001)
-#define BASE_LEVEL_DB (100)
+const float baseLevel = 0.00001;
+const float baseLevelDB = 100;
 
 
 EnvelopeSettings_t::EnvelopeSettings_t() {
@@ -19,19 +19,19 @@ EnvelopeSettings_t::EnvelopeSettings_t() {
 }
 
 void EnvelopeSettings_t::set_adsr() {
-    aIncrement = db2mag(BASE_LEVEL_DB/a);      // a is the number of samples per 100 dB
+    aIncrement = db2mag(baseLevelDB/a);      // a is the number of samples per 100 dB
     dIncrement = db2mag(s/d);                  // d is a number of samples per 100 dB
     sMag = db2mag(s);                          // s is a level in dBFS
-    rIncrement = db2mag(-(BASE_LEVEL_DB+s)/r); // r is a number of samples
+    rIncrement = db2mag(-(baseLevelDB+s)/r); // r is a number of samples
 }
 
 void EnvelopeSettings_t::set_attack(float attackTime) {
-    a = attackTime*SAMPLING_FREQUENCY;
+    a = attackTime*samplingFrequency;
     set_adsr();
 }
 
 void EnvelopeSettings_t::set_decay(float decayTime) {
-    d = decayTime*SAMPLING_FREQUENCY;
+    d = decayTime*samplingFrequency;
     set_adsr();
 }
 
@@ -41,7 +41,7 @@ void EnvelopeSettings_t::set_sustain(float sustainLevel) {
 }
 
 void EnvelopeSettings_t::set_release(float release) {
-    r = release*SAMPLING_FREQUENCY;
+    r = release*samplingFrequency;
     set_adsr();
 }
 
@@ -52,15 +52,15 @@ Envelope_t::Envelope_t(EnvelopeSettings_t * _settings) {
 };
 
 void Envelope_t::step(float * envelope) {
-    for(uint8_t i = 0; i < BLOCK_SIZE; i++) {
+    for(uint8_t i = 0; i < blockSize; i++) {
         (this->*run_state)();
         envelope[i] = amp;
     };
 }
 
 void Envelope_t::press() {
-    if (amp < BASE_LEVEL) {
-        amp = BASE_LEVEL; // -100 dB, and initial value
+    if (amp < baseLevel) {
+        amp = baseLevel; // -100 dB, and initial value
     }
     run_state = &Envelope_t::run_attack;
 }
@@ -123,7 +123,7 @@ extern "C" {
         adsr.set_decay(d);
         adsr.set_sustain(s);
         adsr.set_release(r);
-        for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+        for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 env.press();
                 pressCount++;

@@ -3,16 +3,16 @@
 */
 #include "Synth.h"
 
-#define SEMITONE (1.0594630943592953)
-#define C_MINUS_1 (8.175798915643707/SAMPLING_FREQUENCY)
 
+const float semitone = 1.0594630943592953;
+const float c_minus_1 = 8.175798915643707/samplingFrequency;
 
 Synth_t::Synth_t(): voice(&settings) {
     // calculate the frequency table
     currentNote = 0;
-    frequencyTable[0] = C_MINUS_1;
-    for(uint8_t i = 1; i < NOTES; i++) {
-        frequencyTable[i] = SEMITONE*(frequencyTable[i-1]);
+    frequencyTable[0] = c_minus_1;
+    for(uint8_t i = 1; i < notes; i++) {
+        frequencyTable[i] = semitone*(frequencyTable[i-1]);
     }
 }
 
@@ -33,7 +33,7 @@ void Synth_t::set_release(float r) {
 }
 
 void Synth_t::set_mod_f(float freq) {
-    mod.lfo.set_freq(freq/SAMPLING_FREQUENCY);
+    mod.lfo.set_freq(freq/samplingFrequency);
 }
 
 void Synth_t::set_mod_depth(float depth) {
@@ -93,7 +93,7 @@ extern "C" {
         synth.set_release(r);
         synth.set_mod_depth(modDepth);
         synth.set_mod_f(modFreq);
-        for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+        for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 synth.press(pressNotes[pressCount]);
                 pressCount++;
@@ -109,7 +109,7 @@ extern "C" {
     void test_frequency_table(float freqs[]) {
         // parameters:
         Synth_t synth;
-        for(unsigned int i = 0; i<NOTES; i++) {
+        for(unsigned int i = 0; i<notes; i++) {
             freqs[i] = synth.get_freq_table()[i];
         }
 }

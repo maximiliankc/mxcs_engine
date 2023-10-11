@@ -11,11 +11,11 @@ Modulator_t::Modulator_t() {
 }
 
 void Modulator_t::step(float * signal) {
-    float modCos[BLOCK_SIZE];
-    float modSin[BLOCK_SIZE];
+    float modCos[blockSize];
+    float modSin[blockSize];
 
     lfo.step(modCos, modSin);
-    for (uint8_t i = 0; i < BLOCK_SIZE; i++) {
+    for (uint8_t i = 0; i < blockSize; i++) {
         signal[i] *= modRatio*modCos[i] + 1 - modRatio;
     }
 }
@@ -24,16 +24,16 @@ void Modulator_t::step(float * signal) {
 extern "C" {
     void test_modulator(const float f, const float ratio, const unsigned int n, float * out) {
         Modulator_t modulator;
-        float signal[BLOCK_SIZE];
+        float signal[blockSize];
 
         modulator.modRatio = ratio;
         modulator.lfo.set_freq(f);
-        for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
-            for(unsigned int j = 0; j < BLOCK_SIZE; j++) {
+        for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
+            for(unsigned int j = 0; j < blockSize; j++) {
                 signal[j] = 1;
             }
             modulator.step(signal);
-            for(unsigned int j = 0; j < BLOCK_SIZE; j++) {
+            for(unsigned int j = 0; j < blockSize; j++) {
                 out[i+j] = signal[j];
             }
         }

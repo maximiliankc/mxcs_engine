@@ -11,14 +11,14 @@ Voice_t::Voice_t(EnvelopeSettings_t * settings): envelope(settings) {
 }
 
 void Voice_t::step(float * out) {
-    float cosOut[BLOCK_SIZE];
-    float sinOut[BLOCK_SIZE];
+    float cosOut[blockSize];
+    float sinOut[blockSize];
 
     envelope.step(out);
     osc.step(cosOut, sinOut);
 
     // apply envelope to sine out
-    for (uint8_t i=0; i < BLOCK_SIZE; i++) {
+    for (uint8_t i=0; i < blockSize; i++) {
         out[i] *= sinOut[i];
     }
 }
@@ -59,7 +59,7 @@ extern "C" {
         settings.set_decay(d);
         settings.set_sustain(s);
         settings.set_release(r);
-        for(unsigned int i=0; i+BLOCK_SIZE <= n; i+= BLOCK_SIZE) {
+        for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 voice.press(f);
                 pressCount++;
