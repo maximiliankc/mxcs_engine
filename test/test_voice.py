@@ -33,8 +33,8 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_voice(ctypes.c_float(self.attack), ctypes.c_float(self.decay),
-                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release),
+        self.testlib.test_voice(ctypes.c_float(self.attack_seconds), ctypes.c_float(self.decay_seconds),
+                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release_seconds),
                                     ctypes.c_float(self.freq),
                                     ctypes.c_uint(len(presses)), presses_p,
                                     ctypes.c_uint(len(releases)), releases_p,

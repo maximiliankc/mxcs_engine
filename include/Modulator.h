@@ -6,12 +6,13 @@
 
 #include "Oscillator.h"
 
-typedef struct Modulator_t {
+class Modulator_t {
+    public:
     Oscillator_t lfo;
     float modRatio;
-} Modulator_t;
 
-void mod_init(Modulator_t * self);
-void mod_step(Modulator_t * self, float * signal);
+    Modulator_t();
+    void step(float * signal);
+};
 
 #endif // MODULATOR_H_
