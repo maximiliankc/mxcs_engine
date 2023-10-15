@@ -11,9 +11,12 @@ class EnvelopeInterface:
     ''' ctypes wrapper around test function and tools for interacting with it '''
     base = 100
     attack = 0
+    attack_seconds = 0
     decay = 0
+    decay_seconds = 0
     sustain = 0
     release = 0
+    release_seconds = 0
     testlib = ctypes.CDLL('test.so')
 
     def __init__(self):
@@ -34,8 +37,8 @@ class EnvelopeInterface:
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_envelope(ctypes.c_float(self.attack), ctypes.c_float(self.decay),
-                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release),
+        self.testlib.test_envelope(ctypes.c_float(self.attack_seconds), ctypes.c_float(self.decay_seconds),
+                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release_seconds),
                                     ctypes.c_uint(len(presses)), presses_p,
                                     ctypes.c_uint(len(releases)), releases_p,
                                     ctypes.c_uint(len(out)), out_p)
@@ -47,6 +50,9 @@ class EnvelopeInterface:
         self.decay = decay*sampling_frequency
         self.sustain = sustain
         self.release = release*sampling_frequency
+        self.attack_seconds = attack
+        self.decay_seconds = decay
+        self.release_seconds = release
 
     def calculate_gradients(self):
         ''' Calculate gradients from adsr values '''

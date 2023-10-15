@@ -1,13 +1,13 @@
 IDIR = ./include
-CC=gcc
+CC=g++
 CFLAGS=-I$(IDIR) -Werror -Wall -DSYNTH_TEST_
 
 TEST_TARGET=test.so
 
-_OBJ = Blit.o Envelope.o Oscillator.o Synth.o Voice.o Utils.o
+_OBJ = Blit.o Envelope.o Modulator.o Oscillator.o Synth.o Voice.o Utils.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-_DEPS = Blit.h Constants.h Envelope.h Oscillator.h Synth.h Voice.h Utils.h
+_DEPS = Blit.h Constants.h Envelope.h Modulator.h Oscillator.h Synth.h Voice.h Utils.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 ODIR=obj
@@ -18,7 +18,7 @@ all: $(TEST_TARGET)
 $(TEST_TARGET): $(OBJ)
 	$(CC) -o $@ -shared -Wl,-install_name,$@ -fPIC $^ $(CFLAGS)
 
-$(ODIR)/%.o: $(SRCDIR)/%.c $(DEPS)
+$(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:

@@ -5,20 +5,33 @@
 #define SYNTH_H_
 
 #include <stdint.h>
-#include "Voice.h"
 #include "Constants.h"
+#include "Voice.h"
+#include "Modulator.h"
 
 // Defining a monophonic synth for now
-typedef struct Synth_t {
+class Synth_t {
+    EnvelopeSettings_t settings;
     Voice_t voice;
-    float frequencyTable[NOTES];
+    Modulator_t mod;
+    float frequencyTable[notes];
     uint8_t currentNote;
-} Synth_t;
 
-void synth_init(Synth_t * self);
-void synth_set_adsr(Synth_t * self, float a, float d, float s, float r);
-void synth_press(Synth_t * self, uint8_t note);
-void synth_release(Synth_t * self, uint8_t note);
-void synth_step(Synth_t * self, float * out);
+    public:
+    Synth_t();
+    void set_attack(float a);
+    void set_decay(float d);
+    void set_sustain(float s);
+    void set_release(float r);
+    void set_mod_f(float freq);
+    void set_mod_depth(float depth);
+    void press(uint8_t note);
+    void release(uint8_t note);
+    void step(float * out);
+
+    #ifdef SYNTH_TEST_
+    float * get_freq_table();
+    #endif
+};
 
 #endif // SYNTH_H_

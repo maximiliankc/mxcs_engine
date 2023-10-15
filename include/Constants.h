@@ -4,9 +4,10 @@
 
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
+#include <stdint.h>
 
-#define BLOCK_SIZE (128)
-#define NOTES (128)
-#define SAMPLING_FREQUENCY (44100)
+const uint8_t blockSize = 128;
+const uint8_t notes = 128;
+const float samplingFrequency = 44100;
 
 #endif // CONSTANTS_H

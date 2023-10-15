@@ -26,15 +26,15 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, float_pointer]
 
-    def run_voice(self, presses: list, releases: list, n_samples: int) -> np.ndarray:
+    def run_voice_module(self, presses: list, releases: list, n_samples: int) -> np.ndarray:
         ''' Run the Voice. Output is a float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         out = np.zeros(n_samples, dtype=np.single)
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_voice(ctypes.c_float(self.attack), ctypes.c_float(self.decay),
-                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release),
+        self.testlib.test_voice(ctypes.c_float(self.attack_seconds), ctypes.c_float(self.decay_seconds),
+                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release_seconds),
                                     ctypes.c_float(self.freq),
                                     ctypes.c_uint(len(presses)), presses_p,
                                     ctypes.c_uint(len(releases)), releases_p,
@@ -58,9 +58,9 @@ class TestVoice(unittest.TestCase, VoiceInterface):
         self.freq = freq/sampling_frequency
         self.f_expected = freq
 
-    def run_self(self, presses: list, releases: list, n_samples: int):
+    def run_voice(self, presses: list, releases: list, n_samples: int):
         ''' Run the implementation for the test '''
-        return self.run_voice(presses, releases, n_samples)
+        return self.run_voice_module(presses, releases, n_samples)
 
     def test_envelope(self):
         ''' Check that the envelope is being applied '''
@@ -74,7 +74,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                 self.set_adsr(attack, decay, sustain, release)
                 press_time = int(0.1*sampling_frequency)
                 release_time = int(0.4*sampling_frequency)
-                voice_vector = np.abs(sig.hilbert(self.run_self([press_time], [release_time], n_samples)))
+                voice_vector = np.abs(sig.hilbert(self.run_voice([press_time], [release_time], n_samples)))
                 env_vector = self.run_env([press_time], [release_time], n_samples)
                 rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
                 if self.debug:
@@ -107,7 +107,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
             with self.subTest(f'{freq}'):
                 press_time = 0
                 release_time = int(n_samples)
-                vector = self.run_self([press_time], [release_time], n_samples)
+                vector = self.run_voice([press_time], [release_time], n_samples)
                 f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/n_samples)[:n_samples//2]
                 pkidx = np.argmax(f_vector)
                 freqs = sampling_frequency*np.fft.fftfreq(n_samples)[:n_samples//2]
