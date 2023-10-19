@@ -52,6 +52,10 @@ extern "C" {
             msinc(&out[i], lfCos, lfSin, hfCos, hfSin, M);
         }
     }
+
+    float test_blit_m(float f) {
+        return blit_m(f);
+    }
 }
 
 #endif

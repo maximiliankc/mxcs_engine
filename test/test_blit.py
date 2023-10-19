@@ -13,29 +13,25 @@ class BlitInterface:
 
     def __init__(self):
         ''' Load in the test object file and define the function '''
-        self.float_pointer = ctypes.POINTER(ctypes.c_float)
-        self.testlib.blit_m.argtypes = [ctypes.c_float]
-        self.testlib.blit_m.restype = ctypes.c_float
-        self.testlib.test_blit.argtypes = [self.float_pointer, ctypes.c_float, ctypes.c_int]
+        float_pointer = ctypes.POINTER(ctypes.c_float)
+        self.testlib.test_blit_m.argtypes = [ctypes.c_float]
+        self.testlib.test_blit_m.restype = ctypes.c_float
+        self.testlib.test_blit.argtypes = [float_pointer, ctypes.c_float, ctypes.c_int]
 
     def run_blit(self, freq: float, num_samples: int) -> np.ndarray:
         ''' wrapper around msinc function, generates its own co/sines '''
         out = np.zeros(num_samples, dtype=np.single)
-        p_out = out.ctypes.data_as(self.float_pointer)
-        self.testlib.test_blit(p_out, freq/sampling_frequency, len(out))
+        p_out = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        self.testlib.test_blit(p_out, ctypes.c_float(freq/sampling_frequency), len(out))
         return out
 
     def run_blit_m(self, freqs: list) -> list:
         ''' Wrapper around msinc function '''
-        return [self.testlib.blit_m(f/sampling_frequency) for f in freqs]
+        return [self.testlib.test_blit_m(ctypes.c_float(f/sampling_frequency)) for f in freqs]
 
 
 class TestBlit(unittest.TestCase, BlitInterface):
     debug = False
-
-    def __init__(self):
-        BlitInterface.__init__(self)
-        unittest.TestCase.__init__(self)
 
     def test_blit_m(self):
         freqs = np.arange(10, 16000, 10)
