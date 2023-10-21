@@ -4,6 +4,7 @@ import ctypes
 import unittest
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.signal as sig
 
 from .constants import sampling_frequency, block_size
 
@@ -31,9 +32,11 @@ class BlitInterface:
 
 
 class TestBlit(unittest.TestCase, BlitInterface):
+    ''' Test class for BLIT '''
     debug = False
 
     def test_blit_m(self):
+        ''' Test m calculation for blit '''
         freqs = np.arange(10, 16000, 10)
         ref_ratio = 2*np.trunc(0.5*sampling_frequency/freqs) + 1
         calc_ratio = self.run_blit_m(freqs)
@@ -42,17 +45,19 @@ class TestBlit(unittest.TestCase, BlitInterface):
 
         if self.debug:
             _, ax1 = plt.subplots()
-            ax1.plot(calc_ratio, label='Calculated')
-            ax1.plot(ref_ratio, ls=':', label='Reference')
+            ax1.plot(freqs, calc_ratio, label='Calculated')
+            ax1.plot(freqs, ref_ratio, ls=':', label='Reference')
             ax1.grid()
             ax1.set_ylabel('Output')
+            ax1.set_xlabel('Frequency')
             ax1.set_title('blit_m')
             ax1.legend()
 
             _, ax2 = plt.subplots()
-            ax2.plot(error)
+            ax2.plot(freqs,error)
             ax2.grid()
-            ax2.set_ylabel('Output')
+            ax2.set_ylabel('Error')
+            ax2.set_xlabel('Frequency')
             ax2.set_title('Error')
 
             plt.show()
@@ -61,16 +66,51 @@ class TestBlit(unittest.TestCase, BlitInterface):
         self.assertLessEqual(np.max(abs(error)), 2)
 
     def test_blit(self):
-        num_samples = 20*block_size
-        freq = 200
-        vector = self.run_blit(freq, num_samples)
-        time = np.arange(num_samples)/sampling_frequency
+        ''' Test blit frequencies'''
+        num_samples = 2**12
+        test_freqs = 440*2**((np.arange(21, 109, 4)-69)/12)
+        for freq in test_freqs:
+            vector = self.run_blit(freq, num_samples)
+            time = np.arange(num_samples)/sampling_frequency
+            fdomain = 20*np.log10(np.abs(np.fft.rfft(vector*sig.windows.hann(num_samples))/(num_samples**0.5)))
+            freqs = np.arange(1+num_samples//2)*sampling_frequency/num_samples
+            peaks, _  = sig.find_peaks(fdomain, height=-40)
+            spacing = np.diff(freqs[peaks])
+            mean_spacing = np.mean(spacing)
 
-        if self.debug:
-            _, ax1 = plt.subplots()
-            ax1.plot(vector)
-            ax1.grid(True)
-            plt.show()
+            if self.debug:
+                _, axt = plt.subplots()
+                axt.plot(time, vector)
+                axt.grid(True)
+                axt.set_xlabel('Time (s)')
+                axt.set_ylabel('Magnitude')
+                axt.set_title(f'BLIT (time domain) ({freq} Hz)')
+
+                _, axf = plt.subplots()
+                axf.plot(freqs, fdomain)
+                axf.scatter(freqs[peaks], fdomain[peaks], c='tab:green', marker='x', label='peaks')
+                axf.grid(True)
+                axf.legend()
+                axf.set_xlabel('Frequency')
+                axf.set_ylabel('Magnitude (dB)')
+                axf.set_title(f'BLIT (frequency domain) ({freq} Hz)')
+
+                _, axh = plt.subplots()
+                axh.hist(spacing)
+                axh.axvline(mean_spacing, c='k', label='Mean Frequency')
+                axh.axvline(freq, c='k',ls=':', label='Target Frequency')
+                axh.set_xlabel('Frequency (Hz)')
+                axh.set_title(f'BLIT Frequency Spacing Histogram ({freq} Hz)')
+                axh.legend()
+                axh.grid(True)
+
+                plt.show()
+            self.assertAlmostEqual(freq, mean_spacing, delta=0.01*freq, msg='BLIT frequency Equal to target')
+
+
+    def test_amplitude(self):
+        ''' Check the amplitude across frequencies '''
+
 
 
 def main():
@@ -79,6 +119,7 @@ def main():
     blit_test.debug = True
     blit_test.test_blit_m()
     blit_test.test_blit()
+    blit_test.test_amplitude()
 
 if __name__=='__main__':
     main()
