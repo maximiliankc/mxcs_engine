@@ -65,7 +65,7 @@ class TestBlit(unittest.TestCase, BlitInterface):
         self.assertEqual(np.median(error), 0)
         self.assertLessEqual(np.max(abs(error)), 2)
 
-    def test_blit(self):
+    def test_blit_freq(self):
         ''' Test blit frequencies'''
         num_samples = 2**12
         test_freqs = 440*2**((np.arange(21, 109, 4)-69)/12)
@@ -108,9 +108,25 @@ class TestBlit(unittest.TestCase, BlitInterface):
             self.assertAlmostEqual(freq, mean_spacing, delta=0.01*freq, msg='BLIT frequency Equal to target')
 
 
-    def test_amplitude(self):
+    def test_blit_amp(self):
         ''' Check the amplitude across frequencies '''
+        def get_mag(frequency: float, num_samples: int)->float:
+            vector = self.run_blit(frequency, num_samples)
+            return np.mean(vector**2)**0.5
 
+        samples = 2**12
+        test_freqs = 440*2**((np.arange(21, 109, 4)-69)/12)
+        amps = np.array([get_mag(f, samples) for f in test_freqs])
+
+        if self.debug:
+            _, ax = plt.subplots()
+            ax.plot(np.log(test_freqs), np.log(amps))
+            ax.plot(np.log(test_freqs), 0.5*np.log(test_freqs))
+            ax.set_xlabel('Frequency')
+            ax.set_ylabel('Amplitude')
+            ax.set_title('Average Amplitude over Frequency Range')
+            ax.grid(True)
+            plt.show()
 
 
 def main():
@@ -118,8 +134,8 @@ def main():
     blit_test = TestBlit()
     blit_test.debug = True
     blit_test.test_blit_m()
-    blit_test.test_blit()
-    blit_test.test_amplitude()
+    blit_test.test_blit_freq()
+    blit_test.test_blit_amp()
 
 if __name__=='__main__':
     main()
