@@ -14,16 +14,18 @@ BlSigGen_t::BlSigGen_t() {
 void BlSigGen_t::set_freq(float freq) {
     int16_t period = (int16_t)(0.5f/freq);
     m = (float)(2*period + 1);
-    hfo.set_freq(m*freq); // have this as f/2
-    lfo.set_freq(freq);
+    lfo.set_freq(freq/2.f);
+    hfo.set_freq(m*freq/2.f); // why f/2?
 }
 
 void BlSigGen_t::step(float * out) {
+    lfo.step(lfCos, lfSin);
+    hfo.step(hfCos, hfSin);
     for(uint8_t i = 0; i<blockSize; i++) {
-        if (lfCos[i] > threshold || lfCos[i] < -threshold) {
-            out[i] = hfCos[i]/(m*lfCos[i]);
-        } else {
+        if (lfSin[i] > threshold || lfSin[i] < -threshold) {
             out[i] = hfSin[i]/lfSin[i];
+        } else {
+            out[i] = hfCos[i]/(m*lfCos[i]);
         }
     }
 }
@@ -42,7 +44,7 @@ extern "C" {
 
         blit.set_freq(f);
         for(unsigned int i = 0; i < samples-blockSize; i+=blockSize) {
-            blit.step(out);
+            blit.step(&out[i]);
         }
     }
 
