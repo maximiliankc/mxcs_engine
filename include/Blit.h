@@ -6,7 +6,22 @@
 
 #include <stdint.h>
 
-void msinc(float * out, float * lfSin, float * lfCos, float * hfSin, float * hfCos, float M);
-float blit_m(float f);
+#include "Constants.h"
+#include "Oscillator.h"
+
+class BlSigGen_t {
+   Oscillator_t lfo;
+   Oscillator_t hfo;
+   float lfSin[blockSize];
+   float hfSin[blockSize];
+   float lfCos[blockSize];
+   float hfCos[blockSize];
+   float m;
+
+   public:
+   BlSigGen_t();
+   void set_freq(float freq);
+   void step(float * out);
+};
 
 #endif // BLIT_H_
