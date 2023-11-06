@@ -12,7 +12,7 @@ BlSigGen_t::BlSigGen_t() {
 }
 
 void BlSigGen_t::set_freq(float freq) {
-    int16_t period = (int16_t)(0.5f/freq);
+    int16_t period = (int16_t)(0.4f/freq);
     m = (float)(2*period + 1);
     lfo.set_freq(freq/2.f);
     hfo.set_freq(m*freq/2.f); // why f/2?

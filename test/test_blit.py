@@ -67,14 +67,15 @@ class TestBlit(unittest.TestCase, BlitInterface):
 
     def test_blit_freq(self):
         ''' Test blit frequencies'''
-        num_samples = 2**12
+        num_samples = 2**14
         test_freqs = 440*2**((np.arange(21, 109, 4)-69)/12)
         for freq in test_freqs:
             vector = self.run_blit(freq, num_samples)
             time = np.arange(num_samples)/sampling_frequency
             fdomain = 20*np.log10(np.abs(np.fft.rfft(vector*sig.windows.hann(num_samples))/(num_samples**0.5)))
             freqs = np.arange(1+num_samples//2)*sampling_frequency/num_samples
-            peaks, _  = sig.find_peaks(fdomain, height=-40)
+            max_mag = np.max(fdomain)
+            peaks, _  = sig.find_peaks(fdomain, height=max_mag-10)
             spacing = np.diff(freqs[peaks])
             mean_spacing = np.mean(spacing)
 
@@ -84,7 +85,7 @@ class TestBlit(unittest.TestCase, BlitInterface):
                 axt.grid(True)
                 axt.set_xlabel('Time (s)')
                 axt.set_ylabel('Magnitude')
-                axt.set_title(f'BLIT (time domain) ({freq} Hz)')
+                axt.set_title(f'BLIT (time domain) ({freq:.2f} Hz)')
 
                 _, axf = plt.subplots()
                 axf.plot(freqs, fdomain)
