@@ -9,7 +9,7 @@
 #include "Constants.h"
 #include "Oscillator.h"
 
-class BlSigGen_t {
+class Blit_t {
    Oscillator_t lfo;
    Oscillator_t hfo;
    float lfSin[blockSize];
@@ -19,7 +19,7 @@ class BlSigGen_t {
    float m;
 
    public:
-   BlSigGen_t();
+   Blit_t();
    void set_freq(float freq);
    void step(float * out);
 };
