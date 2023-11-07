@@ -12,6 +12,7 @@
 // Defining a monophonic synth for now
 class Synth_t {
     EnvelopeSettings_t settings;
+    Generator_t generator;
     Voice_t voice;
     Modulator_t mod;
     float frequencyTable[notes];

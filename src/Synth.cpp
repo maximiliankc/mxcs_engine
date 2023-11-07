@@ -7,13 +7,15 @@
 const float semitone = 1.0594630943592953;
 const float c_minus_1 = 8.175798915643707/samplingFrequency;
 
-Synth_t::Synth_t(): voice(&settings) {
+Synth_t::Synth_t(): voice(&settings, &generator) {
     // calculate the frequency table
     currentNote = 0;
     frequencyTable[0] = c_minus_1;
     for(uint8_t i = 1; i < notes; i++) {
         frequencyTable[i] = semitone*(frequencyTable[i-1]);
     }
+    // configure oscillator type
+    generator = sine;
 }
 
 void Synth_t::set_attack(float a) {

@@ -7,8 +7,8 @@
 #include "Constants.h"
 
 
-Voice_t::Voice_t(EnvelopeSettings_t * settings): envelope(settings) {
-    generator = sine;
+Voice_t::Voice_t(EnvelopeSettings_t * settings, Generator_t * _generator): envelope(settings) {
+    generator = _generator;
 }
 
 void Voice_t::osc_step(float * out) {
@@ -37,7 +37,7 @@ void Voice_t::blit_step(float * out) {
 }
 
 void Voice_t::step(float * out) {
-    switch (generator)
+    switch (*generator)
     {
     case sine:
         osc_step(out);
@@ -80,7 +80,8 @@ extern "C" {
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
         EnvelopeSettings_t settings;
-        Voice_t voice(&settings);
+        Generator_t generator = sine;
+        Voice_t voice(&settings, &generator);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
         settings.set_attack(a);
