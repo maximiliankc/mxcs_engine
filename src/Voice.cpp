@@ -53,6 +53,7 @@ void Voice_t::step(float * out) {
 void Voice_t::press(float f) {
     envelope.press();
     osc.set_freq(f);
+    blitOsc.set_freq(f);
 }
 
 void Voice_t::release() {
