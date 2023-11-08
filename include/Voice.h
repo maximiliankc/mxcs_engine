@@ -9,8 +9,8 @@
 #include "Oscillator.h"
 
 enum Generator_t {
-    sine,
-    blit
+    sine = 0,
+    blit = 1
 };
 
 class Voice_t {

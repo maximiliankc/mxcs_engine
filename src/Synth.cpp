@@ -42,6 +42,10 @@ void Synth_t::set_mod_depth(float depth) {
     mod.modRatio = depth;
 }
 
+void Synth_t::set_generator(Generator_t gen) {
+    generator = gen;
+}
+
 void Synth_t::press(uint8_t note) {
     float f = frequencyTable[note];
     voice.press(f);
@@ -68,7 +72,7 @@ float * Synth_t::get_freq_table() {
 
 extern "C" {
     void test_synth(const float a, const float d, const float s, const float r,\
-                    const float modDepth, const float modFreq,\
+                    const float modDepth, const float modFreq, const unsigned int gen,\
                     const unsigned int presses, unsigned int pressNs[], uint8_t pressNotes[],\
                     const unsigned int releases, unsigned int releaseNs[], uint8_t releaseNotes[],\
                     const unsigned int n, float envOut[]) {
@@ -95,6 +99,7 @@ extern "C" {
         synth.set_release(r);
         synth.set_mod_depth(modDepth);
         synth.set_mod_f(modFreq);
+        synth.set_generator((Generator_t)gen);
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 synth.press(pressNotes[pressCount]);
