@@ -22,10 +22,10 @@ void Blit_t::step(float * out) {
     lfo.step(lfCos, lfSin);
     hfo.step(hfCos, hfSin);
     for(uint8_t i = 0; i<blockSize; i++) {
-        if (lfSin[i] > threshold || lfSin[i] < -threshold) {
-            out[i] = hfSin[i]/lfSin[i];
+        if (m*lfSin[i] > threshold || m*lfSin[i] < -threshold) {
+            out[i] = hfSin[i]/(m*lfSin[i]);
         } else {
-            out[i] = hfCos[i]/(m*lfCos[i]);
+            out[i] = hfCos[i]/(lfCos[i]);
         }
     }
 }
