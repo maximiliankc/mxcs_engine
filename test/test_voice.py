@@ -107,7 +107,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
         ''' Check the frequency of the voice '''
         n_samples = self.calculate_length(self.freq_precision)
         self.set_adsr(0.001, 0.01, 1, 0.01)
-        for gen in ['sine', 'blit', 'bpblit']:
+        for gen in ['sine', 'blit', 'bp_blit']:
             self.generator = gen
             for freq in self.test_notes:
                 self.set_f(freq)
@@ -117,7 +117,7 @@ class TestVoice(unittest.TestCase, VoiceInterface):
                     vector = self.run_voice([press_time], [release_time], n_samples)
                     f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/n_samples)[:n_samples//2]
                     max_mag = np.max(f_vector)
-                    peaks, _  = sig.find_peaks(f_vector, height=max_mag-60)
+                    peaks, _  = sig.find_peaks(f_vector, height=max_mag-30)
                     pkidx = peaks[0]
                     freqs = sampling_frequency*np.fft.fftfreq(n_samples)[:n_samples//2]
                     f_measured = freqs[pkidx]
