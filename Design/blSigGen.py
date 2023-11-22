@@ -13,13 +13,13 @@ threshold = 2**-32
 
 def msinc(n: np.ndarray, f: float, M: int)->(np.ndarray,np.ndarray):
     ''' Calculates the periodic sinc function'''
-    top = np.exp(1j*np.pi*M*f*n*1.00001)
+    top = np.exp(1j*np.pi*M*f*n)
     bottom = np.exp(1j*np.pi*f*n)
     top_phase = np.angle(top)
     bottom_phase = np.angle(bottom)
     phase_error = M*bottom_phase - top_phase
 
-    # phase_error = phase_error % 2*np.pi
+    phase_error = phase_error % 2*np.pi
     y = np.real(np.empty_like(top))
     smallbottom = (np.imag(bottom)<threshold/M)*(np.imag(bottom)>-threshold/M)
     ysin = np.imag(top)/(M*np.imag(bottom))
@@ -37,7 +37,7 @@ def blit(n: np.ndarray, f: float)->(np.ndarray,np.ndarray):
 def bpblit(n: np.ndarray, f:float)->(np.ndarray,np.ndarray):
     ''' Bi-polar Band Limited Impulse Train'''
     f = 2*f
-    M = 2*math.trunc(0.5/f)
+    M = 2*math.trunc(0.4/f)
     y, phase_error = msinc(n, f, M)
     return y, phase_error
 
@@ -61,7 +61,7 @@ def blTriangle(n: np.ndarray, f: float)->(np.ndarray,np.ndarray):
 
 def leakyIntegrator(x: np.ndarray, r:float=0.999)->np.ndarray:
     ''' A leaky integrator combined with a low pass filter,
-     r controls the radius of the zeros, r closer to one will
+     r controls the radius of the poles, r closer to one will
      lower the cutoff frequency, but increase the size and duration
       of initial transients '''
     b = [1, -1]
@@ -70,7 +70,7 @@ def leakyIntegrator(x: np.ndarray, r:float=0.999)->np.ndarray:
     return y
 
 def main():
-    N = 2**14
+    N = 2**16
     n = np.arange(N)
     fs = 44100
 
@@ -82,10 +82,10 @@ def main():
         _, fAx = plt.subplots()
 
         combos = [('blit', blit),
-                  ('bpblit', bpblit),
-                  ('Sawtooth', blSawtooth),
-                  ('Triangle', blTriangle),
-                  ('Square', blSquare),
+                #   ('bpblit', bpblit),
+                #   ('Sawtooth', blSawtooth),
+                #   ('Triangle', blTriangle),
+                #   ('Square', blSquare),
                  ]
 
         for (leg, generator) in combos:
@@ -114,6 +114,9 @@ def main():
             tAx.set_title(f'frequency = {f} Hz, time domain')
             eAx.set_title(f'frequency = {f} Hz, phase error')
             fAx.set_title(f'frequency = {f} Hz, freq domain')
+
+            dc = np.abs(Y[0])/(N**0.5)
+            print(f'dc at {f} Hz = {dc} (freq), = {np.mean(y)} (time)')
 
         plt.show()
 

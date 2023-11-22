@@ -11,42 +11,24 @@ Voice_t::Voice_t(EnvelopeSettings_t * settings, Generator_t * _generator): envel
     generator = _generator;
 }
 
-void Voice_t::osc_step(float * out) {
-    float cosOut[blockSize];
-    float sinOut[blockSize];
-
-    osc.step(cosOut, sinOut);
-    envelope.step(out);
-
-    // apply envelope to sine out
-    for (uint8_t i=0; i < blockSize; i++) {
-        out[i] *= sinOut[i];
-    }
-}
-
-void Voice_t::blit_step(float * out) {
-    float blitOut[blockSize];
-
-    blitOsc.step(blitOut);
-    envelope.step(out);
-
-    // apply envelope to sine out
-    for (uint8_t i=0; i < blockSize; i++) {
-        out[i] *= blitOut[i];
-    }
-}
-
 void Voice_t::step(float * out) {
+    float envOut[blockSize];
+
     switch (*generator)
     {
     case sine:
-        osc_step(out);
+        osc.step(out);
         break;
 
     case blit:
-        blit_step(out);
+        blitOsc.step(out);
         break;
+    }
+    envelope.step(envOut);
 
+    // apply envelope to osc out
+    for (uint8_t i=0; i < blockSize; i++) {
+        out[i] *= envOut[i];
     }
 }
 
