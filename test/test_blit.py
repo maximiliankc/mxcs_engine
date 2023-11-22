@@ -75,7 +75,7 @@ class TestBlit(unittest.TestCase, BlitInterface):
             fdomain = 20*np.log10(np.abs(np.fft.rfft(vector*sig.windows.hann(num_samples))/(num_samples**0.5)))
             freqs = np.arange(1+num_samples//2)*sampling_frequency/num_samples
             max_mag = np.max(fdomain)
-            peaks, _  = sig.find_peaks(fdomain, height=max_mag-10)
+            peaks, _  = sig.find_peaks(fdomain, height=max_mag-60)
             spacing = np.diff(freqs[peaks])
             mean_spacing = np.mean(spacing)
 
@@ -88,8 +88,8 @@ class TestBlit(unittest.TestCase, BlitInterface):
                 axt.set_title(f'BLIT (time domain) ({freq:.2f} Hz)')
 
                 _, axf = plt.subplots()
-                axf.plot(freqs, fdomain)
-                axf.scatter(freqs[peaks], fdomain[peaks], c='tab:green', marker='x', label='peaks')
+                axf.plot(freqs, fdomain-max_mag)
+                axf.scatter(freqs[peaks], fdomain[peaks]-max_mag, c='tab:green', marker='x', label='peaks')
                 axf.grid(True)
                 axf.legend()
                 axf.set_xlabel('Frequency')

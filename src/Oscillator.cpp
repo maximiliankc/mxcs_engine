@@ -20,6 +20,17 @@ void Oscillator_t::set_freq(float f) {
     s = sinf(2*M_PI*f);
 }
 
+float Oscillator_t::get_phase() {
+    return atan2f(yjPrev, yrPrev);
+}
+
+void Oscillator_t::adjust_phase(float phase) {
+    float real = cosf(phase);
+    float imag = sinf(phase);
+    yrPrev = real*yrPrev - imag*yjPrev;
+    yjPrev = imag*yrPrev + real*yjPrev;
+}
+
 void Oscillator_t::step(float * yr, float * yj) {
     // thinking of it as a complex exponential
     // y[n] = e^(j*theta)*y[n-1]

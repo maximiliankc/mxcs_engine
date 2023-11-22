@@ -5,7 +5,8 @@
 #include "Blit.h"
 #include "Constants.h"
 
-const float threshold = 1e-6f; // TODO figure out the best threshold
+
+const float threshold = 0.01; // Could be further refined
 
 Blit_t::Blit_t() {
     m = 0;
@@ -21,13 +22,27 @@ void Blit_t::set_freq(float freq) {
 void Blit_t::step(float * out) {
     lfo.step(lfCos, lfSin);
     hfo.step(hfCos, hfSin);
+    // calculate msinc
     for(uint8_t i = 0; i<blockSize; i++) {
-        if (m*lfSin[i] > threshold || m*lfSin[i] < -threshold) {
+        if (m*m*lfSin[i]*lfSin[i] > threshold) {
             out[i] = hfSin[i]/(m*lfSin[i]);
         } else {
             out[i] = hfCos[i]/(lfCos[i]);
+            // printf("%g over %g \n", out[i], hfSin[i]/(m*lfSin[i]));
         }
+        if (out[i] > 1) {
+            // printf("Bottom: %g", m*m*lfSin[i]*lfSin[i]);
+            // printf("  Sin: %g", hfSin[i]/(m*lfSin[i]));
+            // printf("  Cos: %g\n", hfCos[i]/(lfCos[i]));
+            // printf("Sin Bottom: %g\n", lfSin[i]);
+        }
+
     }
+    // PLL, needed to keep low/high frequencies in sync
+    // might be better to adjust frequency instead of phase!
+    // but this seems to work well enough
+    float phase_error = m*lfo.get_phase() - hfo.get_phase();
+    hfo.adjust_phase(phase_error);
 }
 
 float blit_m(float f) {
