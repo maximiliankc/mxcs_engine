@@ -63,6 +63,12 @@ void Oscillator_t::step(float * yr, float * yj) {
     yjPrev = yj[blockSize-1];
 }
 
+void Oscillator_t::step(float * out) {
+    // step function but only with the imaginary (sine) output
+    float cosOut[blockSize];
+    step(cosOut, out);
+}
+
 
 #ifdef SYNTH_TEST_
 extern "C" {

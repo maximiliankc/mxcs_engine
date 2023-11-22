@@ -17,6 +17,7 @@ class Oscillator_t {
     float get_phase();
     void adjust_phase(float phase);
     void step(float * cosOut, float * sinOut);
+    void step(float * out);
 };
 
 #endif
