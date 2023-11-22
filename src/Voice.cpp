@@ -7,7 +7,7 @@
 #include "Constants.h"
 
 
-Voice_t::Voice_t(EnvelopeSettings_t * settings, Generator_t * _generator): envelope(settings) {
+Voice_t::Voice_t(EnvelopeSettings_t * settings, Generator_e * _generator): envelope(settings) {
     generator = _generator;
 }
 
@@ -62,7 +62,7 @@ extern "C" {
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
         EnvelopeSettings_t settings;
-        Generator_t generator = sine;
+        Generator_e generator = sine;
         Voice_t voice(&settings, &generator);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;

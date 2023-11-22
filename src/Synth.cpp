@@ -42,7 +42,7 @@ void Synth_t::set_mod_depth(float depth) {
     mod.modRatio = depth;
 }
 
-void Synth_t::set_generator(Generator_t gen) {
+void Synth_t::set_generator(Generator_e gen) {
     generator = gen;
 }
 
@@ -99,7 +99,7 @@ extern "C" {
         synth.set_release(r);
         synth.set_mod_depth(modDepth);
         synth.set_mod_f(modFreq);
-        synth.set_generator((Generator_t)gen);
+        synth.set_generator((Generator_e)gen);
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 synth.press(pressNotes[pressCount]);
