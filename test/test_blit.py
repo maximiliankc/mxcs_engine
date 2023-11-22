@@ -20,10 +20,17 @@ class BlitInterface:
         self.testlib.test_blit.argtypes = [float_pointer, ctypes.c_float, ctypes.c_int]
 
     def run_blit(self, freq: float, num_samples: int) -> np.ndarray:
-        ''' wrapper around msinc function, generates its own co/sines '''
+        ''' wrapper around blit test function, generates its own co/sines '''
         out = np.zeros(num_samples, dtype=np.single)
         p_out = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         self.testlib.test_blit(p_out, ctypes.c_float(freq/sampling_frequency), len(out))
+        return out
+
+    def run_bp_blit(self, freq: float, num_samples: int) -> np.ndarray:
+        ''' wrapper around bpblit test function, generates its own co/sines '''
+        out = np.zeros(num_samples, dtype=np.single)
+        p_out = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        self.testlib.test_bp_blit(p_out, ctypes.c_float(freq/sampling_frequency), len(out))
         return out
 
     def run_blit_m(self, freqs: list) -> list:
@@ -38,7 +45,7 @@ class TestBlit(unittest.TestCase, BlitInterface):
     def test_blit_m(self):
         ''' Test m calculation for blit '''
         freqs = np.arange(10, 16000, 10)
-        ref_ratio = 2*np.trunc(0.5*sampling_frequency/freqs) + 1
+        ref_ratio = 2*np.trunc(0.4*sampling_frequency/freqs) + 1
         calc_ratio = self.run_blit_m(freqs)
 
         error = ref_ratio-calc_ratio
@@ -69,44 +76,48 @@ class TestBlit(unittest.TestCase, BlitInterface):
         ''' Test blit frequencies'''
         num_samples = 2**14
         test_freqs = 440*2**((np.arange(21, 109, 4)-69)/12)
-        for freq in test_freqs:
-            vector = self.run_blit(freq, num_samples)
-            time = np.arange(num_samples)/sampling_frequency
-            fdomain = 20*np.log10(np.abs(np.fft.rfft(vector*sig.windows.hann(num_samples))/(num_samples**0.5)))
-            freqs = np.arange(1+num_samples//2)*sampling_frequency/num_samples
-            max_mag = np.max(fdomain)
-            peaks, _  = sig.find_peaks(fdomain, height=max_mag-60)
-            spacing = np.diff(freqs[peaks])
-            mean_spacing = np.mean(spacing)
+        # [(self.run_blit, 1),
+        for gen, ratio in [(self.run_bp_blit, 2)]:
+            for freq in test_freqs:
+                vector = gen(freq, num_samples)
+                time = np.arange(num_samples)/sampling_frequency
+                fdomain = 20*np.log10(np.abs(np.fft.rfft(vector*sig.windows.hann(num_samples))/(num_samples**0.5)))
+                freqs = np.arange(1+num_samples//2)*sampling_frequency/num_samples
+                max_mag = np.max(fdomain)
+                peaks, _  = sig.find_peaks(fdomain, height=max_mag-60)
+                spacing = np.diff(freqs[peaks])
+                mean_spacing = np.mean(spacing)
 
-            if self.debug:
-                _, axt = plt.subplots()
-                axt.plot(time, vector)
-                axt.grid(True)
-                axt.set_xlabel('Time (s)')
-                axt.set_ylabel('Magnitude')
-                axt.set_title(f'BLIT (time domain) ({freq:.2f} Hz)')
+                if self.debug:
+                    _, axt = plt.subplots()
+                    axt.plot(time, vector)
+                    axt.grid(True)
+                    axt.set_xlabel('Time (s)')
+                    axt.set_ylabel('Magnitude')
+                    axt.set_title(f'BLIT (time domain) ({freq:.2f} Hz)')
 
-                _, axf = plt.subplots()
-                axf.plot(freqs, fdomain-max_mag)
-                axf.scatter(freqs[peaks], fdomain[peaks]-max_mag, c='tab:green', marker='x', label='peaks')
-                axf.grid(True)
-                axf.legend()
-                axf.set_xlabel('Frequency')
-                axf.set_ylabel('Magnitude (dB)')
-                axf.set_title(f'BLIT (frequency domain) ({freq} Hz)')
+                    _, axf = plt.subplots()
+                    axf.plot(freqs, fdomain-max_mag)
+                    axf.scatter(freqs[peaks], fdomain[peaks]-max_mag, c='tab:green', marker='x', label='peaks')
+                    axf.grid(True)
+                    axf.legend()
+                    axf.set_xlabel('Frequency')
+                    axf.set_ylabel('Magnitude (dB)')
+                    axf.set_title(f'BLIT (frequency domain) ({freq} Hz)')
 
-                _, axh = plt.subplots()
-                axh.hist(spacing)
-                axh.axvline(mean_spacing, c='k', label='Mean Frequency')
-                axh.axvline(freq, c='k',ls=':', label='Target Frequency')
-                axh.set_xlabel('Frequency (Hz)')
-                axh.set_title(f'BLIT Frequency Spacing Histogram ({freq} Hz)')
-                axh.legend()
-                axh.grid(True)
+                    _, axh = plt.subplots()
+                    axh.hist(spacing)
+                    axh.axvline(mean_spacing, c='k', label='Mean Frequency')
+                    axh.axvline(ratio*freq, c='k',ls=':', label='Target Frequency')
+                    axh.set_xlabel('Frequency (Hz)')
+                    axh.set_title(f'BLIT Frequency Spacing Histogram ({freq} Hz)')
+                    axh.legend()
+                    axh.grid(True)
 
-                plt.show()
-            self.assertAlmostEqual(freq, mean_spacing, delta=0.01*freq, msg='BLIT frequency Equal to target')
+                    plt.show()
+                resolution = sampling_frequency/num_samples
+                self.assertAlmostEqual(freq, freqs[peaks[0]], delta=resolution, msg='BLIT fundamental frequency')
+                self.assertAlmostEqual(ratio*freq, mean_spacing, delta=0.01*freq, msg='BLIT harmonic spacing equal to target')
 
 
     def test_blit_amp(self):

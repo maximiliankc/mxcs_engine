@@ -8,13 +8,14 @@
 
 const float threshold = 0.01; // Could be further refined
 
+float blit_m(float f);
+
 Blit_t::Blit_t() {
     m = 0;
 }
 
 void Blit_t::set_freq(float freq) {
-    int16_t period = (int16_t)(0.4f/freq);
-    m = (float)(2*period + 1);
+    m = blit_m(freq);
     lfo.set_freq(freq/2.f);
     hfo.set_freq(m*freq/2.f); // why f/2?
 }
@@ -28,15 +29,7 @@ void Blit_t::step(float * out) {
             out[i] = hfSin[i]/(m*lfSin[i]);
         } else {
             out[i] = hfCos[i]/(lfCos[i]);
-            // printf("%g over %g \n", out[i], hfSin[i]/(m*lfSin[i]));
         }
-        if (out[i] > 1) {
-            // printf("Bottom: %g", m*m*lfSin[i]*lfSin[i]);
-            // printf("  Sin: %g", hfSin[i]/(m*lfSin[i]));
-            // printf("  Cos: %g\n", hfCos[i]/(lfCos[i]));
-            // printf("Sin Bottom: %g\n", lfSin[i]);
-        }
-
     }
     // PLL, needed to keep low/high frequencies in sync
     // might be better to adjust frequency instead of phase!
@@ -45,8 +38,14 @@ void Blit_t::step(float * out) {
     hfo.adjust_phase(phase_error);
 }
 
+void BpBlit_t::set_freq(float freq) {
+    m = blit_m(2*freq) - 1;
+    lfo.set_freq(freq);
+    hfo.set_freq(m*freq);
+}
+
 float blit_m(float f) {
-    int16_t period = (int16_t)(0.5f/f);
+    int16_t period = (int16_t)(0.4f/f);
     period = 2*period + 1;
     return (float)period;
 }
@@ -60,6 +59,15 @@ extern "C" {
         blit.set_freq(f);
         for(unsigned int i = 0; i < samples-blockSize; i+=blockSize) {
             blit.step(&out[i]);
+        }
+    }
+
+    void test_bp_blit(float * out, float f, unsigned int samples) {
+        BpBlit_t bpBlit;
+
+        bpBlit.set_freq(f);
+        for(unsigned int i = 0; i < samples-blockSize; i+=blockSize) {
+            bpBlit.step(&out[i]);
         }
     }
 

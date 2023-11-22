@@ -10,18 +10,25 @@
 #include "Oscillator.h"
 
 class Blit_t {
-   Oscillator_t lfo;
-   Oscillator_t hfo;
    float lfSin[blockSize];
    float hfSin[blockSize];
    float lfCos[blockSize];
    float hfCos[blockSize];
+
+   protected:
+   Oscillator_t lfo;
+   Oscillator_t hfo;
    float m;
 
    public:
    Blit_t();
    void set_freq(float freq);
    void step(float * out);
+};
+
+class BpBlit_t: public Blit_t {
+   public:
+   void set_freq(float freq);
 };
 
 #endif // BLIT_H_
