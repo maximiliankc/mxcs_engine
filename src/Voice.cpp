@@ -23,6 +23,10 @@ void Voice_t::step(float * out) {
     case blit:
         blitOsc.step(out);
         break;
+
+    case bpblit:
+        bpBlitOsc.step(out);
+        break;
     }
     envelope.step(envOut);
 
@@ -36,6 +40,7 @@ void Voice_t::press(float f) {
     envelope.press();
     osc.set_freq(f);
     blitOsc.set_freq(f);
+    bpBlitOsc.set_freq(f);
 }
 
 void Voice_t::release() {
@@ -45,7 +50,8 @@ void Voice_t::release() {
 
 #ifdef SYNTH_TEST_
 extern "C" {
-    void test_voice(const float a, const float d, const float s, const float r, const float f,\
+    void test_voice(const float a, const float d, const float s, const float r,\
+                    const float f, const unsigned int gen,\
                     const unsigned int presses, unsigned int pressNs[],\
                     const unsigned int releases, unsigned int releaseNs[],\
                     const unsigned int n, float envOut[]) {
@@ -62,7 +68,7 @@ extern "C" {
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
         EnvelopeSettings_t settings;
-        Generator_e generator = sine;
+        Generator_e generator = (Generator_e)gen;
         Voice_t voice(&settings, &generator);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;

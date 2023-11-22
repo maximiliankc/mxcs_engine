@@ -7,17 +7,13 @@ import scipy.io.wavfile as wav
 import matplotlib.pyplot as plt
 
 from .constants import sampling_frequency
-from .test_voice import VoiceInterface, TestVoice
+from .test_voice import VoiceInterface, TestVoice, generators
 from .test_modulator import TestModulator
-
-generators = {'sine': 0,
-              'blit': 1}
 
 class SynthInterface(VoiceInterface):
     ''' Interface for the synth '''
     mod_depth = 0
     mod_freq = 0
-    generator = 'sine'
 
     def __init__(self):
         ''' Load in the test object file and define the function '''

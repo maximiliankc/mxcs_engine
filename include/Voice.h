@@ -10,17 +10,16 @@
 
 enum Generator_e {
     sine = 0,
-    blit = 1
+    blit = 1,
+    bpblit = 2
 };
 
 class Voice_t {
     Envelope_t envelope;
     Oscillator_t osc;
     Blit_t blitOsc;
+    BpBlit_t bpBlitOsc;
     Generator_e * generator;
-
-    void osc_step(float * out);
-    void blit_step(float * out);
 
     public:
     Voice_t(EnvelopeSettings_t * settings, Generator_e * generator);
