@@ -21,6 +21,7 @@ void Blit_t::set_freq(float freq) {
     }
     lfo.set_freq(freq/2.f);
     hfo.set_freq(m*freq/2.f); // why f/2?
+    sync_phase();
 }
 
 void Blit_t::step(float * out) {
@@ -34,6 +35,10 @@ void Blit_t::step(float * out) {
             out[i] = hfCos[i]/(lfCos[i]);
         }
     }
+    sync_phase();
+}
+
+void Blit_t::sync_phase(void) {
     // PLL, needed to keep low/high frequencies in sync
     // might be better to adjust frequency instead of phase!
     // but this seems to work well enough
@@ -48,6 +53,7 @@ void BpBlit_t::set_freq(float freq) {
     m = blit_m(2*freq) - 1;
     lfo.set_freq(freq);
     hfo.set_freq(m*freq);
+    sync_phase();
 }
 
 float blit_m(float f) {

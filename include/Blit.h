@@ -19,6 +19,7 @@ class Blit_t {
    Oscillator_t lfo;
    Oscillator_t hfo;
    float m;
+   void sync_phase(void);
 
    public:
    Blit_t();
