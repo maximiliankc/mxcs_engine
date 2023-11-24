@@ -76,8 +76,8 @@ class TestBlit(unittest.TestCase, BlitInterface):
         ''' Test blit frequencies'''
         num_samples = 2**14
         test_freqs = 440*2**((np.arange(21, 109, 4)-69)/12)
-        # [(self.run_blit, 1),
-        for gen, ratio in [(self.run_bp_blit, 2)]:
+        for gen, ratio in [(self.run_blit, 1),
+                           (self.run_bp_blit, 2)]:
             for freq in test_freqs:
                 vector = gen(freq, num_samples)
                 time = np.arange(num_samples)/sampling_frequency

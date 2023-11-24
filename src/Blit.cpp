@@ -16,6 +16,9 @@ Blit_t::Blit_t() {
 
 void Blit_t::set_freq(float freq) {
     m = blit_m(freq);
+    if (freq > 0.4) {
+        freq = 0; // frequencies above 0.4 are unsupproted
+    }
     lfo.set_freq(freq/2.f);
     hfo.set_freq(m*freq/2.f); // why f/2?
 }
@@ -39,6 +42,9 @@ void Blit_t::step(float * out) {
 }
 
 void BpBlit_t::set_freq(float freq) {
+    if (freq > 0.2) {
+        freq = 0; // frequencies above 0.25 aren't supported by bpblit!
+    }
     m = blit_m(2*freq) - 1;
     lfo.set_freq(freq);
     hfo.set_freq(m*freq);
