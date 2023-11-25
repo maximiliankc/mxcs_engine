@@ -49,7 +49,7 @@ Envelope_t::Envelope_t(EnvelopeSettings_t * _settings) {
     run_state = &Envelope_t::run_off;
     amp = 0;
     settings = _settings;
-};
+}
 
 void Envelope_t::step(float * envelope) {
     for(uint8_t i = 0; i < blockSize; i++) {

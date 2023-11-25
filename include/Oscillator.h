@@ -14,7 +14,10 @@ class Oscillator_t {
     public:
     Oscillator_t();
     void set_freq(float f);
+    float get_phase();
+    void adjust_phase(float phase);
     void step(float * cosOut, float * sinOut);
+    void step(float * out);
 };
 
 #endif

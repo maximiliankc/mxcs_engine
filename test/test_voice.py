@@ -10,9 +10,18 @@ from .constants import sampling_frequency
 from .test_envelope import EnvelopeInterface
 from .test_oscillator import OscillatorInterface
 
+generators = {'sine': 0,
+              'blit': 1,
+              'bp_blit': 2}
+
+upper_frequencies = {'sine': 0.5,
+                     'blit': 0.4,
+                     'bp_blit': 0.2}
 
 class VoiceInterface(EnvelopeInterface, OscillatorInterface):
     ''' Interface class for voice module '''
+    generator = 'sine'
+
     def __init__(self):
         ''' Load in the test object file and define the function '''
         super().__init__()
@@ -35,7 +44,7 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
         self.testlib.test_voice(ctypes.c_float(self.attack_seconds), ctypes.c_float(self.decay_seconds),
                                     ctypes.c_float(self.sustain), ctypes.c_float(self.release_seconds),
-                                    ctypes.c_float(self.freq),
+                                    ctypes.c_float(self.freq), ctypes.c_uint(generators[self.generator]),
                                     ctypes.c_uint(len(presses)), presses_p,
                                     ctypes.c_uint(len(releases)), releases_p,
                                     ctypes.c_uint(len(out)), out_p)
@@ -102,35 +111,40 @@ class TestVoice(unittest.TestCase, VoiceInterface):
         ''' Check the frequency of the voice '''
         n_samples = self.calculate_length(self.freq_precision)
         self.set_adsr(0.001, 0.01, 1, 0.01)
-        for freq in self.test_notes:
-            self.set_f(freq)
-            with self.subTest(f'{freq}'):
-                press_time = 0
-                release_time = int(n_samples)
-                vector = self.run_voice([press_time], [release_time], n_samples)
-                f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/n_samples)[:n_samples//2]
-                pkidx = np.argmax(f_vector)
-                freqs = sampling_frequency*np.fft.fftfreq(n_samples)[:n_samples//2]
-                f_measured = freqs[pkidx]
-                if self.debug:
-                    _, ax1 = plt.subplots()
-                    time = np.arange(n_samples)/sampling_frequency
-                    ax1.plot(time, vector)
-                    ax1.grid()
-                    ax1.set_title(f'Output f={self.f_expected:.2f}')
-                    ax1.set_ylabel('Magnitude')
-                    ax1.set_xlabel('Time (s)')
+        for gen in ['sine', 'blit', 'bp_blit']:
+            self.generator = gen
+            for freq in self.test_notes:
+                self.set_f(freq)
+                if self.f_expected < upper_frequencies[gen]*sampling_frequency:
+                    with self.subTest(f'{freq}'):
+                        press_time = 0
+                        release_time = int(n_samples)
+                        vector = self.run_voice([press_time], [release_time], n_samples)
+                        f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/n_samples)[:n_samples//2]
+                        max_mag = np.max(f_vector)
+                        peaks, _  = sig.find_peaks(f_vector, height=max_mag-30)
+                        pkidx = peaks[0]
+                        freqs = sampling_frequency*np.fft.fftfreq(n_samples)[:n_samples//2]
+                        f_measured = freqs[pkidx]
+                        if self.debug:
+                            _, ax1 = plt.subplots()
+                            time = np.arange(n_samples)/sampling_frequency
+                            ax1.plot(time, vector)
+                            ax1.grid()
+                            ax1.set_title(f'Output f={self.f_expected:.2f}')
+                            ax1.set_ylabel('Magnitude')
+                            ax1.set_xlabel('Time (s)')
 
-                    _, ax2 = plt.subplots()
-                    ax2.plot(freqs, f_vector, label='Frequency Response')
-                    ax2.scatter(freqs[pkidx], f_vector[pkidx], label='Peak')
-                    ax2.legend()
-                    ax2.set_xlabel('Frequency (Hz)')
-                    ax2.set_ylabel('Magnitude')
-                    ax2.set_title(f'Target: {self.f_expected:.2f}, Measured: {f_measured:.2f}')
-                    ax2.grid()
-                    plt.show()
-                self.assertAlmostEqual(f_measured, self.f_expected, delta=self.freq_precision)
+                            _, ax2 = plt.subplots()
+                            ax2.plot(freqs, f_vector, label='Frequency Response')
+                            ax2.scatter(freqs[pkidx], f_vector[pkidx], label='Peak')
+                            ax2.legend()
+                            ax2.set_xlabel('Frequency (Hz)')
+                            ax2.set_ylabel('Magnitude')
+                            ax2.set_title(f'Target: {self.f_expected:.2f}, Measured: {f_measured:.2f}')
+                            ax2.grid()
+                            plt.show()
+                        self.assertAlmostEqual(f_measured, self.f_expected, delta=self.freq_precision)
 
 
 def main():
