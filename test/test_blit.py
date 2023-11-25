@@ -6,7 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
 
-from .constants import sampling_frequency, block_size
+from .constants import sampling_frequency
+
+def to_db(vector: np.ndarray) -> np.ndarray:
+    """ Convert data in vector to db """
+    return 20*np.log10(np.abs(vector))
 
 class BlitInterface:
     ''' Interface for BLIT functions '''
@@ -81,7 +85,7 @@ class TestBlit(unittest.TestCase, BlitInterface):
             for freq in test_freqs:
                 vector = gen(freq, num_samples)
                 time = np.arange(num_samples)/sampling_frequency
-                fdomain = 20*np.log10(np.abs(np.fft.rfft(vector*sig.windows.hann(num_samples))/(num_samples**0.5)))
+                fdomain = to_db(np.fft.rfft(vector*sig.windows.hann(num_samples)))
                 freqs = np.arange(1+num_samples//2)*sampling_frequency/num_samples
                 max_mag = np.max(fdomain)
                 peaks, _  = sig.find_peaks(fdomain, height=max_mag-60)
