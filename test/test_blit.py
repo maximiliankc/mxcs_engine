@@ -126,7 +126,6 @@ def main():
     blit_test.debug = True
     blit_test.test_blit_m()
     blit_test.test_blit_freq()
-    blit_test.test_blit_amp()
 
 if __name__=='__main__':
     main()
