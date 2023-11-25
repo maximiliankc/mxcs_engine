@@ -6,7 +6,7 @@
 #include "Constants.h"
 
 
-const float threshold = 0.01; // Could be further refined
+const float threshold = 0.005; // Could be further refined?
 
 float blit_m(float f);
 
@@ -20,7 +20,7 @@ void Blit_t::set_freq(float freq) {
         freq = 0; // frequencies above 0.4 are unsupproted
     }
     lfo.set_freq(freq/2.f);
-    hfo.set_freq(m*freq/2.f); // why f/2?
+    hfo.set_freq(m*freq/2.f);
     sync_phase();
 }
 
@@ -29,9 +29,8 @@ void Blit_t::step(float * out) {
     hfo.step(hfCos, hfSin);
     // calculate msinc
     for(uint8_t i = 0; i<blockSize; i++) {
-        if (m*m*lfSin[i]*lfSin[i] > threshold) {
-            out[i] = hfSin[i]/(m*lfSin[i]);
-        } else {
+        out[i] = hfSin[i]/(m*lfSin[i]);
+        if ((m*m*lfSin[i]*lfSin[i] < threshold) || (out[i]*out[i] > 1)) {
             out[i] = hfCos[i]/(lfCos[i]);
         }
     }
