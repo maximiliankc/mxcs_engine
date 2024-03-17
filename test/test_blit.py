@@ -16,11 +16,10 @@ class BlitInterface:
     ''' Interface for BLIT functions '''
     testlib = ctypes.CDLL('test.so')
 
-    def __init__(self):
+    def setUp(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
-        self.testlib.test_blit_m.argtypes = [ctypes.c_float]
-        self.testlib.test_blit_m.restype = ctypes.c_float
+        self.testlib.test_blit_m.argtypes = [float_pointer, float_pointer, ctypes.c_int]
         self.testlib.test_blit.argtypes = [float_pointer, ctypes.c_float, ctypes.c_int]
 
     def run_blit(self, freq: float, num_samples: int) -> np.ndarray:
@@ -39,7 +38,12 @@ class BlitInterface:
 
     def run_blit_m(self, freqs: list) -> list:
         ''' Wrapper around msinc function '''
-        return [self.testlib.test_blit_m(ctypes.c_float(f/sampling_frequency)) for f in freqs]
+        out = np.zeros(len(freqs), dtype=np.single)
+        p_out = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        freqs_in = np.array(freqs, dtype=np.single)/sampling_frequency
+        p_in = freqs_in.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        self.testlib.test_blit_m(p_out, p_in, len(freqs))
+        return out
 
 
 class TestBlit(unittest.TestCase, BlitInterface):
@@ -127,6 +131,7 @@ class TestBlit(unittest.TestCase, BlitInterface):
 def main():
     ''' For Debugging/Testing '''
     blit_test = TestBlit()
+    blit_test.setUp()
     blit_test.debug = True
     blit_test.test_blit_m()
     blit_test.test_blit_freq()

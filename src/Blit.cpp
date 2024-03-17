@@ -82,8 +82,10 @@ extern "C" {
         }
     }
 
-    float test_blit_m(float f) {
-        return blit_m(f);
+    void test_blit_m(float * m, float * f, unsigned int samples) {
+        for (unsigned int i = 0; i < samples; i++) {
+            m[i] = blit_m(f[i]);
+        }
     }
 }
 
