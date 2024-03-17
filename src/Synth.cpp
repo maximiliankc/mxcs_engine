@@ -82,11 +82,13 @@ extern "C" {
         //              r: release time (in samples)
         //              modDepth: modulation depth
         //              modFreq: modulation frequency
+        //              gen: type of generator
         //              presses: number of presses
         //              pressNs: times at which to press
-        //              notes: MIDI notes to press at each time step
+        //              pressNotes: MIDI notes to press at each time step
         //              releases: number of releases
         //              releaseNs: times at which to release
+        //              releaseNotes: MIDI notes to release at each time step
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
