@@ -16,27 +16,25 @@ class BlitInterface:
     ''' Interface for BLIT functions '''
     testlib = ctypes.CDLL('test.so')
 
-    def __init__(self):
-        self.setUp()
-
     def setUp(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_blit_m.argtypes = [float_pointer, float_pointer, ctypes.c_int]
         self.testlib.test_blit.argtypes = [float_pointer, ctypes.c_float, ctypes.c_int]
+        self.testlib.test_bp_blit.argtypes = [float_pointer, ctypes.c_float, ctypes.c_int]
 
     def run_blit(self, freq: float, num_samples: int) -> np.ndarray:
         ''' wrapper around blit test function, generates its own co/sines '''
         out = np.zeros(num_samples, dtype=np.single)
         p_out = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_blit(p_out, ctypes.c_float(freq/sampling_frequency), len(out))
+        self.testlib.test_blit(p_out, freq/sampling_frequency, len(out))
         return out
 
     def run_bp_blit(self, freq: float, num_samples: int) -> np.ndarray:
         ''' wrapper around bpblit test function, generates its own co/sines '''
         out = np.zeros(num_samples, dtype=np.single)
         p_out = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_bp_blit(p_out, ctypes.c_float(freq/sampling_frequency), len(out))
+        self.testlib.test_bp_blit(p_out, freq/sampling_frequency, len(out))
         return out
 
     def run_blit_m(self, freqs: list) -> list:
@@ -49,7 +47,7 @@ class BlitInterface:
         return out
 
 
-class TestBlit(unittest.TestCase, BlitInterface):
+class TestBlit(BlitInterface, unittest.TestCase):
     ''' Test class for BLIT '''
     debug = False
 
@@ -134,7 +132,8 @@ class TestBlit(unittest.TestCase, BlitInterface):
 def main():
     ''' For Debugging/Testing '''
     blit_test = TestBlit()
-    blit_test.debug = True
+    blit_test.setUp()
+    # blit_test.debug = True
     blit_test.test_blit_m()
     blit_test.test_blit_freq()
 

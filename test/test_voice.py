@@ -22,9 +22,6 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
     ''' Interface class for voice module '''
     generator = 'sine'
 
-    def __init__(self):
-        self.setUp()
-
     def setUp(self):
         ''' Load in the test object file and define the function '''
         EnvelopeInterface.setUp(self)
@@ -34,7 +31,7 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
         # a, d, s, r, f, presses, pressNs, releases, releaseNs, n_samples, envOut
         self.testlib.test_voice.argtypes = [ctypes.c_float, ctypes.c_float,
                                                ctypes.c_float, ctypes.c_float,
-                                               ctypes.c_float,
+                                               ctypes.c_float, ctypes.c_uint,
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, float_pointer]
@@ -46,17 +43,17 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_voice(ctypes.c_float(self.attack_seconds), ctypes.c_float(self.decay_seconds),
-                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release_seconds),
-                                    ctypes.c_float(self.freq), ctypes.c_uint(generators[self.generator]),
-                                    ctypes.c_uint(len(presses)), presses_p,
-                                    ctypes.c_uint(len(releases)), releases_p,
-                                    ctypes.c_uint(len(out)), out_p)
+        self.testlib.test_voice(self.attack_seconds, self.decay_seconds,
+                                    self.sustain, self.release_seconds,
+                                    self.freq, generators[self.generator],
+                                    len(presses), presses_p,
+                                    len(releases), releases_p,
+                                    len(out), out_p)
         return out
 
 
 
-class TestVoice(unittest.TestCase, VoiceInterface):
+class TestVoice(VoiceInterface, unittest.TestCase):
     ''' Test implementations for voice module'''
     freq = 1000
     f_expected = 1000
@@ -154,7 +151,8 @@ class TestVoice(unittest.TestCase, VoiceInterface):
 def main():
     ''' For Debugging/Testing '''
     voice_test = TestVoice()
-    voice_test.debug = True
+    voice_test.setUp()
+    # voice_test.debug = True
     voice_test.test_envelope()
     voice_test.test_frequency()
 

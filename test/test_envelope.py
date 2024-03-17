@@ -19,9 +19,6 @@ class EnvelopeInterface:
     release_seconds = 0
     testlib = ctypes.CDLL('test.so')
 
-    def __init__(self):
-        self.setUp()
-
     def setUp(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
@@ -40,11 +37,11 @@ class EnvelopeInterface:
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_envelope(ctypes.c_float(self.attack_seconds), ctypes.c_float(self.decay_seconds),
-                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release_seconds),
-                                    ctypes.c_uint(len(presses)), presses_p,
-                                    ctypes.c_uint(len(releases)), releases_p,
-                                    ctypes.c_uint(len(out)), out_p)
+        self.testlib.test_envelope(self.attack_seconds, self.decay_seconds,
+                                    self.sustain, self.release_seconds,
+                                    len(presses), presses_p,
+                                    len(releases), releases_p,
+                                    len(out), out_p)
         return out
 
     def set_adsr(self, attack: float, decay: float, sustain: float, release: float):
@@ -66,7 +63,7 @@ class EnvelopeInterface:
         return a_grad, d_grad, r_grad
 
 
-class TestEnvelope(unittest.TestCase, EnvelopeInterface):
+class TestEnvelope(EnvelopeInterface, unittest.TestCase):
     ''' Test for envelope generator '''
     debug = False
 
@@ -245,7 +242,8 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
 def main():
     ''' For Debugging/Testing '''
     env_test = TestEnvelope()
-    env_test.debug = True
+    env_test.setUp()
+    # env_test.debug = True
     env_test.test_basic_envelope()
     env_test.test_double_press()
 

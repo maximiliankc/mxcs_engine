@@ -11,9 +11,6 @@ class ModulatorInterface:
     ''' ctypes wrapper around test shared object file'''
     testlib = ctypes.CDLL('test.so')
 
-    def __init__(self):
-        self.setUp()
-
     def setUp(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
@@ -24,11 +21,11 @@ class ModulatorInterface:
         ''' Run the Modulator. Modulates a constant signal'''
         out = np.zeros(n_samples, dtype=np.single)
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_modulator(ctypes.c_float(freq/sampling_frequency),
-                                     ctypes.c_float(ratio), ctypes.c_int(n_samples), out_p)
+        self.testlib.test_modulator(freq/sampling_frequency,
+                                     ratio, n_samples, out_p)
         return out
 
-class TestModulator(unittest.TestCase, ModulatorInterface):
+class TestModulator(ModulatorInterface, unittest.TestCase):
     ''' test class for modulator'''
     debug = False
     tolerance = 0.01
@@ -75,6 +72,7 @@ class TestModulator(unittest.TestCase, ModulatorInterface):
 def main():
     ''' For debugging/plotting '''
     mod_test = TestModulator()
+    mod_test.setUp()
     mod_test.debug = True
     mod_test.test_model()
 

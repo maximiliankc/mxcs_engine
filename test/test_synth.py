@@ -15,9 +15,6 @@ class SynthInterface(VoiceInterface):
     mod_depth = 0
     mod_freq = 0
 
-    def __init__(self):
-        self.setUp()
-
     def setUp(self):
         ''' Load in the test object file and define the function '''
         super().setUp()
@@ -26,14 +23,16 @@ class SynthInterface(VoiceInterface):
         uint8_pointer = ctypes.POINTER(ctypes.c_uint8)
         # a, d, s, r,
         # modDepth, modFreq,
+        # generator,
         # presses, pressNs, pressNotes,
-        # releases, releaseNs,
+        # releases, releaseNs, releaseNotes,
         # n, envOut
         self.testlib.test_synth.argtypes = [ctypes.c_float, ctypes.c_float,
                                                 ctypes.c_float, ctypes.c_float,
                                                 ctypes.c_float, ctypes.c_float,
+                                                ctypes.c_uint,
                                                 ctypes.c_uint, uint_pointer, uint8_pointer,
-                                                ctypes.c_uint, uint_pointer,
+                                                ctypes.c_uint, uint_pointer, uint8_pointer,
                                                 ctypes.c_uint, float_pointer]
         self.testlib.test_frequency_table.argtypes = [float_pointer]
 
@@ -47,13 +46,13 @@ class SynthInterface(VoiceInterface):
         p_notes_p = np.array(p_notes, dtype=np.uint8).ctypes.data_as(p_uint8)
         r_notes_p = np.array(r_notes, dtype=np.uint8).ctypes.data_as(p_uint8)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_synth(ctypes.c_float(self.attack_seconds), ctypes.c_float(self.decay_seconds),
-                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release_seconds),
-                                    ctypes.c_float(self.mod_depth), ctypes.c_float(self.mod_freq),
-                                    ctypes.c_uint(generators[self.generator]),
-                                    ctypes.c_uint(len(presses)), presses_p, p_notes_p,
-                                    ctypes.c_uint(len(releases)), releases_p, r_notes_p,
-                                    ctypes.c_uint(len(out)), out_p)
+        self.testlib.test_synth(self.attack_seconds, self.decay_seconds,
+                                    self.sustain, self.release_seconds,
+                                    self.mod_depth, self.mod_freq,
+                                    generators[self.generator],
+                                    len(presses), presses_p, p_notes_p,
+                                    len(releases), releases_p, r_notes_p,
+                                    len(out), out_p)
         return out
 
     def run_frequency_table(self):
@@ -64,7 +63,7 @@ class SynthInterface(VoiceInterface):
         return table
 
 
-class TestSynth(TestVoice, TestModulator, SynthInterface):
+class TestSynth(SynthInterface, TestVoice, TestModulator):
     ''' Test suite for synthesiser module'''
     note = 64
     test_notes = [13*n for n in range(9)] + [127]
@@ -158,11 +157,12 @@ class TestSynth(TestVoice, TestModulator, SynthInterface):
 def main():
     ''' For Debugging/Testing '''
     synth_test = TestSynth()
-    synth_test.debug = True
-    # synth_test.test_model()
-    # synth_test.test_envelope()
-    # synth_test.test_frequency()
-    # synth_test.test_frequency_table()
+    synth_test.setUp()
+    # synth_test.debug = True
+    synth_test.test_model()
+    synth_test.test_envelope()
+    synth_test.test_frequency()
+    synth_test.test_frequency_table()
     synth_test.play_notes()
 
 if __name__=='__main__':
