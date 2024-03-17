@@ -16,6 +16,9 @@ class BlitInterface:
     ''' Interface for BLIT functions '''
     testlib = ctypes.CDLL('test.so')
 
+    def __init__(self):
+        self.setUp()
+
     def setUp(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
@@ -131,7 +134,6 @@ class TestBlit(unittest.TestCase, BlitInterface):
 def main():
     ''' For Debugging/Testing '''
     blit_test = TestBlit()
-    blit_test.setUp()
     blit_test.debug = True
     blit_test.test_blit_m()
     blit_test.test_blit_freq()

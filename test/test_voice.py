@@ -23,8 +23,12 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
     generator = 'sine'
 
     def __init__(self):
+        self.setUp()
+
+    def setUp(self):
         ''' Load in the test object file and define the function '''
-        super().__init__()
+        EnvelopeInterface.setUp(self)
+        OscillatorInterface.setUp(self)
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
         # a, d, s, r, f, presses, pressNs, releases, releaseNs, n_samples, envOut

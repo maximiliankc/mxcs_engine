@@ -12,6 +12,9 @@ class ModulatorInterface:
     testlib = ctypes.CDLL('test.so')
 
     def __init__(self):
+        self.setUp()
+
+    def setUp(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_modulator.argtypes = [ctypes.c_float, ctypes.c_float,

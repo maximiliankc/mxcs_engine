@@ -8,7 +8,11 @@ import numpy as np
 
 class UtilsInterface:
     ''' ctypes wrapper around test shared object file'''
+
     def __init__(self):
+        self.setUp()
+
+    def setUp(self):
         ''' Load in the test object file and define the function '''
         self.testlib = ctypes.CDLL('test.so')
         float_pointer = ctypes.POINTER(ctypes.c_float)

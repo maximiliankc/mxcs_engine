@@ -16,8 +16,11 @@ class SynthInterface(VoiceInterface):
     mod_freq = 0
 
     def __init__(self):
+        self.setUp()
+
+    def setUp(self):
         ''' Load in the test object file and define the function '''
-        super().__init__()
+        super().setUp()
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
         uint8_pointer = ctypes.POINTER(ctypes.c_uint8)
