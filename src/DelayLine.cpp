@@ -26,3 +26,22 @@ float DelayLine_t::access(uint32_t delay) {
     uint32_t wrapped_idx = (index + delay) % length; // there are probably more efficient ways of handling this
     return memory[wrapped_idx];
 }
+
+#ifdef SYNTH_TEST_
+extern "C" {
+    void test_delay_line(float * in, float * out, uint32_t * delays,\
+                         unsigned int ioLen, float * lineMemory, unsigned int lineLength) {
+        // params: in: array of input values
+        //         out: array of output values
+        //         delays: amount of delay to use at each time step
+        //         ioLen: length of input/output/delay arrays
+        //         lineMemory: memory to initialise delay line with
+        //         lineLength: the length of the delay line (should be no more than the memory provided)
+        DelayLine_t delayLine(lineMemory, lineLength);
+        for (unsigned int i = 0; i < ioLen; i++) {
+            delayLine.insert(in[i]);
+            out[i] = delayLine.access(delays[i]);
+        }
+    }
+}
+#endif
