@@ -11,12 +11,12 @@ jobs:
       run:
         shell: bash -el {0}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: synth
           environment-file: env.yml
-          auto-activate-base: false
+          auto-activate-base: true
       - run: make
       - run: conda info
       - run: python -m unittest
