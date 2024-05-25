@@ -28,7 +28,6 @@ class DelayLineInterface:
         p_delays = delays.ctypes.data_as(p_uint32)
         memory = np.empty(line_length, dtype=np.single)
         p_memory = memory.ctypes.data_as(p_float)
-        print(f'Length: {len(data_in)}')
         self.testlib.test_delay_line(p_data_in, p_data_out, p_delays,\
                                      len(data_in), p_memory, line_length)
 
