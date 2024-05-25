@@ -9,8 +9,8 @@
 // could make a template out of this, but implementing specifically for floats now
 class DelayLine_t {
     float * memory;
-    uint32_t length;
-    uint32_t index;
+    int32_t length;
+    int32_t index;
 
     public:
     DelayLine_t(float * memory_, int32_t length);
