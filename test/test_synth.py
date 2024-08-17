@@ -1,14 +1,16 @@
 ''' Test and interface classes for synthesiser module
     copyright Maximilian Cornwell 2023 '''
 import ctypes
+
+from test.constants import sampling_frequency
+from test.test_voice import VoiceInterface, TestVoice, generators
+from test.test_modulator import TestModulator
+
 import numpy as np
 import scipy.signal as sig
 import scipy.io.wavfile as wav
 import matplotlib.pyplot as plt
 
-from .constants import sampling_frequency
-from .test_voice import VoiceInterface, TestVoice, generators
-from .test_modulator import TestModulator
 
 class SynthInterface(VoiceInterface):
     ''' Interface for the synth '''

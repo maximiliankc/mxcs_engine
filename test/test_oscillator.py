@@ -3,11 +3,13 @@
 import ctypes
 import math
 import unittest
+
+from test.constants import sampling_frequency, block_size
+
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sig
 
-from .constants import sampling_frequency, block_size
 
 
 class OscillatorInterface:

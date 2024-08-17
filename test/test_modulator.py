@@ -2,9 +2,11 @@
 import ctypes
 import unittest
 import numpy as np
+
+from test.constants import sampling_frequency, block_size
+
 import matplotlib.pyplot as plt
 
-from .constants import sampling_frequency, block_size
 
 
 class ModulatorInterface:

@@ -2,11 +2,13 @@
     copyright Maximilian Cornwell 2023 '''
 import ctypes
 import unittest
+
+from test.constants import sampling_frequency
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
 
-from .constants import sampling_frequency
 
 def to_db(vector: np.ndarray) -> np.ndarray:
     """ Convert data in vector to db """
