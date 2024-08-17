@@ -40,12 +40,42 @@ void Filter_DFI_t::step(float * in, float * out) {
 }
 
 #ifdef SYNTH_TEST_
+
+#define DFI 0
+#define DFII 1
+#define TDFI 2
+#define TDFII 3
+
 extern "C" {
-    void test_filter(unsigned int order, float * memory, float * b, float * a, unsigned int ioLength, float * input, float * output) {
-        Filter_DFI_t filter(memory, b, a, order);
+    void test_filter(unsigned int filterType, unsigned int order, float * memory, float * b, float * a, unsigned int ioLength, float * input, float * output) {
+        Filter_DFI_t filter_df1(memory, b, a, order);
+        // Filter_DFII_t filter_df2(memory, b, a, order);
+        // Filter_TDFI_t filter_tdf1(memory, b, a, order);
+        // Filter_TDFII_t filter_tdf2(memory, b, a, order);
+
+        Filter_t * filter;
+
+        switch (filterType)
+        {
+        case DFI:
+            filter = &filter_df1;
+            break;
+        // case DFII:
+        //     filter = &filter_df2;
+        //     break;
+        // case TDFI:
+        //     filter = &filter_tdf1;
+        //     break;
+        // case TDFII:
+        //     filter = &filter_df2;
+        //     break;
+        default:
+            // don't do anything! We want things to break in this situation
+            break;
+        }
 
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
-            filter.step(&input[i], &output[i]);
+            filter->step(&input[i], &output[i]);
         }
     }
 }

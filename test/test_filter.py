@@ -7,6 +7,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
 
+DFI = 0
+DFII = 1
+TDFI = 2
+TDFII = 3
+
+
 class FilterInterface:
     ''' Interface class for filter interfaces '''
     testlib = ctypes.CDLL('test.so')
@@ -15,11 +21,11 @@ class FilterInterface:
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
         # order, memory, a, b, ioLength, input, output
-        self.testlib.test_filter.argtypes = [ctypes.c_uint, float_pointer,
-                                             float_pointer, float_pointer,
+        self.testlib.test_filter.argtypes = [ctypes.c_uint, ctypes.c_uint,
+                                             float_pointer, float_pointer, float_pointer,
                                              ctypes.c_uint, float_pointer, float_pointer]
 
-    def run_filter(self, b: np.ndarray, a: np.ndarray, samples_in: np.ndarray) -> np.ndarray:
+    def run_filter(self, b: np.ndarray, a: np.ndarray, samples_in: np.ndarray, filter_type=DFI) -> np.ndarray:
         ''' Run the filter '''
         p_float = ctypes.POINTER(ctypes.c_float)
         order = max(len(b), len(a)) - 1
@@ -34,14 +40,16 @@ class FilterInterface:
         memory_p = memory.ctypes.data_as(p_float)
         samples_out = np.empty(io_length, dtype=np.single)
         samples_out_p = samples_out.ctypes.data_as(p_float)
-        self.testlib.test_filter(order, memory_p, b_p, a_p, io_length, samples_in_p, samples_out_p)
+        self.testlib.test_filter(filter_type, order, memory_p, b_p, a_p, io_length, samples_in_p, samples_out_p)
         return samples_out
 
 
 class TestFilter(FilterInterface, unittest.TestCase):
+    ''' Tests for filter implementations '''
     debug = False
 
     def test_response(self):
+        ''' Check that response to white noise matches scipy filter implementation '''
         n = 128*16
         input_sig = np.random.default_rng(1234).normal(0, 0.5, n)
 
