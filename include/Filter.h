@@ -37,7 +37,8 @@ class Filter_DFII_t: public Filter_t {
 
 class Filter_TDFI_t: public Filter_t {
     float * back_state;
-    float * forwared_state;
+    float * forward_state;
+    public:
     Filter_TDFI_t();
     Filter_TDFI_t(float * Memory, float * b, float * a, uint32_t order);
     void step(float * in, float * out);
@@ -45,6 +46,7 @@ class Filter_TDFI_t: public Filter_t {
 
 class Filter_TDFII_t: public Filter_t {
     float * state;
+    public:
     Filter_TDFII_t();
     Filter_TDFII_t(float * Memory, float * b, float * a, uint32_t order);
     void step(float * in, float * out);

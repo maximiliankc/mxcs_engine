@@ -4,6 +4,8 @@
 #include "Constants.h"
 #include "Filter.h"
 
+#include <iostream>
+
 void Filter_t::set_coeffs(float * b_, float * a_) {
     b = b_;
     a = a_;
@@ -28,7 +30,7 @@ Filter_DFI_t::Filter_DFI_t(float * memory_, float * b_, float * a_, uint32_t ord
 }
 
 void Filter_DFI_t::step(float * in, float * out) {
-    for (uint8_t i = 0; i < blockSize; i++) {
+    for (uint32_t i = 0; i < blockSize; i++) {
         out[i] = b[0]*in[i];
         for (uint32_t j=0; j<order; j++) {
             out[i] += b[j+1]*x_delay_line.access(j);
@@ -67,6 +69,35 @@ void Filter_DFII_t::step(float * in, float * out) {
     }
 }
 
+Filter_TDFI_t::Filter_TDFI_t() {
+    order = 0;
+}
+
+Filter_TDFI_t::Filter_TDFI_t(float * memory_, float * b_, float * a_, uint32_t order_) {
+    order = order_;
+    set_coeffs(b_, a_);
+    back_state = memory_;
+    forward_state = memory_ + order;
+    for (uint32_t i = 0; i < order; i++) {
+        back_state[i] = 0;
+        forward_state[i] = 0;
+    }
+}
+
+void Filter_TDFI_t::step(float * in, float * out) {
+    float v;
+    for (uint32_t i = 0; i < blockSize; i++) {
+        v = in[i] + back_state[0];
+        out[i] = forward_state[0] + b[0]*v;
+        for (uint32_t j = 0; j < order-1; j++) {
+            back_state[j] = back_state[j+1] - a[j+1]*v;
+            forward_state[j] = forward_state[j+1] + b[j+1]*v;
+        }
+        back_state[order-1] = -a[order]*v;
+        forward_state[order-1] = b[order]*v;
+    }
+}
+
 #ifdef SYNTH_TEST_
 
 #define DFI 0
@@ -78,7 +109,7 @@ extern "C" {
     void test_filter(unsigned int filterType, unsigned int order, float * memory, float * b, float * a, unsigned int ioLength, float * input, float * output) {
         Filter_DFI_t filter_df1(memory, b, a, order);
         Filter_DFII_t filter_df2(memory, b, a, order);
-        // Filter_TDFI_t filter_tdf1(memory, b, a, order);
+        Filter_TDFI_t filter_tdf1(memory, b, a, order);
         // Filter_TDFII_t filter_tdf2(memory, b, a, order);
 
         Filter_t * filter;
@@ -91,9 +122,9 @@ extern "C" {
         case DFII:
             filter = &filter_df2;
             break;
-        // case TDFI:
-        //     filter = &filter_tdf1;
-        //     break;
+        case TDFI:
+            filter = &filter_tdf1;
+            break;
         // case TDFII:
         //     filter = &filter_df2;
         //     break;

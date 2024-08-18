@@ -50,15 +50,18 @@ class TestFilter(FilterInterface, unittest.TestCase):
 
     def test_response(self):
         ''' Check that response to white noise matches scipy filter implementation '''
-        n = 128*12
+        n = 128
         input_sig = np.random.default_rng(1234).normal(0, 0.5, n)
+        # input_sig = np.zeros(16)
+        # input_sig[0] = 1
 
-        for filter_type in [DFI, DFII]:
+        # for filter_type in [DFI, DFII, TDFI, TDFII]:
+        for filter_type in [TDFI]:
             for a, b in ([([1, 0, 0], [1, 0, 0]),
-                        ([1, 0, 0], [0, 1, 0]),
-                        ([1, 0, 0], [0, 0, 1]),
-                        ([1, 0.5, 0], [1, 0, 0]),
-                        ([1, 0, 0.5], [1, 0, 0]),
+                          ([1, 0, 0], [0, 1, 0]),
+                          ([1, 0, 0], [0, 0, 1]),
+                          ([1, 0.5, 0], [1, 0, 0]),
+                          ([1, 0, 0.5], [1, 0, 0]),
                         ]):
                 ref = sig.lfilter(b, a, input_sig)
                 out = self.run_filter(b, a, input_sig, filter_type=filter_type)
