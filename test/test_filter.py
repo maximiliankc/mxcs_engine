@@ -56,12 +56,14 @@ class TestFilter(FilterInterface, unittest.TestCase):
         # input_sig[0] = 1
 
         # for filter_type in [DFI, DFII, TDFI, TDFII]:
-        for filter_type in [TDFI]:
-            for a, b in ([([1, 0, 0], [1, 0, 0]),
-                          ([1, 0, 0], [0, 1, 0]),
+        for filter_type in [TDFII]:
+            for a, b in ([([1, 0], [1, 0]),
+                          ([1, 0], [0, 1]),
                           ([1, 0, 0], [0, 0, 1]),
-                          ([1, 0.5, 0], [1, 0, 0]),
+                          ([1, 0, 0, 0], [0, 0, 0, 1]),
+                          ([1, 0.5], [1, 0]),
                           ([1, 0, 0.5], [1, 0, 0]),
+                          ([1, 0, 0, 0.5], [1, 0, 0, 0]),
                         ]):
                 ref = sig.lfilter(b, a, input_sig)
                 out = self.run_filter(b, a, input_sig, filter_type=filter_type)

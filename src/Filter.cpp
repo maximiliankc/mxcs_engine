@@ -98,6 +98,28 @@ void Filter_TDFI_t::step(float * in, float * out) {
     }
 }
 
+Filter_TDFII_t::Filter_TDFII_t() {
+    order = 0;
+}
+
+Filter_TDFII_t::Filter_TDFII_t(float * memory_, float * b_, float * a_, uint32_t order_) {
+    order = order_;
+    set_coeffs(b_, a_);
+    for (uint32_t i = 0; i < order; i++){
+        state[i] = 0;
+    }
+}
+
+void Filter_TDFII_t::step(float * in, float * out) {
+    for (uint32_t i = 0; i < blockSize; i++) {
+        out[i] = b[0]*in[i] + state[0];
+        for (uint32_t j = 0; j<order-1; j++) {
+            state[j] = state[j+1] + b[j+1]*in[i] - a[j+1]*out[i];
+        }
+        state[order-1] = b[order]*in[i] - a[order]*out[i];
+    }
+}
+
 #ifdef SYNTH_TEST_
 
 #define DFI 0
@@ -110,7 +132,7 @@ extern "C" {
         Filter_DFI_t filter_df1(memory, b, a, order);
         Filter_DFII_t filter_df2(memory, b, a, order);
         Filter_TDFI_t filter_tdf1(memory, b, a, order);
-        // Filter_TDFII_t filter_tdf2(memory, b, a, order);
+        Filter_TDFII_t filter_tdf2(memory, b, a, order);
 
         Filter_t * filter;
 
@@ -125,9 +147,9 @@ extern "C" {
         case TDFI:
             filter = &filter_tdf1;
             break;
-        // case TDFII:
-        //     filter = &filter_df2;
-        //     break;
+        case TDFII:
+            filter = &filter_tdf2;
+            break;
         default:
             // don't do anything! We want things to break in this situation
             break;
