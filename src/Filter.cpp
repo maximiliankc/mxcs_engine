@@ -39,6 +39,34 @@ void Filter_DFI_t::step(float * in, float * out) {
     }
 }
 
+Filter_DFII_t::Filter_DFII_t():
+    v_delay_line(nullptr, 0) {
+    order = 0;
+}
+
+Filter_DFII_t::Filter_DFII_t(float * memory_, float * b_, float * a_, uint32_t order_):
+    v_delay_line(memory_, order_) {
+    order = order_;
+    set_coeffs(b_, a_);
+}
+
+void Filter_DFII_t::step(float * in, float * out) {
+    float v;
+    float vn;
+    float y;
+    for (uint32_t i = 0; i < blockSize; i++) {
+        v = in[i];
+        y = 0;
+        for (uint32_t j = 0; j < order; j++) {
+            vn = v_delay_line.access(j);
+            y += b[j+1]*vn;
+            v -= a[j+1]*vn;
+        }
+        v_delay_line.insert(v);
+        out[i] = y + b[0]*v;
+    }
+}
+
 #ifdef SYNTH_TEST_
 
 #define DFI 0
@@ -49,7 +77,7 @@ void Filter_DFI_t::step(float * in, float * out) {
 extern "C" {
     void test_filter(unsigned int filterType, unsigned int order, float * memory, float * b, float * a, unsigned int ioLength, float * input, float * output) {
         Filter_DFI_t filter_df1(memory, b, a, order);
-        // Filter_DFII_t filter_df2(memory, b, a, order);
+        Filter_DFII_t filter_df2(memory, b, a, order);
         // Filter_TDFI_t filter_tdf1(memory, b, a, order);
         // Filter_TDFII_t filter_tdf2(memory, b, a, order);
 
@@ -60,9 +88,9 @@ extern "C" {
         case DFI:
             filter = &filter_df1;
             break;
-        // case DFII:
-        //     filter = &filter_df2;
-        //     break;
+        case DFII:
+            filter = &filter_df2;
+            break;
         // case TDFI:
         //     filter = &filter_tdf1;
         //     break;
