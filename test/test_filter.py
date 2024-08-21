@@ -11,6 +11,7 @@ DFI = 0
 DFII = 1
 TDFI = 2
 TDFII = 3
+BIQUAD = 4
 
 
 class FilterInterface:
@@ -53,7 +54,7 @@ class TestFilter(FilterInterface, unittest.TestCase):
         n = 128*16
         input_sig = np.random.default_rng(1234).normal(0, 0.5, n)
 
-        for filter_type in [DFI, DFII, TDFI, TDFII]:
+        for filter_type in [DFI, DFII, TDFI, TDFII, BIQUAD]:
             for a, b in ([([1, 0], [1, 0]),
                           ([1, 0], [0, 1]),
                           ([1, 0, 0], [0, 0, 1]),
@@ -63,6 +64,11 @@ class TestFilter(FilterInterface, unittest.TestCase):
                           ([1, 0, 0, 0.5], [1, 0, 0, 0]),
                         ]):
                 with self.subTest(f'{filter_type=}, {a=}, {b=}'):
+                    if filter_type == BIQUAD:
+                        b = np.array(b)
+                        b.resize(3)
+                        a = np.array(a)
+                        a.resize(3)
                     ref = sig.lfilter(b, a, input_sig)
                     out = self.run_filter(b, a, input_sig, filter_type=filter_type)
                     if self.debug:

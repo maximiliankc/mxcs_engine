@@ -4,7 +4,7 @@
 #include "Constants.h"
 #include "Filter.h"
 
-void Filter_t::set_coeffs(float * b_, float * a_) {
+void IIR_Filter_t::set_coeffs(float * b_, float * a_) {
     b = b_;
     a = a_;
     for(uint32_t i = 0; i < order; i++) {
@@ -119,12 +119,22 @@ void Filter_TDFII_t::step(float * in, float * out) {
     }
 }
 
+// Biquad_Filter_t::Biquad_Filter_t();
+
+Biquad_Filter_t::Biquad_Filter_t(float * b_, float * a_) {
+    order = 2;
+    set_coeffs(b_, a_);
+    state[0] = 0;
+    state[1] = 0;
+}
+
 #ifdef SYNTH_TEST_
 
 #define DFI 0
 #define DFII 1
 #define TDFI 2
 #define TDFII 3
+#define BIQUAD 4
 
 extern "C" {
     void run_df1_filter(unsigned int order, float * memory, float * b, float * a, unsigned int ioLength, float * input, float * output) {
@@ -155,6 +165,13 @@ extern "C" {
         }
     }
 
+    void run_biquad_filter(float * b, float * a, unsigned int ioLength, float * input, float * output) {
+        Biquad_Filter_t filter(b, a);
+        for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
+            filter.step(&input[i], &output[i]);
+        }
+    }
+
     void test_filter(unsigned int filterType, unsigned int order, float * memory, float * b, float * a, unsigned int ioLength, float * input, float * output) {
 
         switch (filterType)
@@ -170,6 +187,9 @@ extern "C" {
             break;
         case TDFII:
             run_tdf2_filter(order, memory, b, a, ioLength, input, output);
+            break;
+        case BIQUAD:
+            run_biquad_filter(b, a, ioLength, input, output);
             break;
         default:
             // don't do anything! We want things to break in this situation
