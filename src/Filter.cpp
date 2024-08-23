@@ -140,10 +140,8 @@ Biquad_Filter_t::Biquad_Filter_t(float * b_, float * a_) {
 void Biquad_Filter_t::step(float * in, float * out) {
     for (uint32_t i = 0; i < blockSize; i++) {
         out[i] = b[0]*in[i] + state[0];
-        for (uint32_t j = 0; j < order-1; j++) {
-            state[j] = state[j+1] + b[j+1]*in[i] - a[j+1]*out[i];
-        }
-        state[order-1] = b[order]*in[i] - a[order]*out[i];
+        state[0] = state[1] + b[1]*in[i] - a[1]*out[i];
+        state[1] = b[2]*in[i] - a[2]*out[i];
     }
 }
 
