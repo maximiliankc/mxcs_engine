@@ -4,6 +4,8 @@
 #include "Constants.h"
 #include "Filter.h"
 
+#include <iostream>
+
 void IIR_Filter_t::set_coeffs(float * b_, float * a_) {
     b = b_;
     a = a_;
@@ -119,13 +121,39 @@ void Filter_TDFII_t::step(float * in, float * out) {
     }
 }
 
-// Biquad_Filter_t::Biquad_Filter_t();
+Biquad_Filter_t::Biquad_Filter_t() {
+    order = 0;
+    float a_[3] = {1, 0, 0};
+    float b_[3] = {1, 0, 0};
+    set_coeffs(a_, b_);
+    state[0] = 0;
+    state[1] = 0;
+}
 
 Biquad_Filter_t::Biquad_Filter_t(float * b_, float * a_) {
     order = 2;
     set_coeffs(b_, a_);
     state[0] = 0;
     state[1] = 0;
+}
+
+void Biquad_Filter_t::step(float * in, float * out) {
+    for (uint32_t i = 0; i < blockSize; i++) {
+        out[i] = b[0]*in[i] + state[0];
+        for (uint32_t j = 0; j < order-1; j++) {
+            state[j] = state[j+1] + b[j+1]*in[i] - a[j+1]*out[i];
+        }
+        state[order-1] = b[order]*in[i] - a[order]*out[i];
+    }
+}
+
+void Biquad_Filter_t::set_coeffs(float * b_, float * a_) {
+    std::cout << "about to set coefficients" << std::endl;
+    for (unsigned int i = 0; i < 3; i++) {
+        std::cout << "i: " << i << std::endl;
+        b[i] = b_[i]/a_[0];
+        a[i] = a_[i]/a_[0];
+    }
 }
 
 #ifdef SYNTH_TEST_
@@ -167,7 +195,9 @@ extern "C" {
 
     void run_biquad_filter(float * b, float * a, unsigned int ioLength, float * input, float * output) {
         Biquad_Filter_t filter(b, a);
+        std::cout << "finished initialising" << std::endl;
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
+            std::cout << "i: " << i << std::endl;
             filter.step(&input[i], &output[i]);
         }
     }

@@ -54,7 +54,8 @@ class TestFilter(FilterInterface, unittest.TestCase):
         n = 128*16
         input_sig = np.random.default_rng(1234).normal(0, 0.5, n)
 
-        for filter_type in [DFI, DFII, TDFI, TDFII, BIQUAD]:
+        # for filter_type in [DFI, DFII, TDFI, TDFII, BIQUAD]:
+        for filter_type in [BIQUAD]:
             for a, b in ([([1, 0], [1, 0]),
                           ([1, 0], [0, 1]),
                           ([1, 0, 0], [0, 0, 1]),

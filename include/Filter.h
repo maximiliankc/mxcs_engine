@@ -53,10 +53,16 @@ class Filter_TDFII_t: public IIR_Filter_t {
     void step(float * in, float * out);
 };
 
-class Biquad_Filter_t: public Filter_TDFII_t {
+class Biquad_Filter_t: public IIR_Filter_t {
     float state[2];
+    float a[3];
+    float b[3];
     public:
+    Biquad_Filter_t();
     Biquad_Filter_t(float * b, float * a);
+    void step(float * in, float * out);
+    void set_coeffs(float * b, float * a);
+
 };
 
 #endif // FILTER_H_
