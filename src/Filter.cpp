@@ -3,8 +3,7 @@
 */
 #include "Constants.h"
 #include "Filter.h"
-
-#include <iostream>
+#include <math.h>
 
 void IIR_Filter_t::set_coeffs(float * b_, float * a_) {
     b = b_;
@@ -98,10 +97,6 @@ void Filter_TDFI_t::step(float * in, float * out) {
     }
 }
 
-Filter_TDFII_t::Filter_TDFII_t() {
-    order = 0;
-}
-
 Filter_TDFII_t::Filter_TDFII_t(float * memory_, float * b_, float * a_, uint32_t order_) {
     order = order_;
     set_coeffs(b_, a_);
@@ -122,7 +117,6 @@ void Filter_TDFII_t::step(float * in, float * out) {
 }
 
 Biquad_Filter_t::Biquad_Filter_t() {
-    order = 0;
     float a_[3] = {1, 0, 0};
     float b_[3] = {1, 0, 0};
     set_coeffs(a_, b_);
@@ -131,7 +125,6 @@ Biquad_Filter_t::Biquad_Filter_t() {
 }
 
 Biquad_Filter_t::Biquad_Filter_t(float * b_, float * a_) {
-    order = 2;
     set_coeffs(b_, a_);
     state[0] = 0;
     state[1] = 0;
@@ -146,12 +139,39 @@ void Biquad_Filter_t::step(float * in, float * out) {
 }
 
 void Biquad_Filter_t::set_coeffs(float * b_, float * a_) {
-    std::cout << "about to set coefficients" << std::endl;
     for (unsigned int i = 0; i < 3; i++) {
-        std::cout << "i: " << i << std::endl;
         b[i] = b_[i]/a_[0];
         a[i] = a_[i]/a_[0];
     }
+}
+
+void Biquad_Filter_t::configure_lowpass(float f, float q) {
+    float tau = tanf(f*M_PI/samplingFrequency);
+    float b_[3];
+    float a_[3];
+
+    // normalise by q?
+    b_[0] = tau*tau;
+    b_[1] = 2*tau*tau;
+    b_[2] = tau*tau;
+    a_[0] = 1 + (tau/q) + tau*tau;
+    a_[1] = (2*tau*tau) - 2;
+    a_[2] = 1 - (tau/q) + tau*tau;
+    set_coeffs(b_, a_);
+}
+
+void Biquad_Filter_t::configure_highpass(float f, float q) {
+    float tau = tanf(f*M_PI/samplingFrequency);
+    float b_[3];
+    float a_[3];
+
+    b_[0] = 1;
+    b_[1] = -2;
+    b_[2] = 1;
+    a_[0] = 1 + (tau/q) + tau*tau;
+    a_[1] = (2*tau*tau) - 2;
+    a_[2] = 1 - (tau/q) + tau*tau;
+    set_coeffs(b_, a_);
 }
 
 #ifdef SYNTH_TEST_
@@ -193,9 +213,7 @@ extern "C" {
 
     void run_biquad_filter(float * b, float * a, unsigned int ioLength, float * input, float * output) {
         Biquad_Filter_t filter(b, a);
-        std::cout << "finished initialising" << std::endl;
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
-            std::cout << "i: " << i << std::endl;
             filter.step(&input[i], &output[i]);
         }
     }
@@ -224,5 +242,22 @@ extern "C" {
             break;
         }
     }
+
+    void test_lowpass(float freq, float q, unsigned int ioLength, float * input, float * output) {
+        Biquad_Filter_t filter;
+        filter.configure_lowpass(freq, q);
+        for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
+            filter.step(&input[i], &output[i]);
+        }
+    }
+
+    void test_highpass(float freq, float q, unsigned int ioLength, float * input, float * output) {
+        Biquad_Filter_t filter;
+        filter.configure_highpass(freq, q);
+        for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
+            filter.step(&input[i], &output[i]);
+        }
+    }
+
 }
 #endif // SYNTH_TEST_

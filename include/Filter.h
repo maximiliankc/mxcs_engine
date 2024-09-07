@@ -62,7 +62,8 @@ class Biquad_Filter_t: public IIR_Filter_t {
     Biquad_Filter_t(float * b, float * a);
     void step(float * in, float * out);
     void set_coeffs(float * b, float * a);
-
+    void configure_lowpass(float f, float q);
+    void configure_highpass(float f, float q);
 };
 
 #endif // FILTER_H_
