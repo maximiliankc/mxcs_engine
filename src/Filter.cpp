@@ -145,10 +145,15 @@ void Biquad_Filter_t::set_coeffs(float * b_, float * a_) {
     }
 }
 
-void Biquad_Filter_t::configure_lowpass(float f, float q) {
+float res_2_q(float resonance) {
+    return pow(10, resonance/20);
+}
+
+void Biquad_Filter_t::configure_lowpass(float f, float resonance) {
     float tau = tanf(f*M_PI/samplingFrequency);
     float b_[3];
     float a_[3];
+    float q = res_2_q(resonance);
 
     // normalise by q?
     b_[0] = tau*tau;
@@ -160,10 +165,11 @@ void Biquad_Filter_t::configure_lowpass(float f, float q) {
     set_coeffs(b_, a_);
 }
 
-void Biquad_Filter_t::configure_highpass(float f, float q) {
+void Biquad_Filter_t::configure_highpass(float f, float resonance) {
     float tau = tanf(f*M_PI/samplingFrequency);
     float b_[3];
     float a_[3];
+    float q = res_2_q(resonance);
 
     b_[0] = 1;
     b_[1] = -2;
@@ -243,17 +249,17 @@ extern "C" {
         }
     }
 
-    void test_lowpass(float freq, float q, unsigned int ioLength, float * input, float * output) {
+    void test_lowpass(float freq, float res, unsigned int ioLength, float * input, float * output) {
         Biquad_Filter_t filter;
-        filter.configure_lowpass(freq, q);
+        filter.configure_lowpass(freq, res);
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
             filter.step(&input[i], &output[i]);
         }
     }
 
-    void test_highpass(float freq, float q, unsigned int ioLength, float * input, float * output) {
+    void test_highpass(float freq, float res, unsigned int ioLength, float * input, float * output) {
         Biquad_Filter_t filter;
-        filter.configure_highpass(freq, q);
+        filter.configure_highpass(freq, res);
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
             filter.step(&input[i], &output[i]);
         }
