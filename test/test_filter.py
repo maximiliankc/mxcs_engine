@@ -75,6 +75,9 @@ class FilterInterface:
         self.testlib.test_highpass(freq, q, io_length, samples_in_p, samples_out_p)
         return samples_out
 
+def evaluate_f(x: np.ndarray, y: np.ndarray, f: float) -> complex:
+    mod = np.exp((2j*np.pi*f/sampling_frequency)*np.arange(len(x)))
+    return np.dot(y, mod)/np.dot(x,mod)
 
 class TestFilter(FilterInterface, unittest.TestCase):
     ''' Tests for filter implementations '''
@@ -142,6 +145,8 @@ class TestFilter(FilterInterface, unittest.TestCase):
                             ax_t.set_xlabel('Time (s)')
                             ax_f.set_xlabel('Frequency (Hz)')
                             ax_t.set_title(f'{f=}, {q=}')
+                            ax_f.axhline(2*20*np.log10(q), ls=':', c='k')
+                            ax_f.axvline(f, ls=':', c='k')
                             if ftype == 'lp':
                                 f_passpand = [0, f/10]
                                 ax_f.fill_between(f_passpand, -3, 3, color='g', alpha=0.3)
@@ -159,6 +164,9 @@ class TestFilter(FilterInterface, unittest.TestCase):
                             ax_t.set_title(f'{ftype}, {f=}, {q=:.2f}')
                             plt.show()
                             plt.close(fig_t)
+                        expected_f0 = 20*np.log10(q)
+                        f0_magnitude = 20*np.log10(np.abs(evaluate_f(input_sig, output_sig, f)))
+                        self.assertAlmostEqual(f0_magnitude, expected_f0, delta=3)
                         if ftype == 'lp':
                             np.testing.assert_allclose(h[freqs<f/10], 0, atol=3)
                             if f/10 > sampling_frequency:
@@ -171,13 +179,11 @@ class TestFilter(FilterInterface, unittest.TestCase):
                                 np.testing.assert_allclose(h[freqs>10*f], 0, atol=3)
 
 
-
-
 def main():
     ''' For Debugging/Testing '''
     filter_test = TestFilter()
     filter_test.setUp()
-    filter_test.debug = True
+    # filter_test.debug = True
     filter_test.test_response()
     filter_test.test_biquads()
 
