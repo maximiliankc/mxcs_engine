@@ -8,6 +8,7 @@
 #include "Constants.h"
 #include "Voice.h"
 #include "Modulator.h"
+#include "Filter.h"
 
 // Defining a monophonic synth for now
 class Synth_t {
@@ -15,6 +16,8 @@ class Synth_t {
     Generator_e generator;
     Voice_t voice;
     Modulator_t mod;
+    Biquad_Filter_t lp_filter;
+    Biquad_Filter_t hp_filter;
     float frequencyTable[notes];
     uint8_t currentNote;
 

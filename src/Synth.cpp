@@ -16,6 +16,9 @@ Synth_t::Synth_t(): voice(&settings, &generator) {
     }
     // configure oscillator type
     generator = sine;
+    // initial filter configuration
+    lp_filter.configure_lowpass(20000, -3);
+    hp_filter.configure_highpass(20, -3);
 }
 
 void Synth_t::set_attack(float a) {
@@ -61,6 +64,8 @@ void Synth_t::release(uint8_t note) {
 void Synth_t::step(float * out) {
     voice.step(out);
     mod.step(out);
+    lp_filter.step(out, out);
+    hp_filter.step(out, out);
 }
 
 
