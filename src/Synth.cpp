@@ -61,12 +61,12 @@ void Synth_t::set_lpf_res(float res) {
 
 void Synth_t::set_hpf_freq(float freq) {
     hpF = freq;
-    hpFilter.configure_lowpass(hpF, hpRes);
+    hpFilter.configure_highpass(hpF, hpRes);
 }
 
 void Synth_t::set_hpf_res(float res){
     hpF = res;
-    hpFilter.configure_lowpass(hpF, hpRes);
+    hpFilter.configure_highpass(hpF, hpRes);
 }
 
 void Synth_t::set_generator(Generator_e gen) {
