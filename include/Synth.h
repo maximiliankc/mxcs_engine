@@ -16,8 +16,12 @@ class Synth_t {
     Generator_e generator;
     Voice_t voice;
     Modulator_t mod;
-    Biquad_Filter_t lp_filter;
-    Biquad_Filter_t hp_filter;
+    Biquad_Filter_t lpFilter;
+    float lpF;
+    float lpRes;
+    Biquad_Filter_t hpFilter;
+    float hpF;
+    float hpRes;
     float frequencyTable[notes];
     uint8_t currentNote;
 
@@ -29,6 +33,10 @@ class Synth_t {
     void set_release(float r);
     void set_mod_f(float freq);
     void set_mod_depth(float depth);
+    void set_lpf_freq(float freq);
+    void set_lpf_res(float res);
+    void set_hpf_freq(float freq);
+    void set_hpf_res(float res);
     void set_generator(Generator_e gen);
     void press(uint8_t note);
     void release(uint8_t note);

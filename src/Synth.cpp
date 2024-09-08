@@ -17,8 +17,12 @@ Synth_t::Synth_t(): voice(&settings, &generator) {
     // configure oscillator type
     generator = sine;
     // initial filter configuration
-    lp_filter.configure_lowpass(20000, -3);
-    hp_filter.configure_highpass(20, -3);
+    lpRes = -3;
+    lpF = 20000;
+    lpFilter.configure_lowpass(lpF, lpRes);
+    hpRes = -3;
+    hpRes = 20;
+    hpFilter.configure_highpass(hpF, hpRes);
 }
 
 void Synth_t::set_attack(float a) {
@@ -45,6 +49,26 @@ void Synth_t::set_mod_depth(float depth) {
     mod.modRatio = depth;
 }
 
+void Synth_t::set_lpf_freq(float freq) {
+    lpF = freq;
+    lpFilter.configure_lowpass(lpF, lpRes);
+}
+
+void Synth_t::set_lpf_res(float res) {
+    lpRes = res;
+    lpFilter.configure_lowpass(lpF, lpRes);
+}
+
+void Synth_t::set_hpf_freq(float freq) {
+    hpF = freq;
+    hpFilter.configure_lowpass(hpF, hpRes);
+}
+
+void Synth_t::set_hpf_res(float res){
+    hpF = res;
+    hpFilter.configure_lowpass(hpF, hpRes);
+}
+
 void Synth_t::set_generator(Generator_e gen) {
     generator = gen;
 }
@@ -64,10 +88,9 @@ void Synth_t::release(uint8_t note) {
 void Synth_t::step(float * out) {
     voice.step(out);
     mod.step(out);
-    lp_filter.step(out, out);
-    hp_filter.step(out, out);
+    lpFilter.step(out, out);
+    hpFilter.step(out, out);
 }
-
 
 #ifdef SYNTH_TEST_
 
