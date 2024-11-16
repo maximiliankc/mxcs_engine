@@ -2,13 +2,15 @@
     copyright Maximilian Cornwell 2023  '''
 import ctypes
 import unittest
+
+from test.constants import sampling_frequency
+from test.test_envelope import EnvelopeInterface
+from test.test_oscillator import OscillatorInterface
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
 
-from .constants import sampling_frequency
-from .test_envelope import EnvelopeInterface
-from .test_oscillator import OscillatorInterface
 
 generators = {'sine': 0,
               'blit': 1,
@@ -84,7 +86,9 @@ class TestVoice(VoiceInterface, unittest.TestCase):
                 self.set_adsr(attack, decay, sustain, release)
                 press_time = int(0.1*sampling_frequency)
                 release_time = int(0.4*sampling_frequency)
-                voice_vector = np.abs(sig.hilbert(self.run_voice([press_time], [release_time], n_samples)))
+                voice_vector = np.abs(sig.hilbert(self.run_voice([press_time],
+                                                                 [release_time],
+                                                                 n_samples)))
                 env_vector = self.run_env([press_time], [release_time], n_samples)
                 rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
                 if self.debug:
@@ -145,7 +149,9 @@ class TestVoice(VoiceInterface, unittest.TestCase):
                             ax2.set_title(f'Target: {self.f_expected:.2f}, Measured: {f_measured:.2f}')
                             ax2.grid()
                             plt.show()
-                        self.assertAlmostEqual(f_measured, self.f_expected, delta=self.freq_precision)
+                        self.assertAlmostEqual(f_measured,
+                                               self.f_expected,
+                                               delta=self.freq_precision)
 
 
 def main():
