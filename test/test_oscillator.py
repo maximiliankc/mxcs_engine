@@ -3,11 +3,13 @@
 import ctypes
 import math
 import unittest
+
+from test.constants import sampling_frequency, block_size
+
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as sig
 
-from .constants import sampling_frequency, block_size
 
 
 class OscillatorInterface:
@@ -15,7 +17,7 @@ class OscillatorInterface:
     freq = 0
     testlib = ctypes.CDLL('test.so')
 
-    def __init__(self):
+    def setUp(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
@@ -27,7 +29,7 @@ class OscillatorInterface:
         cos_out_p = cos_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         sin_out = np.zeros(n_samples, dtype=np.single)
         sin_out_p = sin_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_oscillator(ctypes.c_float(self.freq), ctypes.c_int(n_samples), cos_out_p, sin_out_p)
+        self.testlib.test_oscillator(self.freq, n_samples, cos_out_p, sin_out_p)
         return cos_out + 1j*sin_out
 
     def set_f(self, freq: float):
@@ -39,7 +41,7 @@ class OscillatorInterface:
         return int(2**math.ceil(math.log2((sampling_frequency/precision))))
 
 
-class TestOscillator(unittest.TestCase, OscillatorInterface):
+class TestOscillator(OscillatorInterface, unittest.TestCase):
     ''' Test Suite for Oscillator, checks frequency accuracy and amplitude accuracy/consistency.
         Uses an interface to the OscillatorInterface '''
     debug = False # controls whether plots will be made
@@ -104,7 +106,8 @@ class TestOscillator(unittest.TestCase, OscillatorInterface):
 def main():
     ''' For debugging/plotting '''
     osc_test = TestOscillator()
-    osc_test.debug = True
+    osc_test.setUp()
+    # osc_test.debug = True
     osc_test.test_sine_frequency()
     osc_test.test_sine_amplitude()
 

@@ -2,21 +2,26 @@
     copyright Maximilian Cornwell 2023  '''
 import ctypes
 import unittest
+
+from test.constants import sampling_frequency, block_size
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
-from .constants import sampling_frequency, block_size
 
 class EnvelopeInterface:
     ''' ctypes wrapper around test function and tools for interacting with it '''
     base = 100
     attack = 0
+    attack_seconds = 0
     decay = 0
+    decay_seconds = 0
     sustain = 0
     release = 0
+    release_seconds = 0
     testlib = ctypes.CDLL('test.so')
 
-    def __init__(self):
+    def setUp(self):
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
@@ -34,11 +39,11 @@ class EnvelopeInterface:
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
-        self.testlib.test_envelope(ctypes.c_float(self.attack), ctypes.c_float(self.decay),
-                                    ctypes.c_float(self.sustain), ctypes.c_float(self.release),
-                                    ctypes.c_uint(len(presses)), presses_p,
-                                    ctypes.c_uint(len(releases)), releases_p,
-                                    ctypes.c_uint(len(out)), out_p)
+        self.testlib.test_envelope(self.attack_seconds, self.decay_seconds,
+                                    self.sustain, self.release_seconds,
+                                    len(presses), presses_p,
+                                    len(releases), releases_p,
+                                    len(out), out_p)
         return out
 
     def set_adsr(self, attack: float, decay: float, sustain: float, release: float):
@@ -47,6 +52,9 @@ class EnvelopeInterface:
         self.decay = decay*sampling_frequency
         self.sustain = sustain
         self.release = release*sampling_frequency
+        self.attack_seconds = attack
+        self.decay_seconds = decay
+        self.release_seconds = release
 
     def calculate_gradients(self):
         ''' Calculate gradients from adsr values '''
@@ -57,7 +65,7 @@ class EnvelopeInterface:
         return a_grad, d_grad, r_grad
 
 
-class TestEnvelope(unittest.TestCase, EnvelopeInterface):
+class TestEnvelope(EnvelopeInterface, unittest.TestCase):
     ''' Test for envelope generator '''
     debug = False
 
@@ -236,7 +244,8 @@ class TestEnvelope(unittest.TestCase, EnvelopeInterface):
 def main():
     ''' For Debugging/Testing '''
     env_test = TestEnvelope()
-    env_test.debug = True
+    env_test.setUp()
+    # env_test.debug = True
     env_test.test_basic_envelope()
     env_test.test_double_press()
 

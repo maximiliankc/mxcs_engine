@@ -8,23 +8,43 @@
 #include "Constants.h"
 #include "Voice.h"
 #include "Modulator.h"
+#include "Filter.h"
 
 // Defining a monophonic synth for now
-typedef struct Synth_t {
-    Voice_t voice;
+class Synth_t {
     EnvelopeSettings_t settings;
+    Generator_e generator;
+    Voice_t voice;
     Modulator_t mod;
-    float frequencyTable[NOTES];
+    Biquad_Filter_t lpFilter;
+    float lpF;
+    float lpRes;
+    Biquad_Filter_t hpFilter;
+    float hpF;
+    float hpRes;
+    float frequencyTable[notes];
     uint8_t currentNote;
-} Synth_t;
 
-void synth_init(Synth_t * self);
-void synth_set_attack(Synth_t * self, float a);
-void synth_set_decay(Synth_t * self, float d);
-void synth_set_sustain(Synth_t * self, float s);
-void synth_set_release(Synth_t * self, float r);
-void synth_press(Synth_t * self, uint8_t note);
-void synth_release(Synth_t * self, uint8_t note);
-void synth_step(Synth_t * self, float * out);
+    public:
+    Synth_t();
+    void set_attack(float a);
+    void set_decay(float d);
+    void set_sustain(float s);
+    void set_release(float r);
+    void set_mod_f(float freq);
+    void set_mod_depth(float depth);
+    void set_lpf_freq(float freq);
+    void set_lpf_res(float res);
+    void set_hpf_freq(float freq);
+    void set_hpf_res(float res);
+    void set_generator(Generator_e gen);
+    void press(uint8_t note);
+    void release(uint8_t note);
+    void step(float * out);
+
+    #ifdef SYNTH_TEST_
+    float * get_freq_table();
+    #endif
+};
 
 #endif // SYNTH_H_
