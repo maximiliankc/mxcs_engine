@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import scipy.signal as sig
 
 
-
 class OscillatorInterface:
     ''' ctypes wrapper around test shared object file'''
     freq = 0
@@ -22,6 +21,8 @@ class OscillatorInterface:
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
                                                  float_pointer, float_pointer]
+        self.testlib.test_lut_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
+                                                     float_pointer, float_pointer]
 
     def run_osc(self, n_samples: int) -> np.ndarray:
         ''' Run the Oscillator. Output is a complex exponential at frequency f with length n'''
@@ -30,6 +31,15 @@ class OscillatorInterface:
         sin_out = np.zeros(n_samples, dtype=np.single)
         sin_out_p = sin_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         self.testlib.test_oscillator(self.freq, n_samples, cos_out_p, sin_out_p)
+        return cos_out + 1j*sin_out
+
+    def run_lut_osc(self, n_samples: int) -> np.ndarray:
+        ''' Run the Oscillator. Output is a complex exponential at frequency f with length n'''
+        cos_out = np.zeros(n_samples, dtype=np.single)
+        cos_out_p = cos_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        sin_out = np.zeros(n_samples, dtype=np.single)
+        sin_out_p = sin_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        self.testlib.test_lut_oscillator(self.freq, n_samples, cos_out_p, sin_out_p)
         return cos_out + 1j*sin_out
 
     def set_f(self, freq: float):
@@ -48,6 +58,11 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
     test_frequencies = 440*2**((np.arange(21, 109)-69)/12)
     freq_accuracy = 0.5 # cents
     power_accuracy = 0.001
+    peak_thresh = -96
+
+    def osc_call(self, n_samples: int) -> np.ndarray:
+        ''' Call for the specific oscillator implementation '''
+        return self.run_osc(n_samples)
 
     def test_sine_frequency(self) -> None:
         ''' Checks that the oscillator produces a range of test frequencies.
@@ -62,9 +77,9 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
                 n_samples = self.calculate_length(precision)
                 freqs = np.fft.fftshift(np.fft.fftfreq(n_samples))*sampling_frequency
                 self.set_f(freq)
-                vector = self.run_osc(n_samples)
+                vector = self.osc_call(n_samples)
                 f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/n_samples)
-                pkidx, _  = sig.find_peaks(f_vector, height=-96, prominence=1)
+                pkidx, _  = sig.find_peaks(f_vector, height=self.peak_thresh, prominence=1)
                 f_measured = freqs[pkidx]
 
                 if self.debug:
@@ -86,7 +101,7 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
         n_samples = sampling_frequency*30
         freq = 1000
         self.set_f(freq)
-        vector = self.run_osc(n_samples)[:-block_size]
+        vector = self.osc_call(n_samples)[:-block_size]
         power = np.abs(vector)**2
         if self.debug:
             time = np.arange(n_samples-block_size)/sampling_frequency
@@ -103,11 +118,21 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
         self.assertAlmostEqual(np.min(power), 1., delta=self.power_accuracy)
         self.assertAlmostEqual(np.max(power), 1., delta=self.power_accuracy)
 
+class TestLutOscillator(TestOscillator):
+    ''' Test Suite for LUT version of oscillator '''
+    peak_thresh = -60
+    power_accuracy = 0.002
+
+    def osc_call(self, n_samples: int) -> np.ndarray:
+        ''' Call for the specific oscillator implementation '''
+        return self.run_lut_osc(n_samples)
+
+
 def main():
     ''' For debugging/plotting '''
-    osc_test = TestOscillator()
+    osc_test = TestLutOscillator()
     osc_test.setUp()
-    # osc_test.debug = True
+    osc_test.debug = True
     osc_test.test_sine_frequency()
     osc_test.test_sine_amplitude()
 
