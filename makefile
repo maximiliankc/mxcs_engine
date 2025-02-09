@@ -4,10 +4,10 @@ CFLAGS=-I$(IDIR) -Werror -Wall -Wpedantic -DSYNTH_TEST_
 
 TEST_TARGET=test.so
 
-_OBJ = Blit.o DelayLine.o Envelope.o Filter.o Modulator.o Oscillator.o Synth.o Voice.o Utils.o
+_OBJ = Blit.o DelayLine.o Envelope.o Filter.o Modulator.o Oscillator.o OscLut.o Synth.o Utils.o Voice.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-_DEPS = Blit.h Constants.h DelayLine.h Filter.h Envelope.h Modulator.h Oscillator.h Synth.h Voice.h Utils.h
+_DEPS = Blit.h Constants.h DelayLine.h Envelope.h Filter.h Modulator.h Oscillator.h OscLut.h SineTable.h Synth.h Utils.h Voice.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 ODIR=obj

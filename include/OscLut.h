@@ -13,5 +13,4 @@ class OscillatorLut_t {
     void step(float * out);
 };
 
-
 #endif
