@@ -6,12 +6,16 @@
 #define VOICE_H_
 #include "Blit.h"
 #include "Envelope.h"
+#include "Filter.h"
 #include "Oscillator.h"
 
 enum Generator_e {
     sine = 0,
     blit = 1,
-    bpblit = 2
+    bpblit = 2,
+    square = 3,
+    triangle = 4,
+    sawtooth = 5
 };
 
 class Voice_t {
@@ -19,6 +23,8 @@ class Voice_t {
     Oscillator_t osc;
     Blit_t blitOsc;
     BpBlit_t bpBlitOsc;
+    Biquad_Filter_t integrator1;
+    Biquad_Filter_t integrator2;
     Generator_e * generator;
 
     public:

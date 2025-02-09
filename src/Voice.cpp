@@ -27,6 +27,22 @@ void Voice_t::step(float * out) {
     case bpblit:
         bpBlitOsc.step(out);
         break;
+
+    case square:
+        bpBlitOsc.step(out);
+        integrator1.step(out, out);
+        break;
+
+    case triangle:
+        bpBlitOsc.step(out);
+        integrator1.step(out, out);
+        integrator2.step(out, out);
+        break;
+
+    case sawtooth:
+        blitOsc.step(out);
+        integrator1.step(out, out);
+        break;
     }
     envelope.step(envOut);
 
