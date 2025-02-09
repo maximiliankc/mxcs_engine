@@ -120,8 +120,8 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
 
 class TestLutOscillator(TestOscillator):
     ''' Test Suite for LUT version of oscillator '''
-    peak_thresh = -60
-    power_accuracy = 0.002
+    peak_thresh = -66
+    power_accuracy = 0.001
 
     def osc_call(self, n_samples: int) -> np.ndarray:
         ''' Call for the specific oscillator implementation '''
