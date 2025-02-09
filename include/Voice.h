@@ -6,7 +6,7 @@
 #define VOICE_H_
 #include "Blit.h"
 #include "Envelope.h"
-#include "Oscillator.h"
+#include "OscillatorLut.h"
 
 enum Generator_e {
     sine = 0,
@@ -16,7 +16,7 @@ enum Generator_e {
 
 class Voice_t {
     Envelope_t envelope;
-    Oscillator_t osc;
+    OscillatorLut_t osc;
     Blit_t blitOsc;
     BpBlit_t bpBlitOsc;
     Generator_e * generator;
