@@ -11,6 +11,9 @@ from scipy import io
 
 THRESHOLD = 2**-32
 
+def rms(x: np.ndarray):
+    return np.mean(x**2)**0.5
+
 def msinc(n: np.ndarray, f: float, m: int)->(np.ndarray,np.ndarray):
     ''' Calculates the periodic sinc function'''
     top = np.exp(1j*np.pi*m*f*n)
@@ -50,16 +53,16 @@ def bl_sawtooth(n: np.ndarray, f: float)->(np.ndarray,np.ndarray):
 def bl_square(n: np.ndarray, f: float)->(np.ndarray,np.ndarray):
     ''' Band limited Square Wave '''
     x, phase_error = bp_blit(n, f)
-    y = leaky_integrator(2*x)
+    y = leaky_integrator(x)
     return y, phase_error
 
 def bl_triangle(n: np.ndarray, f: float)->(np.ndarray,np.ndarray):
     ''' Band Limited Triangle wave '''
     x, phase_error = bl_square(n, f)
-    y = leaky_integrator(4*f*x)
+    y = leaky_integrator(8*f*x)
     return y, phase_error
 
-def leaky_integrator(x: np.ndarray, r:float=0.999)->np.ndarray:
+def leaky_integrator(x: np.ndarray, r:float=0.99)->np.ndarray:
     ''' A leaky integrator combined with a low pass filter,
      r controls the radius of the poles, r closer to one will
      lower the cutoff frequency, but increase the size and duration
@@ -77,10 +80,17 @@ def main():
 
     freqs = 27.5*2**(np.arange(16)/2)
 
+    magnitudes = {'blit': [],
+                 'bpblit': [],
+                 'Sawtooth': [],
+                 'Triangle': [],
+                 'Square': [],
+    }
+
     for f in freqs:
-        _, t_ax = plt.subplots()
-        _, e_ax = plt.subplots()
-        _, f_ax = plt.subplots()
+        # _, t_ax = plt.subplots()
+        # _, e_ax = plt.subplots()
+        # _, f_ax = plt.subplots()
 
         combos = [('blit', blit),
                   ('bpblit', bp_blit),
@@ -93,33 +103,44 @@ def main():
             fnorm = f/fs
             y, phase_error = generator(n, fnorm)
 
+            mag = rms(y[len(y)//2:])
+            magnitudes[leg].append(mag)
+
             max_val = np.max(np.abs(y))
             io.wavfile.write(f'{leg}_({int(f)}).wav', fs, y/max_val)
 
-            y_f = np.fft.fft(y)
-            t_ax.plot(n/fs, y, label=leg)
-            e_ax.plot(n/fs, phase_error, label=leg)
-            f_ax.plot(fs*n/n_samples, 20*np.log10(np.abs(y_f)), label=leg)
-            t_ax.legend()
-            t_ax.grid(True)
-            t_ax.set_xlabel('Time')
-            t_ax.set_ylabel('Magnitude')
-            e_ax.legend()
-            e_ax.grid(True)
-            e_ax.set_xlabel('Time')
-            e_ax.set_ylabel('Error (rad)')
-            f_ax.legend()
-            f_ax.grid(True)
-            f_ax.set_xlabel('Frequency')
-            f_ax.set_ylabel('Magnitude')
-            t_ax.set_title(f'frequency = {f} Hz, time domain')
-            e_ax.set_title(f'frequency = {f} Hz, phase error')
-            f_ax.set_title(f'frequency = {f} Hz, freq domain')
+        #     y_f = np.fft.fft(y)
+        #     t_ax.plot(n/fs, y, label=leg)
+        #     # e_ax.plot(n/fs, phase_error, label=leg)
+        #     f_ax.plot(fs*n/n_samples, 20*np.log10(np.abs(y_f)), label=leg)
+        #     t_ax.legend()
+        #     t_ax.grid(True)
+        #     t_ax.set_xlabel('Time')
+        #     t_ax.set_ylabel('Magnitude')
+        #     # e_ax.legend()
+        #     # e_ax.grid(True)
+        #     # e_ax.set_xlabel('Time')
+        #     # e_ax.set_ylabel('Error (rad)')
+        #     f_ax.legend()
+        #     f_ax.grid(True)
+        #     f_ax.set_xlabel('Frequency')
+        #     f_ax.set_ylabel('Magnitude')
+        #     t_ax.set_title(f'frequency = {f} Hz, time domain')
+        #     # e_ax.set_title(f'frequency = {f} Hz, phase error')
+        #     f_ax.set_title(f'frequency = {f} Hz, freq domain')
 
-            dc = np.abs(y_f[0])/(n_samples**0.5)
-            print(f'dc at {f} Hz = {dc} (freq), = {np.mean(y)} (time)')
+        #     dc = np.abs(y_f[0])/(n_samples**0.5)
+        #     print(f'dc at {f} Hz = {dc} (freq), = {np.mean(y)} (time)')
 
-        plt.show()
+        # plt.show()
+
+    _, max_ax = plt.subplots()
+    for signal_type in magnitudes:
+        max_ax.plot(freqs, magnitudes[signal_type], label=signal_type)
+    max_ax.grid(True)
+    max_ax.set_xlabel('Frequency (Hz)')
+    max_ax.legend()
+    plt.show()
 
 if __name__ == "__main__":
     main()
