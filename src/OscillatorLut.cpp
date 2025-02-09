@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "OscLut.h"
+#include "OscillatorLut.h"
 #include "SineTable.h"
 #include "Constants.h"
 
