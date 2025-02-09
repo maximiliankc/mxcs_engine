@@ -1,9 +1,10 @@
 #ifndef OSC_LUT_H
 #define OSC_LUT_H
+#include <stdint.h>
 
 class OscillatorLut_t {
-    float phase;
-    float frequency;
+    uint32_t phase; // <0,32> format
+    uint32_t frequency; // <0,32> format
 
     public:
     OscillatorLut_t();

@@ -1,35 +1,39 @@
+#include <math.h>
+
 #include "OscLut.h"
 #include "SineTable.h"
 #include "Constants.h"
-#include "math.h"
-#include <stdio.h>
+
+#define FLOAT_CONVERSION 4294967296 //2**32
 
 OscillatorLut_t::OscillatorLut_t() {
     phase = 0;
 }
 
 void OscillatorLut_t::set_freq(float f) {
-    frequency = f;
+    double float_freq = (double)f;
+    float_freq = FLOAT_CONVERSION*float_freq;
+    frequency = (uint32_t)float_freq;
 }
 
 float OscillatorLut_t::get_phase() {
-    return 2*M_PI*phase;
+    return 2*M_PI*(double)phase/FLOAT_CONVERSION;
 }
 
 void OscillatorLut_t::adjust_phase(float phase_) {
-    phase = phase_/(2*M_PI);
+    double normalised_phase = phase_/(2*M_PI);
+    normalised_phase *= FLOAT_CONVERSION;
+    phase = (uint32_t)normalised_phase;
 }
 
 void OscillatorLut_t::step(float * out) {
-    uint16_t phase_index;
+    uint32_t phase_index;
     for (uint16_t i = 0; i < blockSize; i++) {
-        phase_index = (uint16_t)(phase*((float)table_length));
+        phase_index = phase>>20;
         out[i] = sine_table[phase_index];
         // update phase
-        phase += frequency;
-        if (phase > 1.0) {
-            phase -= 1.0;
-        }
+        // printf("phase_index %d, phase %d\n", phase_index, phase);
+        phase += frequency; // relying on overflow!
     }
 }
 
