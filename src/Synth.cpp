@@ -26,7 +26,7 @@ Synth_t::Synth_t(float _samplingFrequency): envelopeSettings(_samplingFrequency)
     lpF = 20000;
     lpFilter.configure_lowpass(lpF, lpRes);
     hpRes = -3;
-    hpRes = 20;
+    hpF = 20;
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
@@ -70,7 +70,7 @@ void Synth_t::set_hpf_freq(float freq) {
 }
 
 void Synth_t::set_hpf_res(float res){
-    hpF = res;
+    hpRes = res;
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
@@ -93,7 +93,8 @@ void Synth_t::release(uint8_t note) {
 void Synth_t::step(float * out) {
     voice.step(out);
     mod.step(out);
-    // lpFilter.step(out, out);
+    lpFilter.step(out, out);
+    hpFilter.step(out, out);
 }
 
 #ifdef SYNTH_TEST_

@@ -155,14 +155,16 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
                 ax2.legend()
                 plt.show()
 
+    #   TODO: add integration tests for filters
+
 
 def main():
     ''' For Debugging/Testing '''
     synth_test = TestSynth()
     synth_test.setUp()
     synth_test.debug = True
-    # synth_test.test_model()
-    synth_test.test_envelope()
+    synth_test.test_model()
+    # synth_test.test_envelope()
     # synth_test.test_frequency()
     # synth_test.test_frequency_table()
     # synth_test.play_notes()
