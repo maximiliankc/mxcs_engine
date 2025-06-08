@@ -2,7 +2,7 @@
     copyright Maximilian Cornwell 2023 '''
 import ctypes
 
-from test.constants import sampling_frequency
+from test.constants import sampling_frequencies
 from test.test_voice import VoiceInterface, TestVoice, generators
 from test.test_modulator import TestModulator
 
@@ -39,7 +39,7 @@ class SynthInterface(VoiceInterface):
                                                 ctypes.c_uint, float_pointer]
         self.testlib.test_frequency_table.argtypes = [float_pointer, ctypes.c_float]
 
-    def run_synth(self, presses: list, p_notes: list, releases: list, r_notes: list, n_samples: int, fs: float=sampling_frequency) -> np.ndarray:
+    def run_synth(self, presses: list, p_notes: list, releases: list, r_notes: list, n_samples: int, fs: float) -> np.ndarray:
         ''' Run the Synth. Output is a float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         p_uint8 = ctypes.POINTER(ctypes.c_uint8)
@@ -87,13 +87,13 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
         notes = len(presses)*[self.note]
         self.mod_freq = 0
         self.mod_depth = 0
-        return self.run_synth(presses, notes, releases, notes, n_samples)
+        return self.run_synth(presses, notes, releases, notes, n_samples, 44100)
 
-    def run_mod(self, freq: float, ratio: float, n_samples: int):
+    def run_mod(self, freq: float, ratio: float, n_samples: int, fs: float):
         self.mod_freq = freq
         self.mod_depth = ratio
         self.set_adsr(10**-6, 10**-6, 0, 10**-6)
-        vector = sig.hilbert(self.run_synth([0], [64], [0], [0], n_samples))
+        vector = sig.hilbert(self.run_synth([0], [64], [0], [0], n_samples, fs))
         self.check_abs = True
         return np.abs(vector)
 
@@ -125,6 +125,7 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
 
     def play_notes(self):
         ''' Play a series of notes, show a spectrogram, save as a wav '''
+        sampling_frequency = 44100
         n_samples = sampling_frequency*60
         for gen in generators:
             self.generator = gen
@@ -137,7 +138,7 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
                 notes = [(2*p) % 24 + 50 for p in presses]
                 presses = [p*sampling_frequency for p in presses]
                 releases = [r*sampling_frequency for r in releases]
-                out = self.run_synth(presses, notes, releases, notes, n_samples)
+                out = self.run_synth(presses, notes, releases, notes, n_samples, sampling_frequency)
                 wav.write(f'Test_Signal_{release_delay}_{mod_depth}_{mod_freq}_{gen}.wav', sampling_frequency, out)
                 out = sig.resample_poly(out, 1, 4)
                 freq, time, s_xx = sig.spectrogram(out, fs=sampling_frequency/4, nperseg=2**12, noverlap=2**10)

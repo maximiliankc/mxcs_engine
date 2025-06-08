@@ -28,8 +28,8 @@ void Modulator_t::step(float * signal) {
 
 #ifdef SYNTH_TEST_
 extern "C" {
-    void test_modulator(const float f, const float ratio, const unsigned int n, float * out) {
-        Modulator_t modulator(44100);
+    void test_modulator(const float f, const float ratio, const unsigned int n, float * out, float fs) {
+        Modulator_t modulator(fs);
         float signal[blockSize];
 
         modulator.modRatio = ratio;
