@@ -220,7 +220,7 @@ extern "C" {
     }
 
     void run_biquad_filter(float * b, float * a, unsigned int ioLength, float * input, float * output) {
-        Biquad_Filter_t filter(44100, b, a);
+        Biquad_Filter_t filter(1, b, a); // sampling frequency irrelevant for this test
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
             filter.step(&input[i], &output[i]);
         }
@@ -251,16 +251,16 @@ extern "C" {
         }
     }
 
-    void test_lowpass(float freq, float res, unsigned int ioLength, float * input, float * output) {
-        Biquad_Filter_t filter(44100);
+    void test_lowpass(float freq, float res, unsigned int ioLength, float * input, float * output, float fs) {
+        Biquad_Filter_t filter(fs);
         filter.configure_lowpass(freq, res);
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
             filter.step(&input[i], &output[i]);
         }
     }
 
-    void test_highpass(float freq, float res, unsigned int ioLength, float * input, float * output) {
-        Biquad_Filter_t filter(44100);
+    void test_highpass(float freq, float res, unsigned int ioLength, float * input, float * output, float fs) {
+        Biquad_Filter_t filter(fs);
         filter.configure_highpass(freq, res);
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
             filter.step(&input[i], &output[i]);
