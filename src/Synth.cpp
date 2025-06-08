@@ -148,9 +148,9 @@ extern "C" {
         }
     }
 
-    void test_frequency_table(float freqs[]) {
+    void test_frequency_table(float freqs[], float fs) {
         // parameters:
-        Synth_t synth(44100);
+        Synth_t synth(fs);
         for(unsigned int i = 0; i<notes; i++) {
             freqs[i] = synth.get_freq_table()[i];
         }

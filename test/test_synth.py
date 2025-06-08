@@ -36,7 +36,7 @@ class SynthInterface(VoiceInterface):
                                                 ctypes.c_uint, uint_pointer, uint8_pointer,
                                                 ctypes.c_uint, uint_pointer, uint8_pointer,
                                                 ctypes.c_uint, float_pointer]
-        self.testlib.test_frequency_table.argtypes = [float_pointer]
+        self.testlib.test_frequency_table.argtypes = [float_pointer, ctypes.c_float]
 
     def run_synth(self, presses: list, p_notes: list, releases: list, r_notes: list, n_samples: int) -> np.ndarray:
         ''' Run the Synth. Output is a float'''
@@ -57,11 +57,11 @@ class SynthInterface(VoiceInterface):
                                     len(out), out_p)
         return out
 
-    def run_frequency_table(self):
+    def run_frequency_table(self, fs):
         ''' Reads the calculated frequency table '''
         table = np.zeros(128, dtype=np.single)
         table_p = table.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_frequency_table(table_p)
+        self.testlib.test_frequency_table(table_p, fs)
         return table
 
 
@@ -98,28 +98,29 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
 
     def test_frequency_table(self):
         ''' Check the accuracy of the frequeny table '''
-        reference = self.midi_to_freq(np.arange(128))
-        device = self.run_frequency_table()*sampling_frequency
-        error_cents = 1200*np.log2(reference/device)
-        if self.debug:
-            _, ax1 = plt.subplots()
-            ax1.plot(np.arange(128), reference, label='Target')
-            ax1.plot(np.arange(128), device, label='Device')
-            ax1.legend()
-            ax1.grid(True)
-            ax1.set_xlabel('MIDI note')
-            ax1.set_ylabel('Frequency (Hz)')
-            ax1.set_title('Error')
+        for fs in [44100, 48000]:
+            reference = self.midi_to_freq(np.arange(128))
+            device = self.run_frequency_table(fs)*fs
+            error_cents = 1200*np.log2(reference/device)
+            if self.debug:
+                _, ax1 = plt.subplots()
+                ax1.semilogy(np.arange(128), reference, label='Target')
+                ax1.semilogy(np.arange(128), device, label='Device')
+                ax1.legend()
+                ax1.grid(True)
+                ax1.set_xlabel('MIDI note')
+                ax1.set_ylabel('Frequency (Hz)')
+                ax1.set_title(f'Error ({fs=})')
 
-            _, ax2 = plt.subplots()
-            ax2.plot(np.arange(128), error_cents)
-            ax2.grid(True)
-            ax2.set_xlabel('MIDI note')
-            ax2.set_ylabel('Error (cents)')
-            ax2.set_title('Error')
-            plt.show()
-        # check the frequency is within half a cent of the desired note
-        self.assertLess(np.max(np.abs(error_cents)), 0.5)
+                _, ax2 = plt.subplots()
+                ax2.plot(np.arange(128), error_cents)
+                ax2.grid(True)
+                ax2.set_xlabel('MIDI note')
+                ax2.set_ylabel('Error (cents)')
+                ax2.set_title(f'Error ({fs=})')
+                plt.show()
+            # check the frequency is within half a cent of the desired note
+            self.assertLess(np.max(np.abs(error_cents)), 0.5)
 
     def play_notes(self):
         ''' Play a series of notes, show a spectrogram, save as a wav '''
@@ -163,10 +164,10 @@ def main():
     synth_test = TestSynth()
     synth_test.setUp()
     synth_test.debug = True
-    synth_test.test_model()
+    # synth_test.test_model()
     # synth_test.test_envelope()
     # synth_test.test_frequency()
-    # synth_test.test_frequency_table()
+    synth_test.test_frequency_table()
     # synth_test.play_notes()
 
 if __name__=='__main__':
