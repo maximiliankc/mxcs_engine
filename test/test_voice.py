@@ -3,7 +3,7 @@
 import ctypes
 import unittest
 
-from test.constants import sampling_frequency
+from test.constants import sampling_frequency, sampling_frequencies
 from test.test_envelope import EnvelopeInterface
 from test.test_oscillator import OscillatorInterface
 
@@ -76,47 +76,48 @@ class TestVoice(VoiceInterface, unittest.TestCase):
         self.freq = freq/fs
         self.f_expected = freq
 
-    def run_voice(self, presses: list, releases: list, n_samples: int, fs):
+    def run_voice(self, presses: list, releases: list, n_samples: int, fs: float):
         ''' Run the implementation for the test '''
         return self.run_voice_module(presses, releases, n_samples, fs)
 
     def test_envelope(self):
         ''' Check that the envelope is being applied '''
-        n_samples = 1*sampling_frequency # s
-        self.set_f(self.env_test_note, sampling_frequency)
-        for attack, decay, sustain, release in [(0.1, 0.05, -3., 0.1),
-                                                (0.01, 0.1, -20, 0.5),
-                                                (0.05, 0.2, -80, 0.4)
-                                                ]:
-            with self.subTest(f'{attack},{decay},{sustain},{release}'):
-                self.set_adsr(attack, decay, sustain, release, sampling_frequency)
-                press_time = int(0.1*sampling_frequency)
-                release_time = int(0.4*sampling_frequency)
-                voice_vector = np.abs(sig.hilbert(self.run_voice([press_time],
-                                                                 [release_time],
-                                                                 n_samples, sampling_frequency)))
-                env_vector = self.run_env([press_time], [release_time], n_samples, sampling_frequency)
-                rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
-                if self.debug:
-                    _, ax1 = plt.subplots()
-                    time = np.arange(n_samples)/sampling_frequency
-                    ax1.plot(time, voice_vector, label='voice')
-                    ax1.plot(time, env_vector, label='envelope')
-                    ax1.legend()
-                    ax1.grid()
-                    ax1.set_title('Voice and Envelope')
-                    ax1.set_ylabel('Magnitude')
-                    ax1.set_xlabel('Time (s)')
+        for fs in sampling_frequencies:
+            n_samples = 1*fs # s
+            self.set_f(self.env_test_note, fs)
+            for attack, decay, sustain, release in [(0.1, 0.05, -3., 0.1),
+                                                    (0.01, 0.1, -20, 0.5),
+                                                    (0.05, 0.2, -80, 0.4)
+                                                    ]:
+                with self.subTest(f'{attack},{decay},{sustain},{release}'):
+                    self.set_adsr(attack, decay, sustain, release, sampling_frequency)
+                    press_time = int(0.1*fs)
+                    release_time = int(0.4*fs)
+                    voice_vector = np.abs(sig.hilbert(self.run_voice([press_time],
+                                                                    [release_time],
+                                                                    n_samples, fs)))
+                    env_vector = self.run_env([press_time], [release_time], n_samples, fs)
+                    rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
+                    if self.debug:
+                        _, ax1 = plt.subplots()
+                        time = np.arange(n_samples)/fs
+                        ax1.plot(time, voice_vector, label='voice')
+                        ax1.plot(time, env_vector, label='envelope')
+                        ax1.legend()
+                        ax1.grid()
+                        ax1.set_title('Voice and Envelope')
+                        ax1.set_ylabel('Magnitude')
+                        ax1.set_xlabel('Time (s)')
 
-                    _, ax2 = plt.subplots()
-                    ax2.plot(time, voice_vector-env_vector)
-                    ax2.grid()
-                    ax2.set_title(f'Voice/Envelope error, rmse = {rms_error}')
-                    ax2.set_xlabel('Time (s)')
-                    ax2.set_ylabel('Error')
+                        _, ax2 = plt.subplots()
+                        ax2.plot(time, voice_vector-env_vector)
+                        ax2.grid()
+                        ax2.set_title(f'Voice/Envelope error, rmse = {rms_error}')
+                        ax2.set_xlabel('Time (s)')
+                        ax2.set_ylabel('Error')
 
-                    plt.show()
-                self.assertLess(rms_error, 0.01)
+                        plt.show()
+                    self.assertLess(rms_error, 0.01)
 
     def test_frequency(self):
         ''' Check the frequency of the voice '''

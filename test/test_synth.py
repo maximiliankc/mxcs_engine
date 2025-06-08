@@ -99,7 +99,7 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
 
     def test_frequency_table(self):
         ''' Check the accuracy of the frequeny table '''
-        for fs in [44100, 48000]:
+        for fs in sampling_frequencies:
             reference = self.midi_to_freq(np.arange(128))
             device = self.run_frequency_table(fs)*fs
             error_cents = 1200*np.log2(reference/device)
