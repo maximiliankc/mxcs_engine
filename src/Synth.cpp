@@ -5,12 +5,17 @@
 
 
 const float semitone = 1.0594630943592953;
-const float c_minus_1 = 8.175798915643707/samplingFrequency;
+const float c_minus_1 = 8.175798915643707;
 
-Synth_t::Synth_t(): voice(&settings, &generator) {
+Synth_t::Synth_t(float _samplingFrequency): envelopeSettings(_samplingFrequency),
+                                            voice(&envelopeSettings, &generator),
+                                            mod(_samplingFrequency),
+                                            lpFilter(_samplingFrequency),
+                                            hpFilter(_samplingFrequency) {
     // calculate the frequency table
+    samplingFrequency = _samplingFrequency;
     currentNote = 0;
-    frequencyTable[0] = c_minus_1;
+    frequencyTable[0] = c_minus_1/samplingFrequency;
     for(uint8_t i = 1; i < notes; i++) {
         frequencyTable[i] = semitone*(frequencyTable[i-1]);
     }
@@ -26,23 +31,23 @@ Synth_t::Synth_t(): voice(&settings, &generator) {
 }
 
 void Synth_t::set_attack(float a) {
-    settings.set_attack(a);
+    envelopeSettings.set_attack(a);
 }
 
 void Synth_t::set_decay(float d) {
-    settings.set_decay(d);
+    envelopeSettings.set_decay(d);
 }
 
 void Synth_t::set_sustain(float s) {
-    settings.set_sustain(s);
+    envelopeSettings.set_sustain(s);
 }
 
 void Synth_t::set_release(float r) {
-    settings.set_release(r);
+    envelopeSettings.set_release(r);
 }
 
 void Synth_t::set_mod_f(float freq) {
-    mod.lfo.set_freq(freq/samplingFrequency);
+    mod.set_freq(freq);
 }
 
 void Synth_t::set_mod_depth(float depth) {
@@ -88,8 +93,7 @@ void Synth_t::release(uint8_t note) {
 void Synth_t::step(float * out) {
     voice.step(out);
     mod.step(out);
-    lpFilter.step(out, out);
-    hpFilter.step(out, out);
+    // lpFilter.step(out, out);
 }
 
 #ifdef SYNTH_TEST_
@@ -120,7 +124,7 @@ extern "C" {
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        Synth_t synth;
+        Synth_t synth(44100);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
         synth.set_attack(a);
@@ -145,7 +149,7 @@ extern "C" {
 
     void test_frequency_table(float freqs[]) {
         // parameters:
-        Synth_t synth;
+        Synth_t synth(44100);
         for(unsigned int i = 0; i<notes; i++) {
             freqs[i] = synth.get_freq_table()[i];
         }

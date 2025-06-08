@@ -23,8 +23,7 @@ class ModulatorInterface:
         ''' Run the Modulator. Modulates a constant signal'''
         out = np.zeros(n_samples, dtype=np.single)
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        self.testlib.test_modulator(freq/sampling_frequency,
-                                     ratio, n_samples, out_p)
+        self.testlib.test_modulator(freq, ratio, n_samples, out_p)
         return out
 
 class TestModulator(ModulatorInterface, unittest.TestCase):
@@ -51,7 +50,7 @@ class TestModulator(ModulatorInterface, unittest.TestCase):
                     if self.debug:
                         _, ax1 = plt.subplots()
                         ax1.plot(time, vector, label='vector')
-                        ax1.plot(time, expected, label='expected')
+                        ax1.plot(time, expected, ls=':', label='expected')
                         ax1.legend()
                         ax1.grid(True)
                         ax1.set_xlabel('Time (s)')

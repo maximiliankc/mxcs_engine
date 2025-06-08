@@ -160,12 +160,12 @@ def main():
     ''' For Debugging/Testing '''
     synth_test = TestSynth()
     synth_test.setUp()
-    # synth_test.debug = True
-    synth_test.test_model()
+    synth_test.debug = True
+    # synth_test.test_model()
     synth_test.test_envelope()
-    synth_test.test_frequency()
-    synth_test.test_frequency_table()
-    synth_test.play_notes()
+    # synth_test.test_frequency()
+    # synth_test.test_frequency_table()
+    # synth_test.play_notes()
 
 if __name__=='__main__':
     main()

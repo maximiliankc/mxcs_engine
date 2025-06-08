@@ -10,7 +10,8 @@ const float baseLevel = 0.00001;
 const float baseLevelDB = 100;
 
 
-EnvelopeSettings_t::EnvelopeSettings_t() {
+EnvelopeSettings_t::EnvelopeSettings_t(float _samplingFrequency) {
+    samplingFrequency = _samplingFrequency;
     a = 0;
     d = 0;
     s = 0;
@@ -115,7 +116,7 @@ extern "C" {
         //              n: number of samples to iterate over.
         //              if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        EnvelopeSettings_t adsr;
+        EnvelopeSettings_t adsr(44100);
         Envelope_t env(&adsr);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;

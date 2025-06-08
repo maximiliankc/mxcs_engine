@@ -116,7 +116,8 @@ void Filter_TDFII_t::step(float * in, float * out) {
     }
 }
 
-Biquad_Filter_t::Biquad_Filter_t() {
+Biquad_Filter_t::Biquad_Filter_t(float _samplingFrequency) {
+    samplingFrequency = _samplingFrequency;
     float a_[3] = {1, 0, 0};
     float b_[3] = {1, 0, 0};
     set_coeffs(a_, b_);
@@ -124,7 +125,8 @@ Biquad_Filter_t::Biquad_Filter_t() {
     state[1] = 0;
 }
 
-Biquad_Filter_t::Biquad_Filter_t(float * b_, float * a_) {
+Biquad_Filter_t::Biquad_Filter_t(float _samplingFrequency, float * b_, float * a_) {
+    samplingFrequency = _samplingFrequency;
     set_coeffs(b_, a_);
     state[0] = 0;
     state[1] = 0;
@@ -218,7 +220,7 @@ extern "C" {
     }
 
     void run_biquad_filter(float * b, float * a, unsigned int ioLength, float * input, float * output) {
-        Biquad_Filter_t filter(b, a);
+        Biquad_Filter_t filter(44100, b, a);
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
             filter.step(&input[i], &output[i]);
         }
@@ -250,7 +252,7 @@ extern "C" {
     }
 
     void test_lowpass(float freq, float res, unsigned int ioLength, float * input, float * output) {
-        Biquad_Filter_t filter;
+        Biquad_Filter_t filter(44100);
         filter.configure_lowpass(freq, res);
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
             filter.step(&input[i], &output[i]);
@@ -258,7 +260,7 @@ extern "C" {
     }
 
     void test_highpass(float freq, float res, unsigned int ioLength, float * input, float * output) {
-        Biquad_Filter_t filter;
+        Biquad_Filter_t filter(44100);
         filter.configure_highpass(freq, res);
         for(unsigned int i=0; i+blockSize <= ioLength; i+= blockSize) {
             filter.step(&input[i], &output[i]);

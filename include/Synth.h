@@ -12,7 +12,8 @@
 
 // Defining a monophonic synth for now
 class Synth_t {
-    EnvelopeSettings_t settings;
+    float samplingFrequency;
+    EnvelopeSettings_t envelopeSettings;
     Generator_e generator;
     Voice_t voice;
     Modulator_t mod;
@@ -26,7 +27,7 @@ class Synth_t {
     uint8_t currentNote;
 
     public:
-    Synth_t();
+    Synth_t(float _samplingFrequency);
     void set_attack(float a);
     void set_decay(float d);
     void set_sustain(float s);

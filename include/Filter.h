@@ -54,12 +54,13 @@ class Filter_TDFII_t: public IIR_Filter_t {
 };
 
 class Biquad_Filter_t: public IIR_Filter_t {
+    float samplingFrequency;
     float state[2];
     float a[3];
     float b[3];
     public:
-    Biquad_Filter_t();
-    Biquad_Filter_t(float * b, float * a);
+    Biquad_Filter_t(float samplingFrequency);
+    Biquad_Filter_t(float samplingFrequency, float * b, float * a);
     void step(float * in, float * out);
     void set_coeffs(float * b, float * a);
     void configure_lowpass(float f, float res);

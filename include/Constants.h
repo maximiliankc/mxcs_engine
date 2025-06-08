@@ -8,6 +8,5 @@
 
 const uint8_t blockSize = 128;
 const uint8_t notes = 128;
-const float samplingFrequency = 44100;
 
 #endif // CONSTANTS_H

@@ -67,7 +67,7 @@ extern "C" {
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        EnvelopeSettings_t settings;
+        EnvelopeSettings_t settings(44100);
         Generator_e generator = (Generator_e)gen;
         Voice_t voice(&settings, &generator);
         unsigned int pressCount = 0;
