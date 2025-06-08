@@ -106,6 +106,7 @@ float * Synth_t::get_freq_table() {
 extern "C" {
     void test_synth(const float a, const float d, const float s, const float r,\
                     const float modDepth, const float modFreq, const unsigned int gen,\
+                    const float fs,\
                     const unsigned int presses, unsigned int pressNs[], uint8_t pressNotes[],\
                     const unsigned int releases, unsigned int releaseNs[], uint8_t releaseNotes[],\
                     const unsigned int n, float envOut[]) {
@@ -115,6 +116,7 @@ extern "C" {
         //              r: release time (in samples)
         //              modDepth: modulation depth
         //              modFreq: modulation frequency
+        //              fs: sampling frequency
         //              gen: type of generator
         //              presses: number of presses
         //              pressNs: times at which to press
@@ -125,7 +127,7 @@ extern "C" {
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        Synth_t synth(44100);
+        Synth_t synth(fs);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
         synth.set_attack(a);

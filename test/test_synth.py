@@ -23,22 +23,23 @@ class SynthInterface(VoiceInterface):
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
         uint8_pointer = ctypes.POINTER(ctypes.c_uint8)
-        # a, d, s, r,
+        # a, d,
+        # s, r,
         # modDepth, modFreq,
-        # generator,
+        # generator, fs
         # presses, pressNs, pressNotes,
         # releases, releaseNs, releaseNotes,
         # n, envOut
         self.testlib.test_synth.argtypes = [ctypes.c_float, ctypes.c_float,
                                                 ctypes.c_float, ctypes.c_float,
                                                 ctypes.c_float, ctypes.c_float,
-                                                ctypes.c_uint,
+                                                ctypes.c_uint, ctypes.c_float,
                                                 ctypes.c_uint, uint_pointer, uint8_pointer,
                                                 ctypes.c_uint, uint_pointer, uint8_pointer,
                                                 ctypes.c_uint, float_pointer]
         self.testlib.test_frequency_table.argtypes = [float_pointer, ctypes.c_float]
 
-    def run_synth(self, presses: list, p_notes: list, releases: list, r_notes: list, n_samples: int) -> np.ndarray:
+    def run_synth(self, presses: list, p_notes: list, releases: list, r_notes: list, n_samples: int, fs: float=sampling_frequency) -> np.ndarray:
         ''' Run the Synth. Output is a float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         p_uint8 = ctypes.POINTER(ctypes.c_uint8)
@@ -51,7 +52,7 @@ class SynthInterface(VoiceInterface):
         self.testlib.test_synth(self.attack_seconds, self.decay_seconds,
                                     self.sustain, self.release_seconds,
                                     self.mod_depth, self.mod_freq,
-                                    generators[self.generator],
+                                    generators[self.generator], fs,
                                     len(presses), presses_p, p_notes_p,
                                     len(releases), releases_p, r_notes_p,
                                     len(out), out_p)
