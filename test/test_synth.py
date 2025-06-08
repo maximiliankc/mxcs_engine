@@ -79,20 +79,20 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
             https://newt.phys.unsw.edu.au/jw/notes.html'''
         return 440*2**((note-69)/12)
 
-    def set_f(self, freq: int):
+    def set_f(self, freq: int, fs: float):
         self.note = freq
         self.f_expected = self.midi_to_freq(freq)
 
-    def run_voice(self, presses: list, releases: list, n_samples: int):
+    def run_voice(self, presses: list, releases: list, n_samples: int, fs: float):
         notes = len(presses)*[self.note]
         self.mod_freq = 0
         self.mod_depth = 0
-        return self.run_synth(presses, notes, releases, notes, n_samples, 44100)
+        return self.run_synth(presses, notes, releases, notes, n_samples, fs)
 
     def run_mod(self, freq: float, ratio: float, n_samples: int, fs: float):
         self.mod_freq = freq
         self.mod_depth = ratio
-        self.set_adsr(10**-6, 10**-6, 0, 10**-6)
+        self.set_adsr(10**-6, 10**-6, 0, 10**-6, fs)
         vector = sig.hilbert(self.run_synth([0], [64], [0], [0], n_samples, fs))
         self.check_abs = True
         return np.abs(vector)
@@ -130,7 +130,7 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
         for gen in generators:
             self.generator = gen
             for release_delay, mod_depth, mod_freq in zip([0.5, 1.5, 1], [0.5, 1, 0.25], [0.5, 3, 1]):
-                self.set_adsr(0.1, 0.1, -5, 0.1)
+                self.set_adsr(0.1, 0.1, -5, 0.1, sampling_frequency)
                 self.mod_freq = mod_freq
                 self.mod_depth = mod_depth
                 presses = list(range(50))

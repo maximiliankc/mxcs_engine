@@ -30,15 +30,22 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
         OscillatorInterface.setUp(self)
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
-        # a, d, s, r, f, presses, pressNs, releases, releaseNs, n_samples, envOut
+        # a, d,
+        # s, r,
+        # f, gen,
+        # presses, pressNs,
+        # releases, releaseNs,
+        # n_samples, fs,
+        # envOut
         self.testlib.test_voice.argtypes = [ctypes.c_float, ctypes.c_float,
                                                ctypes.c_float, ctypes.c_float,
                                                ctypes.c_float, ctypes.c_uint,
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, uint_pointer,
-                                               ctypes.c_uint, float_pointer]
+                                               ctypes.c_uint, ctypes.c_float,
+                                               float_pointer]
 
-    def run_voice_module(self, presses: list, releases: list, n_samples: int) -> np.ndarray:
+    def run_voice_module(self, presses: list, releases: list, n_samples: int, fs: float) -> np.ndarray:
         ''' Run the Voice. Output is a float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         out = np.zeros(n_samples, dtype=np.single)
@@ -50,9 +57,9 @@ class VoiceInterface(EnvelopeInterface, OscillatorInterface):
                                     self.freq, generators[self.generator],
                                     len(presses), presses_p,
                                     len(releases), releases_p,
-                                    len(out), out_p)
+                                    len(out), fs,
+                                    out_p)
         return out
-
 
 
 class TestVoice(VoiceInterface, unittest.TestCase):
@@ -61,35 +68,34 @@ class TestVoice(VoiceInterface, unittest.TestCase):
     f_expected = 1000
     test_notes = [100, 400, 1000, 4000]
     env_test_note = 440
-    fs = 44100
     debug = False
     freq_precision = 0.1
 
-    def set_f(self, freq: float):
+    def set_f(self, freq: float, fs: float):
         ''' Set the expected frequency '''
-        self.freq = freq/sampling_frequency
+        self.freq = freq/fs
         self.f_expected = freq
 
-    def run_voice(self, presses: list, releases: list, n_samples: int):
+    def run_voice(self, presses: list, releases: list, n_samples: int, fs):
         ''' Run the implementation for the test '''
-        return self.run_voice_module(presses, releases, n_samples)
+        return self.run_voice_module(presses, releases, n_samples, fs)
 
     def test_envelope(self):
         ''' Check that the envelope is being applied '''
         n_samples = 1*sampling_frequency # s
-        self.set_f(self.env_test_note)
+        self.set_f(self.env_test_note, sampling_frequency)
         for attack, decay, sustain, release in [(0.1, 0.05, -3., 0.1),
                                                 (0.01, 0.1, -20, 0.5),
                                                 (0.05, 0.2, -80, 0.4)
                                                 ]:
             with self.subTest(f'{attack},{decay},{sustain},{release}'):
-                self.set_adsr(attack, decay, sustain, release)
+                self.set_adsr(attack, decay, sustain, release, sampling_frequency)
                 press_time = int(0.1*sampling_frequency)
                 release_time = int(0.4*sampling_frequency)
                 voice_vector = np.abs(sig.hilbert(self.run_voice([press_time],
                                                                  [release_time],
-                                                                 n_samples)))
-                env_vector = self.run_env([press_time], [release_time], n_samples)
+                                                                 n_samples, sampling_frequency)))
+                env_vector = self.run_env([press_time], [release_time], n_samples, sampling_frequency)
                 rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
                 if self.debug:
                     _, ax1 = plt.subplots()
@@ -115,16 +121,16 @@ class TestVoice(VoiceInterface, unittest.TestCase):
     def test_frequency(self):
         ''' Check the frequency of the voice '''
         n_samples = self.calculate_length(self.freq_precision)
-        self.set_adsr(0.001, 0.01, 1, 0.01)
+        self.set_adsr(0.001, 0.01, 1, 0.01, sampling_frequency)
         for gen in ['sine', 'blit', 'bp_blit']:
             self.generator = gen
             for freq in self.test_notes:
-                self.set_f(freq)
+                self.set_f(freq, sampling_frequency)
                 if self.f_expected < upper_frequencies[gen]*sampling_frequency:
                     with self.subTest(f'{freq}'):
                         press_time = 0
                         release_time = int(n_samples)
-                        vector = self.run_voice([press_time], [release_time], n_samples)
+                        vector = self.run_voice([press_time], [release_time], n_samples, sampling_frequency)
                         f_vector = 20*np.log10(np.abs(np.fft.fft(vector))/n_samples)[:n_samples//2]
                         max_mag = np.max(f_vector)
                         peaks, _  = sig.find_peaks(f_vector, height=max_mag-30)
