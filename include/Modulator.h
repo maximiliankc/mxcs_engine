@@ -7,11 +7,13 @@
 #include "Oscillator.h"
 
 class Modulator_t {
+    float samplingFrequency;
     public:
     Oscillator_t lfo;
     float modRatio;
 
-    Modulator_t();
+    Modulator_t(float samplingFrequency);
+    void set_freq(float frequency);
     void step(float * signal);
 };
 

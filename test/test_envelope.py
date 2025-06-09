@@ -3,7 +3,7 @@
 import ctypes
 import unittest
 
-from test.constants import sampling_frequency, block_size
+from test.constants import sampling_frequency, sampling_frequencies, block_size
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,14 +25,14 @@ class EnvelopeInterface:
         ''' Load in the test object file and define the function '''
         float_pointer = ctypes.POINTER(ctypes.c_float)
         uint_pointer = ctypes.POINTER(ctypes.c_uint)
-        # attack, decay, sustain, release, presses, pressNs, releases, releaseNs, n, envOut
+        # attack, decay, sustain, release, presses, pressNs, releases, releaseNs, n, fs, envOut
         self.testlib.test_envelope.argtypes = [ctypes.c_float, ctypes.c_float,
                                                ctypes.c_float, ctypes.c_float,
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, uint_pointer,
-                                               ctypes.c_uint, float_pointer]
+                                               ctypes.c_uint, ctypes.c_float, float_pointer]
 
-    def run_env(self, presses: list, releases: list, n_samples: int) -> np.ndarray:
+    def run_env(self, presses: list, releases: list, n_samples: int, fs: float) -> np.ndarray:
         ''' Run the Envelope Generator. Output is attack float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         out = np.zeros(n_samples, dtype=np.single)
@@ -43,15 +43,15 @@ class EnvelopeInterface:
                                     self.sustain, self.release_seconds,
                                     len(presses), presses_p,
                                     len(releases), releases_p,
-                                    len(out), out_p)
+                                    len(out), fs, out_p)
         return out
 
-    def set_adsr(self, attack: float, decay: float, sustain: float, release: float):
+    def set_adsr(self, attack: float, decay: float, sustain: float, release: float, fs: float):
         ''' Configure adsr values '''
-        self.attack = attack*sampling_frequency
-        self.decay = decay*sampling_frequency
+        self.attack = attack*fs
+        self.decay = decay*fs
         self.sustain = sustain
-        self.release = release*sampling_frequency
+        self.release = release*fs
         self.attack_seconds = attack
         self.decay_seconds = decay
         self.release_seconds = release
@@ -126,88 +126,89 @@ class TestEnvelope(EnvelopeInterface, unittest.TestCase):
 
     def test_basic_envelope(self):
         ''' Tests attack basic single envelope '''
-        n_samples = 1*sampling_frequency # sustain
-        for attack, decay, sustain, release in [(0.1, 0.05, -3., 0.1),
-                           (0.01, 0.1, -20, 0.5),
-                           (0.05, 0.2, -80, 0.4)
-                           ]:
-            with self.subTest(f'{attack},{decay},{sustain},{release}'):
-                self.set_adsr(attack, decay, sustain, release)
-                exp_a_grad, exp_d_grad, exp_r_grad = self.calculate_gradients()
-                threshold = np.min(np.abs([exp_a_grad, exp_d_grad, exp_r_grad]))/3
-                press_time = int(0.1*sampling_frequency)
-                release_time = int(0.4*sampling_frequency)
+        for fs in sampling_frequencies:
+            n_samples = 1*fs# sustain
+            for attack, decay, sustain, release in [(0.1, 0.05, -3., 0.1),
+                            (0.01, 0.1, -20, 0.5),
+                            (0.05, 0.2, -80, 0.4)
+                            ]:
+                with self.subTest(f'{attack},{decay},{sustain},{release},{fs=}'):
+                    self.set_adsr(attack, decay, sustain, release, fs)
+                    exp_a_grad, exp_d_grad, exp_r_grad = self.calculate_gradients()
+                    threshold = np.min(np.abs([exp_a_grad, exp_d_grad, exp_r_grad]))/3
+                    press_time = int(0.1*fs)
+                    release_time = int(0.4*fs)
 
-                vector = self.run_env([press_time], [release_time], n_samples)
-                vector = 20*np.log10(vector)
-                vector[vector<-100] = -100
+                    vector = self.run_env([press_time], [release_time], n_samples, fs)
+                    vector = 20*np.log10(vector)
+                    vector[vector<-100] = -100
 
-                # find derivates for use detecting state changes
-                derivative = np.diff(vector, prepend=[-100])
-                second_derivative = np.diff(derivative, prepend=[0])
-                attack_idxs = []
-                decay_idxs = []
-                sustain_idxs = []
-                release_idxs = []
-                # find state transition point from peaks of second derivative:
-                pt_idxs, _  = sig.find_peaks(second_derivative, height=threshold)
-                for idx in pt_idxs:
-                    if derivative[idx+1] > threshold:
-                        attack_idxs.append(idx)
-                    elif derivative[idx-1] < -threshold:
-                        if vector[idx+1] > -self.base:
-                            sustain_idxs.append(idx)
-                nt_idxs, _ = sig.find_peaks(-second_derivative, height=threshold)
-                for idx in nt_idxs:
-                    if derivative[idx-2] > threshold:
-                        decay_idxs.append(idx)
-                    else:
-                        release_idxs.append(idx)
-                if self.debug:
-                    time = np.arange(n_samples)/sampling_frequency
-                    attack_markers = vector[attack_idxs]
-                    attack_times = time[attack_idxs]
-                    decay_markers = vector[decay_idxs]
-                    decay_times = time[decay_idxs]
-                    sustain_markers = vector[sustain_idxs]
-                    sustain_times = time[sustain_idxs]
-                    release_markers = vector[release_idxs]
-                    release_times = time[release_idxs]
+                    # find derivates for use detecting state changes
+                    derivative = np.diff(vector, prepend=[-100])
+                    second_derivative = np.diff(derivative, prepend=[0])
+                    attack_idxs = []
+                    decay_idxs = []
+                    sustain_idxs = []
+                    release_idxs = []
+                    # find state transition point from peaks of second derivative:
+                    pt_idxs, _  = sig.find_peaks(second_derivative, height=threshold)
+                    for idx in pt_idxs:
+                        if derivative[idx+1] > threshold:
+                            attack_idxs.append(idx)
+                        elif derivative[idx-1] < -threshold:
+                            if vector[idx+1] > -self.base:
+                                sustain_idxs.append(idx)
+                    nt_idxs, _ = sig.find_peaks(-second_derivative, height=threshold)
+                    for idx in nt_idxs:
+                        if derivative[idx-2] > threshold:
+                            decay_idxs.append(idx)
+                        else:
+                            release_idxs.append(idx)
+                    if self.debug:
+                        time = np.arange(n_samples)/fs
+                        attack_markers = vector[attack_idxs]
+                        attack_times = time[attack_idxs]
+                        decay_markers = vector[decay_idxs]
+                        decay_times = time[decay_idxs]
+                        sustain_markers = vector[sustain_idxs]
+                        sustain_times = time[sustain_idxs]
+                        release_markers = vector[release_idxs]
+                        release_times = time[release_idxs]
 
-                    _, ax1 = plt.subplots()
-                    ax1.plot(time, vector)
-                    ax1.scatter(attack_times, attack_markers)
-                    ax1.scatter(decay_times, decay_markers)
-                    ax1.scatter(sustain_times, sustain_markers)
-                    ax1.scatter(release_times, release_markers)
-                    ax1.set_xlabel('Time (sustain)')
-                    ax1.set_ylabel('Magnitude (dB)')
-                    ax1.set_title(f'Envelope ({attack}, {decay}, {sustain}, {release})')
-                    ax1.grid()
-                    _, ax2 = plt.subplots()
-                    ax2.plot(time, derivative, label='First Derivative')
-                    ax2.plot(time, second_derivative, label='Second Derivative')
-                    ax2.set_xlabel('Time (sustain)')
-                    ax2.set_ylabel('Magnitude (dB)')
-                    ax2.set_title(f'Derivatives ({attack}, {decay}, {sustain}, {release})')
-                    ax2.legend()
-                    ax2.grid()
-                    plt.show()
+                        _, ax1 = plt.subplots()
+                        ax1.plot(time, vector)
+                        ax1.scatter(attack_times, attack_markers)
+                        ax1.scatter(decay_times, decay_markers)
+                        ax1.scatter(sustain_times, sustain_markers)
+                        ax1.scatter(release_times, release_markers)
+                        ax1.set_xlabel('Time (sustain)')
+                        ax1.set_ylabel('Magnitude (dB)')
+                        ax1.set_title(f'Envelope ({attack}, {decay}, {sustain}, {release})')
+                        ax1.grid()
+                        _, ax2 = plt.subplots()
+                        ax2.plot(time, derivative, label='First Derivative')
+                        ax2.plot(time, second_derivative, label='Second Derivative')
+                        ax2.set_xlabel('Time (sustain)')
+                        ax2.set_ylabel('Magnitude (dB)')
+                        ax2.set_title(f'Derivatives ({attack}, {decay}, {sustain}, {release})')
+                        ax2.legend()
+                        ax2.grid()
+                        plt.show()
 
-                # envelope should never exceed 0 dBFS
-                self.assertLessEqual(np.max(vector), 0)
+                    # envelope should never exceed 0 dBFS
+                    self.assertLessEqual(np.max(vector), 0)
 
-                self.check_attack(vector, attack_idxs, decay_idxs, press_time)
-                self.check_decay(vector, decay_idxs, sustain_idxs, press_time)
-                self.check_sustain(vector, sustain_idxs, release_idxs, press_time)
-                self.check_release(vector, release_idxs, release_time)
+                    self.check_attack(vector, attack_idxs, decay_idxs, press_time)
+                    self.check_decay(vector, decay_idxs, sustain_idxs, press_time)
+                    self.check_sustain(vector, sustain_idxs, release_idxs, press_time)
+                    self.check_release(vector, release_idxs, release_time)
 
     def test_double_press(self):
         ''' Check that there is an attack when a double press occurs '''
         n_samples = 2*sampling_frequency
         attack, decay, sustain, release = (0.1, 0.1, -20, 0.2)
         s_len = 0.5*sampling_frequency
-        self.set_adsr(attack, decay, sustain, release)
+        self.set_adsr(attack, decay, sustain, release, sampling_frequency)
         # all relative to the first
         first_press = 0.1*sampling_frequency
         test_ids = ['Attack', 'Decay', 'Sustain', 'Release']
@@ -221,7 +222,7 @@ class TestEnvelope(EnvelopeInterface, unittest.TestCase):
         for second_press, test_id in zip(second_presses, test_ids):
             with self.subTest(test_id):
                 presses = [first_press, second_press]
-                vector = self.run_env(presses, releases, n_samples)
+                vector = self.run_env(presses, releases, n_samples, sampling_frequency)
                 if self.debug:
                     vector = 20*np.log10(vector)
                     time = np.arange(n_samples)/sampling_frequency

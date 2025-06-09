@@ -54,7 +54,7 @@ extern "C" {
                     const float f, const unsigned int gen,\
                     const unsigned int presses, unsigned int pressNs[],\
                     const unsigned int releases, unsigned int releaseNs[],\
-                    const unsigned int n, float envOut[]) {
+                    const unsigned int n, const float fs, float envOut[]) {
         // parameters:  a: attack time (in samples)
         //              d: decay time (in samples)
         //              s: sustain level (amplitude between 0 and 1)
@@ -67,7 +67,7 @@ extern "C" {
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        EnvelopeSettings_t settings;
+        EnvelopeSettings_t settings(fs);
         Generator_e generator = (Generator_e)gen;
         Voice_t voice(&settings, &generator);
         unsigned int pressCount = 0;

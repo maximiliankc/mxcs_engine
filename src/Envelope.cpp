@@ -10,7 +10,8 @@ const float baseLevel = 0.00001;
 const float baseLevelDB = 100;
 
 
-EnvelopeSettings_t::EnvelopeSettings_t() {
+EnvelopeSettings_t::EnvelopeSettings_t(float _samplingFrequency) {
+    samplingFrequency = _samplingFrequency;
     a = 0;
     d = 0;
     s = 0;
@@ -103,7 +104,7 @@ extern "C" {
     void test_envelope(const float a, const float d, const float s, const float r,\
                     const unsigned int presses, unsigned int pressNs[],\
                     const unsigned int releases, unsigned int releaseNs[],\
-                    const unsigned int n, float envOut[]) {
+                    const unsigned int n, const float fs, float envOut[]) {
         // parameters:  a: attack time (in samples)
         //              d: decay time (in samples)
         //              s: sustain level (amplitude between 0 and 1)
@@ -115,7 +116,7 @@ extern "C" {
         //              n: number of samples to iterate over.
         //              if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        EnvelopeSettings_t adsr;
+        EnvelopeSettings_t adsr(fs);
         Envelope_t env(&adsr);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;

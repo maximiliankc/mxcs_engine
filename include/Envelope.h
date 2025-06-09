@@ -5,6 +5,7 @@
 #define ENVELOPE_H_
 
 class EnvelopeSettings_t {
+    float samplingFrequency;
     float a;
     float d;
     float s;
@@ -18,7 +19,7 @@ class EnvelopeSettings_t {
     float sMag;
     float rIncrement;
 
-    EnvelopeSettings_t();
+    EnvelopeSettings_t(float samplingFrequency);
     void set_attack(float a);
     void set_decay(float d);
     void set_sustain(float s);
