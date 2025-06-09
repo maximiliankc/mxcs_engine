@@ -24,7 +24,7 @@ class OscillatorInterface:
         self.testlib.test_lut_oscillator.argtypes = [ctypes.c_float, ctypes.c_int,
                                                      float_pointer, float_pointer]
 
-    def run_osc(self, n_samples: int) -> np.ndarray:
+    def run_phase_osc(self, n_samples: int) -> np.ndarray:
         ''' Run the Oscillator. Output is a complex exponential at frequency f with length n'''
         cos_out = np.zeros(n_samples, dtype=np.single)
         cos_out_p = cos_out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
@@ -60,9 +60,9 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
     power_accuracy = 0.001
     peak_thresh = -96
 
-    def osc_call(self, n_samples: int) -> np.ndarray:
-        ''' Call for the specific oscillator implementation '''
-        return self.run_osc(n_samples)
+    def run_osc(self, n_samples: int) -> np.ndarray:
+        ''' Call the phase multiplier implementation of the oscillator '''
+        return self.run_phase_osc(n_samples)
 
     def test_sine_frequency(self) -> None:
         ''' Checks that the oscillator produces a range of test frequencies.
@@ -121,10 +121,9 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
 class TestLutOscillator(TestOscillator):
     ''' Test Suite for LUT version of oscillator '''
     peak_thresh = -66
-    power_accuracy = 0.001
 
-    def osc_call(self, n_samples: int) -> np.ndarray:
-        ''' Call for the specific oscillator implementation '''
+    def run_osc(self, n_samples: int) -> np.ndarray:
+        ''' Run the LUT version of the oscillator '''
         return self.run_lut_osc(n_samples)
 
 
