@@ -2,12 +2,18 @@
    copyright Maximilian Cornwell 2023
 */
 #include <stdint.h>
+#include <stdio.h>
 #include "Modulator.h"
 #include "Constants.h"
 
 
-Modulator_t::Modulator_t() {
+Modulator_t::Modulator_t(float _samplingFrequency) {
+    samplingFrequency = _samplingFrequency;
     modRatio = 0;
+}
+
+void Modulator_t::set_freq(float frequency) {
+    lfo.set_freq(frequency/samplingFrequency);
 }
 
 void Modulator_t::step(float * signal) {
@@ -22,12 +28,12 @@ void Modulator_t::step(float * signal) {
 
 #ifdef SYNTH_TEST_
 extern "C" {
-    void test_modulator(const float f, const float ratio, const unsigned int n, float * out) {
-        Modulator_t modulator;
+    void test_modulator(const float f, const float ratio, const unsigned int n, float * out, float fs) {
+        Modulator_t modulator(fs);
         float signal[blockSize];
 
         modulator.modRatio = ratio;
-        modulator.lfo.set_freq(f);
+        modulator.set_freq(f);
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             for(unsigned int j = 0; j < blockSize; j++) {
                 signal[j] = 1;

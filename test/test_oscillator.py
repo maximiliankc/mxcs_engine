@@ -42,9 +42,9 @@ class OscillatorInterface:
         self.testlib.test_lut_oscillator(self.freq, n_samples, cos_out_p, sin_out_p)
         return cos_out + 1j*sin_out
 
-    def set_f(self, freq: float):
+    def set_f(self, freq: float, fs: float):
         ''' set the frequency to freq '''
-        self.freq = freq/sampling_frequency
+        self.freq = freq/fs
 
     def calculate_length(self, precision: float):
         ''' Calculate the length of sample required for a particular frequency resolution '''
@@ -76,8 +76,8 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
                 # convert the precision to an fft length
                 n_samples = self.calculate_length(precision)
                 freqs = np.fft.fftshift(np.fft.fftfreq(n_samples))*sampling_frequency
-                self.set_f(freq)
-                vector = self.osc_call(n_samples)
+                self.set_f(freq, sampling_frequency)
+                vector = self.run_osc(n_samples)
                 f_vector = 20*np.log10(np.abs(np.fft.fftshift(np.fft.fft(vector)))/n_samples)
                 pkidx, _  = sig.find_peaks(f_vector, height=self.peak_thresh, prominence=1)
                 f_measured = freqs[pkidx]
@@ -100,8 +100,8 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
         ''' Checks that the amplitude of the sinusoid is correct '''
         n_samples = sampling_frequency*30
         freq = 1000
-        self.set_f(freq)
-        vector = self.osc_call(n_samples)[:-block_size]
+        self.set_f(freq, sampling_frequency)
+        vector = self.run_osc(n_samples)[:-block_size]
         power = np.abs(vector)**2
         if self.debug:
             time = np.arange(n_samples-block_size)/sampling_frequency
