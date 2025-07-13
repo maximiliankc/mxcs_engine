@@ -92,7 +92,7 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
                     fax.set_title(f'Frequency Domain (f_0 = {freq:.2f} Hz)')
                     plt.show()
 
-                self.assertEqual(1, len(f_measured))
+                self.assertEqual(1, len(f_measured), msg = f"{len(f_measured)} > 1 spectral peaks detected")
                 cents = 1200*np.log2(f_measured/freq)
                 self.assertLess(cents, self.freq_accuracy)
 
@@ -120,7 +120,7 @@ class TestOscillator(OscillatorInterface, unittest.TestCase):
 
 class TestLutOscillator(TestOscillator):
     ''' Test Suite for LUT version of oscillator '''
-    peak_thresh = -66
+    peak_thresh = -78
 
     def run_osc(self, n_samples: int) -> np.ndarray:
         ''' Run the LUT version of the oscillator '''

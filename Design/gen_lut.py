@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.signal as sig
 
 
-bits = 12
+bits = 15
 points = 2**bits
 
 t = np.arange(points)
