@@ -29,10 +29,8 @@ void OscillatorLut_t::adjust_phase(float phase_) {
 void OscillatorLut_t::step(float * out) {
     uint32_t phase_index;
     for (uint16_t i = 0; i < blockSize; i++) {
-        phase_index = phase>>20;
+        phase_index = phase>>(32-(table_bits)); // trim down to length of phase index
         out[i] = sine_table[phase_index];
-        // update phase
-        // printf("phase_index %d, phase %d\n", phase_index, phase);
         phase += frequency; // relying on overflow!
     }
 }
