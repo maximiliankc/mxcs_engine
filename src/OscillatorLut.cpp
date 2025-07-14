@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdint.h>
 
 #include "OscillatorLut.h"
 #include "SineTable.h"
@@ -30,7 +31,7 @@ void OscillatorLut_t::step(float * out) {
     uint32_t phase_index;
     for (uint16_t i = 0; i < blockSize; i++) {
         phase_index = phase>>(32-(table_bits)); // trim down to length of phase index
-        out[i] = sine_table[phase_index];
+        out[i] = ((float)sine_table[phase_index])/(INT16_MAX + 1);
         phase += frequency; // relying on overflow!
     }
 }
