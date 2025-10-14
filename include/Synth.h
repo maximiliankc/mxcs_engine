@@ -10,6 +10,8 @@
 #include "Modulator.h"
 #include "Filter.h"
 
+const uint8_t stackDepth = 32;
+
 // Defining a monophonic synth for now
 class Synth_t {
     float samplingFrequency;
@@ -25,6 +27,10 @@ class Synth_t {
     float hpRes;
     float frequencyTable[notes];
     uint8_t currentNote;
+    // should these be encapsulated into an object?
+    uint8_t noteStackIndex = 0;
+    uint8_t noteStack[stackDepth] = {0};
+    bool enabledNotes[notes] = {0};
 
     public:
     Synth_t(float _samplingFrequency);
