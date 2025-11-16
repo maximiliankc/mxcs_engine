@@ -12,10 +12,10 @@ const float baseLevelDB = 100;
 
 Envelope_t::Envelope_t(float _samplingFrequency) {
     samplingFrequency = _samplingFrequency;
-    a = 0;
-    d = 0;
+    a = 0.01;
+    d = 0.01;
     s = 0;
-    r = 0;
+    r = 0.01;
     run_state = &Envelope_t::run_off;
     amp = 0;
     set_adsr();
