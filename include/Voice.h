@@ -17,9 +17,10 @@ enum Generator_e {
 class Voice_t {
     Envelope_t envelope;
     Oscillator_t osc;
-    Blit_t blitOsc;
-    BpBlit_t bpBlitOsc;
+    // Blit_t blitOsc;
+    // BpBlit_t bpBlitOsc;
     Generator_e * generator;
+    float gain = 0;
 
     public:
     Voice_t(EnvelopeSettings_t * settings, Generator_e * generator);

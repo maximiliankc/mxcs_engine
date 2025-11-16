@@ -13,37 +13,40 @@ Voice_t::Voice_t(EnvelopeSettings_t * settings, Generator_e * _generator): envel
 
 void Voice_t::step(float * out) {
     float envOut[blockSize];
+    osc.step(out);
+    // Generator_e gen = *generator;
+    // switch (gen)
+    // {
+    // case sine:
+    //     osc.step(out);
+    //     break;
 
-    switch (*generator)
-    {
-    case sine:
-        osc.step(out);
-        break;
+    // case blit:
+    //     blitOsc.step(out);
+    //     break;
 
-    case blit:
-        blitOsc.step(out);
-        break;
+    // case bpblit:
+    //     bpBlitOsc.step(out);
+    //     break;
+    // }
 
-    case bpblit:
-        bpBlitOsc.step(out);
-        break;
-    }
-    envelope.step(envOut);
-
+    // envelope.step(envOut);
     // apply envelope to osc out
     for (uint8_t i=0; i < blockSize; i++) {
-        out[i] *= envOut[i];
+        out[i] *= gain;
     }
 }
 
 void Voice_t::press(float f) {
     envelope.press();
     osc.set_freq(f);
-    blitOsc.set_freq(f);
-    bpBlitOsc.set_freq(f);
+    gain = 1.0;
+    // blitOsc.set_freq(f);
+    // bpBlitOsc.set_freq(f);
 }
 
 void Voice_t::release() {
+    gain = 0.0;
     envelope.release();
 }
 
