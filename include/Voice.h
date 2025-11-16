@@ -23,8 +23,11 @@ class Voice_t {
     float gain = 0;
 
     public:
-    Voice_t(EnvelopeSettings_t * settings);
-
+    Voice_t(float samplingFrequency);
+    void set_attack(float a);
+    void set_decay(float d);
+    void set_sustain(float s);
+    void set_release(float r);
     void set_generator(Generator_e gen);
     void step(float * out);
     void press(float f);

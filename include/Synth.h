@@ -13,7 +13,6 @@
 // Defining a monophonic synth for now
 class Synth_t {
     float samplingFrequency;
-    EnvelopeSettings_t envelopeSettings;
     Voice_t voice;
     Modulator_t mod;
     Biquad_Filter_t lpFilter;

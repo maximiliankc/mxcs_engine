@@ -6,17 +6,31 @@
 #include "Voice.h"
 #include "Constants.h"
 
-
-Voice_t::Voice_t(EnvelopeSettings_t * settings): envelope(settings) {
+Voice_t::Voice_t(float samplingFrequency): envelope(samplingFrequency) {
 }
 
+void Voice_t::set_attack(float a) {
+    envelope.set_attack(a);
+}
+
+void Voice_t::set_decay(float d) {
+    envelope.set_decay(d);
+}
+
+void Voice_t::set_sustain(float s) {
+    envelope.set_sustain(s);
+}
+
+void Voice_t::set_release(float r) {
+    envelope.set_release(r);
+}
 
 void Voice_t::set_generator(Generator_e gen) {
     generator = gen;
 }
 
 void Voice_t::step(float * out) {
-    // float envOut[blockSize];
+    float envOut[blockSize];
     switch (generator)
     {
     case sine:
@@ -32,7 +46,7 @@ void Voice_t::step(float * out) {
         break;
     }
 
-    // envelope.step(envOut);
+    envelope.step(envOut);
     // apply envelope to osc out
     for (uint8_t i=0; i < blockSize; i++) {
         out[i] *= gain;
@@ -72,16 +86,15 @@ extern "C" {
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        EnvelopeSettings_t settings(fs);
         Generator_e generator = (Generator_e)gen;
-        Voice_t voice(&settings);
+        Voice_t voice(fs);
         voice.set_generator(generator);
+        voice.set_attack(a);
+        voice.set_decay(d);
+        voice.set_sustain(s);
+        voice.set_release(r);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
-        settings.set_attack(a);
-        settings.set_decay(d);
-        settings.set_sustain(s);
-        settings.set_release(r);
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 voice.press(f);

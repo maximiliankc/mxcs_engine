@@ -7,8 +7,7 @@
 const float semitone = 1.0594630943592953;
 const float c_minus_1 = 8.175798915643707;
 
-Synth_t::Synth_t(float _samplingFrequency): envelopeSettings(_samplingFrequency),
-                                            voice(&envelopeSettings),
+Synth_t::Synth_t(float _samplingFrequency): voice(_samplingFrequency),
                                             mod(_samplingFrequency),
                                             lpFilter(_samplingFrequency),
                                             hpFilter(_samplingFrequency) {
@@ -29,19 +28,19 @@ Synth_t::Synth_t(float _samplingFrequency): envelopeSettings(_samplingFrequency)
 }
 
 void Synth_t::set_attack(float a) {
-    envelopeSettings.set_attack(a);
+    voice.set_attack(a);
 }
 
 void Synth_t::set_decay(float d) {
-    envelopeSettings.set_decay(d);
+    voice.set_decay(d);
 }
 
 void Synth_t::set_sustain(float s) {
-    envelopeSettings.set_sustain(s);
+    voice.set_sustain(s);
 }
 
 void Synth_t::set_release(float r) {
-    envelopeSettings.set_release(r);
+    voice.set_release(r);
 }
 
 void Synth_t::set_mod_f(float freq) {
