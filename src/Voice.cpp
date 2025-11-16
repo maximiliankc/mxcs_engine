@@ -7,28 +7,30 @@
 #include "Constants.h"
 
 
-Voice_t::Voice_t(EnvelopeSettings_t * settings, Generator_e * _generator): envelope(settings) {
-    generator = _generator;
+Voice_t::Voice_t(EnvelopeSettings_t * settings): envelope(settings) {
+}
+
+
+void Voice_t::set_generator(Generator_e gen) {
+    generator = gen;
 }
 
 void Voice_t::step(float * out) {
-    float envOut[blockSize];
-    osc.step(out);
-    // Generator_e gen = *generator;
-    // switch (gen)
-    // {
-    // case sine:
-    //     osc.step(out);
-    //     break;
+    // float envOut[blockSize];
+    switch (generator)
+    {
+    case sine:
+        osc.step(out);
+        break;
 
-    // case blit:
-    //     blitOsc.step(out);
-    //     break;
+    case blit:
+        blitOsc.step(out);
+        break;
 
-    // case bpblit:
-    //     bpBlitOsc.step(out);
-    //     break;
-    // }
+    case bpblit:
+        bpBlitOsc.step(out);
+        break;
+    }
 
     // envelope.step(envOut);
     // apply envelope to osc out
@@ -41,8 +43,8 @@ void Voice_t::press(float f) {
     envelope.press();
     osc.set_freq(f);
     gain = 1.0;
-    // blitOsc.set_freq(f);
-    // bpBlitOsc.set_freq(f);
+    blitOsc.set_freq(f);
+    bpBlitOsc.set_freq(f);
 }
 
 void Voice_t::release() {
@@ -72,7 +74,8 @@ extern "C" {
         //              envOut: generated envelope
         EnvelopeSettings_t settings(fs);
         Generator_e generator = (Generator_e)gen;
-        Voice_t voice(&settings, &generator);
+        Voice_t voice(&settings);
+        voice.set_generator(generator);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
         settings.set_attack(a);

@@ -14,7 +14,6 @@
 class Synth_t {
     float samplingFrequency;
     EnvelopeSettings_t envelopeSettings;
-    Generator_e generator;
     Voice_t voice;
     Modulator_t mod;
     Biquad_Filter_t lpFilter;
