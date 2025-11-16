@@ -49,7 +49,7 @@ void Voice_t::step(float * out) {
     envelope.step(envOut);
     // apply envelope to osc out
     for (uint8_t i=0; i < blockSize; i++) {
-        out[i] *= gain;
+        out[i] *= envOut[i];
     }
 }
 
