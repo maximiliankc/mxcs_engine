@@ -19,10 +19,16 @@ class Voice_t {
     Oscillator_t osc;
     Blit_t blitOsc;
     BpBlit_t bpBlitOsc;
-    Generator_e * generator;
+    Generator_e generator;
+    float gain = 0;
 
     public:
-    Voice_t(EnvelopeSettings_t * settings, Generator_e * generator);
+    Voice_t(float samplingFrequency);
+    void set_attack(float a);
+    void set_decay(float d);
+    void set_sustain(float s);
+    void set_release(float r);
+    void set_generator(Generator_e gen);
     void step(float * out);
     void press(float f);
     void release();

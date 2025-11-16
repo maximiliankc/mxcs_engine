@@ -10,46 +10,42 @@ const float baseLevel = 0.00001;
 const float baseLevelDB = 100;
 
 
-EnvelopeSettings_t::EnvelopeSettings_t(float _samplingFrequency) {
+Envelope_t::Envelope_t(float _samplingFrequency) {
     samplingFrequency = _samplingFrequency;
-    a = 0;
-    d = 0;
+    a = 0.01;
+    d = 0.01;
     s = 0;
-    r = 0;
+    r = 0.01;
+    run_state = &Envelope_t::run_off;
+    amp = 0;
     set_adsr();
 }
 
-void EnvelopeSettings_t::set_adsr() {
+void Envelope_t::set_adsr() {
     aIncrement = db2mag(baseLevelDB/a);      // a is the number of samples per 100 dB
     dIncrement = db2mag(s/d);                  // d is a number of samples per 100 dB
     sMag = db2mag(s);                          // s is a level in dBFS
     rIncrement = db2mag(-(baseLevelDB+s)/r); // r is a number of samples
 }
 
-void EnvelopeSettings_t::set_attack(float attackTime) {
+void Envelope_t::set_attack(float attackTime) {
     a = attackTime*samplingFrequency;
     set_adsr();
 }
 
-void EnvelopeSettings_t::set_decay(float decayTime) {
+void Envelope_t::set_decay(float decayTime) {
     d = decayTime*samplingFrequency;
     set_adsr();
 }
 
-void EnvelopeSettings_t::set_sustain(float sustainLevel) {
+void Envelope_t::set_sustain(float sustainLevel) {
     s = sustainLevel;
     set_adsr();
 }
 
-void EnvelopeSettings_t::set_release(float release) {
+void Envelope_t::set_release(float release) {
     r = release*samplingFrequency;
     set_adsr();
-}
-
-Envelope_t::Envelope_t(EnvelopeSettings_t * _settings) {
-    run_state = &Envelope_t::run_off;
-    amp = 0;
-    settings = _settings;
 }
 
 void Envelope_t::step(float * envelope) {
@@ -75,7 +71,7 @@ void Envelope_t::run_off() {
 }
 
 void Envelope_t::run_attack() {
-    amp *= settings->aIncrement;
+    amp *= aIncrement;
     if (amp >= 1.0) {
         amp = 1.0;
         run_state = &Envelope_t::run_decay;
@@ -83,19 +79,19 @@ void Envelope_t::run_attack() {
 }
 
 void Envelope_t::run_decay() {
-    amp *= settings->dIncrement;
-    if (amp <= settings->sMag) {
-        amp = settings->sMag;
+    amp *= dIncrement;
+    if (amp <= sMag) {
+        amp = sMag;
         run_state = &Envelope_t::run_sustain;
     }
 }
 
 void Envelope_t::run_sustain() {
-    amp = settings->sMag;
+    amp = sMag;
 }
 
 void Envelope_t::run_release() {
-    amp *= settings->rIncrement; // linear shift for now
+    amp *= rIncrement; // linear shift for now
 }
 
 
@@ -116,14 +112,13 @@ extern "C" {
         //              n: number of samples to iterate over.
         //              if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        EnvelopeSettings_t adsr(fs);
-        Envelope_t env(&adsr);
+        Envelope_t env(fs);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
-        adsr.set_attack(a);
-        adsr.set_decay(d);
-        adsr.set_sustain(s);
-        adsr.set_release(r);
+        env.set_attack(a);
+        env.set_decay(d);
+        env.set_sustain(s);
+        env.set_release(r);
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 env.press();
