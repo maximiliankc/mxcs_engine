@@ -76,13 +76,14 @@ void Synth_t::set_generator(Generator_e gen) {
 }
 
 void Synth_t::press(uint8_t note) {
-    float f = frequencyTable[note];
-    voice.press(f);
-    currentNote = note;
-    enabledNotes[note] = true;
-    // TODO add some protection against over-filling the stack
-    noteStack[noteStackIndex++] = note; // add handling for filling stack
-                                        // note stack points to lowest empty slot
+    if (noteStackIndex < stackDepth) {
+        float f = frequencyTable[note];
+        voice.press(f);
+        currentNote = note;
+        enabledNotes[note] = true;
+        noteStack[noteStackIndex++] = note; // add handling for filling stack
+                                            // note stack points to lowest empty slot
+    }
 }
 
 void Synth_t::release(uint8_t note) {
