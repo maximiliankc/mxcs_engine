@@ -79,11 +79,31 @@ void Synth_t::press(uint8_t note) {
     float f = frequencyTable[note];
     voice.press(f);
     currentNote = note;
+    enabledNotes[note] = true;
+    // TODO add some protection against over-filling the stack
+    noteStack[noteStackIndex++] = note; // add handling for filling stack
+                                        // note stack points to lowest empty slot
 }
 
 void Synth_t::release(uint8_t note) {
-    if (note==currentNote) {
-        voice.release();
+    enabledNotes[note] = false; // released note is no longer active
+    if (note == currentNote) {
+        // find the next frequency where a note is enabled
+        bool searching = true;
+        while(noteStackIndex > 0 && searching) {
+            noteStackIndex--; // noteStack now points at highest note that (might) be active
+            if (enabledNotes[noteStack[noteStackIndex]]) {
+                float f = frequencyTable[noteStack[noteStackIndex]];
+                voice.press(f); // should replace this with a 'change_freq' method, so envelope is unaffected
+                currentNote = noteStack[noteStackIndex++]; // point index back to lowest empty slow
+                searching = false;
+            } // otherwise, just keep searching
+        }
+        // noteStackIndex now points to 0 (searching true) or the active notes (searching false)
+        if (searching) {
+            // no active notes found, just release the current note
+            voice.release();
+        }
     }
 }
 

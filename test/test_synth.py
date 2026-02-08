@@ -125,6 +125,23 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
 
     def play_notes(self):
         ''' Play a series of notes, show a spectrogram, save as a wav '''
+        def generate_sequence(release_delay) -> tuple[list, list, list, list]:
+            presses = range(50)
+            releases = [x+release_delay for x in presses]
+            notes = [(2*p) % 24 + 50 for p in presses]
+            presses = [p*sampling_frequency for p in presses]
+            releases = [r*sampling_frequency for r in releases]
+            return presses, notes, releases, notes
+
+        def generate_sequence_2(release_delay) -> tuple[list, list, list, list]:
+            presses = range(10)
+            releases = range(10, 20)
+            press_notes = [(2*p) % 24 + 50 for p in presses]
+            release_notes = list(reversed(press_notes))
+            presses = [p*sampling_frequency for p in presses]
+            releases = [r*sampling_frequency for r in releases]
+            return presses, press_notes, releases, release_notes
+
         sampling_frequency = 44100
         n_samples = sampling_frequency*60
         for gen in generators:
@@ -133,12 +150,8 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
                 self.set_adsr(0.1, 0.1, -5, 0.1, sampling_frequency)
                 self.mod_freq = mod_freq
                 self.mod_depth = mod_depth
-                presses = list(range(50))
-                releases = [x+release_delay for x in presses]
-                notes = [(2*p) % 24 + 50 for p in presses]
-                presses = [p*sampling_frequency for p in presses]
-                releases = [r*sampling_frequency for r in releases]
-                out = self.run_synth(presses, notes, releases, notes, n_samples, sampling_frequency)
+                presses, press_notes, releases, release_notes = generate_sequence_2(release_delay)
+                out = self.run_synth(presses, press_notes, releases, release_notes, n_samples, sampling_frequency)
                 wav.write(f'Test_Signal_{release_delay}_{mod_depth}_{mod_freq}_{gen}.wav', sampling_frequency, out)
                 out = sig.resample_poly(out, 1, 4)
                 freq, time, s_xx = sig.spectrogram(out, fs=sampling_frequency/4, nperseg=2**12, noverlap=2**10)
@@ -169,8 +182,8 @@ def main():
     # synth_test.test_model()
     # synth_test.test_envelope()
     # synth_test.test_frequency()
-    synth_test.test_frequency_table()
-    # synth_test.play_notes()
+    # synth_test.test_frequency_table()
+    synth_test.play_notes()
 
 if __name__=='__main__':
     main()
