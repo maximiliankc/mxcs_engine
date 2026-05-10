@@ -6,33 +6,37 @@
 #include "Voice.h"
 #include "Constants.h"
 
-Voice_t::Voice_t(float samplingFrequency): env_config(samplingFrequency),
-                                           envelope(&env_config) {
+Voice_Config_t::Voice_Config_t(float samplingFrequency): env_config(samplingFrequency) {
 }
 
-void Voice_t::set_attack(float a) {
+void Voice_Config_t::set_attack(float a) {
     env_config.set_attack(a);
 }
 
-void Voice_t::set_decay(float d) {
+void Voice_Config_t::set_decay(float d) {
     env_config.set_decay(d);
 }
 
-void Voice_t::set_sustain(float s) {
+void Voice_Config_t::set_sustain(float s) {
     env_config.set_sustain(s);
 }
 
-void Voice_t::set_release(float r) {
+void Voice_Config_t::set_release(float r) {
     env_config.set_release(r);
 }
 
-void Voice_t::set_generator(Generator_e gen) {
+void Voice_Config_t::set_generator(Generator_e gen) {
     generator = gen;
 }
 
+Voice_t::Voice_t(Voice_Config_t * _config): envelope(&(_config->env_config)) {
+    config = _config;
+}
+
+
 void Voice_t::step(float * out) {
     float envOut[blockSize];
-    switch (generator)
+    switch (config->generator)
     {
     case sine:
         osc.step(out);
@@ -57,13 +61,11 @@ void Voice_t::step(float * out) {
 void Voice_t::press(float f) {
     envelope.press();
     osc.set_freq(f);
-    gain = 1.0;
     blitOsc.set_freq(f);
     bpBlitOsc.set_freq(f);
 }
 
 void Voice_t::release() {
-    gain = 0.0;
     envelope.release();
 }
 
@@ -88,12 +90,13 @@ extern "C" {
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
         Generator_e generator = (Generator_e)gen;
-        Voice_t voice(fs);
-        voice.set_generator(generator);
-        voice.set_attack(a);
-        voice.set_decay(d);
-        voice.set_sustain(s);
-        voice.set_release(r);
+        Voice_Config_t voice_config(fs);
+        Voice_t voice(&voice_config);
+        voice_config.set_generator(generator);
+        voice_config.set_attack(a);
+        voice_config.set_decay(d);
+        voice_config.set_sustain(s);
+        voice_config.set_release(r);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {

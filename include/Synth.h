@@ -15,6 +15,7 @@ const uint8_t stackDepth = 32;
 // Defining a monophonic synth for now
 class Synth_t {
     float samplingFrequency;
+    Voice_Config_t voice_config;
     Voice_t voice;
     Modulator_t mod;
     Biquad_Filter_t lpFilter;
