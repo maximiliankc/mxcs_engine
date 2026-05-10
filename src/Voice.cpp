@@ -6,23 +6,24 @@
 #include "Voice.h"
 #include "Constants.h"
 
-Voice_t::Voice_t(float samplingFrequency): envelope(samplingFrequency) {
+Voice_t::Voice_t(float samplingFrequency): env_config(samplingFrequency),
+                                           envelope(&env_config) {
 }
 
 void Voice_t::set_attack(float a) {
-    envelope.set_attack(a);
+    env_config.set_attack(a);
 }
 
 void Voice_t::set_decay(float d) {
-    envelope.set_decay(d);
+    env_config.set_decay(d);
 }
 
 void Voice_t::set_sustain(float s) {
-    envelope.set_sustain(s);
+    env_config.set_sustain(s);
 }
 
 void Voice_t::set_release(float r) {
-    envelope.set_release(r);
+    env_config.set_release(r);
 }
 
 void Voice_t::set_generator(Generator_e gen) {

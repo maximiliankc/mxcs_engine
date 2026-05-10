@@ -15,6 +15,7 @@ enum Generator_e {
 };
 
 class Voice_t {
+    Envelope_Config_t env_config;
     Envelope_t envelope;
     Oscillator_t osc;
     Blit_t blitOsc;
