@@ -10,7 +10,7 @@ const float baseLevel = 0.00001;
 const float baseLevelDB = 100;
 
 
-Envelope_Config_t::Envelope_Config_t(float _samplingFrequency) {
+EnvelopeConfig_t::EnvelopeConfig_t(float _samplingFrequency) {
     samplingFrequency = _samplingFrequency;
     a = 0.01;
     d = 0.01;
@@ -19,34 +19,34 @@ Envelope_Config_t::Envelope_Config_t(float _samplingFrequency) {
     set_adsr();
 }
 
-void Envelope_Config_t::set_adsr() {
+void EnvelopeConfig_t::set_adsr() {
     aIncrement = db2mag(baseLevelDB/a);      // a is the number of samples per 100 dB
     dIncrement = db2mag(s/d);                  // d is a number of samples per 100 dB
     sMag = db2mag(s);                          // s is a level in dBFS
     rIncrement = db2mag(-(baseLevelDB+s)/r); // r is a number of samples
 }
 
-void Envelope_Config_t::set_attack(float attackTime) {
+void EnvelopeConfig_t::set_attack(float attackTime) {
     a = attackTime*samplingFrequency;
     set_adsr();
 }
 
-void Envelope_Config_t::set_decay(float decayTime) {
+void EnvelopeConfig_t::set_decay(float decayTime) {
     d = decayTime*samplingFrequency;
     set_adsr();
 }
 
-void Envelope_Config_t::set_sustain(float sustainLevel) {
+void EnvelopeConfig_t::set_sustain(float sustainLevel) {
     s = sustainLevel;
     set_adsr();
 }
 
-void Envelope_Config_t::set_release(float release) {
+void EnvelopeConfig_t::set_release(float release) {
     r = release*samplingFrequency;
     set_adsr();
 }
 
-Envelope_t::Envelope_t(Envelope_Config_t * _config){
+Envelope_t::Envelope_t(EnvelopeConfig_t * _config){
     config = _config;
     run_state = &Envelope_t::run_off;
     amp = 0;
@@ -116,7 +116,7 @@ extern "C" {
         //              n: number of samples to iterate over.
         //              if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        Envelope_Config_t env_config(fs);
+        EnvelopeConfig_t env_config(fs);
         Envelope_t env(&env_config);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;

@@ -7,8 +7,8 @@
 const float semitone = 1.0594630943592953;
 const float c_minus_1 = 8.175798915643707;
 
-Synth_t::Synth_t(float _samplingFrequency): voice_config(_samplingFrequency),
-                                            voice(&voice_config),
+MonoSynth_t::MonoSynth_t(float _samplingFrequency): voiceConfig(_samplingFrequency),
+                                            voice(&voiceConfig),
                                             mod(_samplingFrequency),
                                             lpFilter(_samplingFrequency),
                                             hpFilter(_samplingFrequency) {
@@ -28,55 +28,55 @@ Synth_t::Synth_t(float _samplingFrequency): voice_config(_samplingFrequency),
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
-void Synth_t::set_attack(float a) {
-    voice_config.set_attack(a);
+void MonoSynth_t::set_attack(float a) {
+    voiceConfig.set_attack(a);
 }
 
-void Synth_t::set_decay(float d) {
-    voice_config.set_decay(d);
+void MonoSynth_t::set_decay(float d) {
+    voiceConfig.set_decay(d);
 }
 
-void Synth_t::set_sustain(float s) {
-    voice_config.set_sustain(s);
+void MonoSynth_t::set_sustain(float s) {
+    voiceConfig.set_sustain(s);
 }
 
-void Synth_t::set_release(float r) {
-    voice_config.set_release(r);
+void MonoSynth_t::set_release(float r) {
+    voiceConfig.set_release(r);
 }
 
-void Synth_t::set_mod_f(float freq) {
+void MonoSynth_t::set_mod_f(float freq) {
     mod.set_freq(freq);
 }
 
-void Synth_t::set_mod_depth(float depth) {
+void MonoSynth_t::set_mod_depth(float depth) {
     mod.modRatio = depth;
 }
 
-void Synth_t::set_lpf_freq(float freq) {
+void MonoSynth_t::set_lpf_freq(float freq) {
     lpF = freq;
     lpFilter.configure_lowpass(lpF, lpRes);
 }
 
-void Synth_t::set_lpf_res(float res) {
+void MonoSynth_t::set_lpf_res(float res) {
     lpRes = res;
     lpFilter.configure_lowpass(lpF, lpRes);
 }
 
-void Synth_t::set_hpf_freq(float freq) {
+void MonoSynth_t::set_hpf_freq(float freq) {
     hpF = freq;
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
-void Synth_t::set_hpf_res(float res){
+void MonoSynth_t::set_hpf_res(float res){
     hpRes = res;
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
-void Synth_t::set_generator(Generator_e gen) {
-    voice_config.set_generator(gen);
+void MonoSynth_t::set_generator(Generator_e gen) {
+    voiceConfig.set_generator(gen);
 }
 
-void Synth_t::press(uint8_t note) {
+void MonoSynth_t::press(uint8_t note) {
     float f = frequencyTable[note];
     voice.press(f);
     currentNote = note;
@@ -86,7 +86,7 @@ void Synth_t::press(uint8_t note) {
                                         // note stack points to lowest empty slot
 }
 
-void Synth_t::release(uint8_t note) {
+void MonoSynth_t::release(uint8_t note) {
     enabledNotes[note] = false; // released note is no longer active
     if (note == currentNote) {
         // find the next frequency where a note is enabled
@@ -108,7 +108,7 @@ void Synth_t::release(uint8_t note) {
     }
 }
 
-void Synth_t::step(float * out) {
+void MonoSynth_t::step(float * out) {
     voice.step(out);
     mod.step(out);
     lpFilter.step(out, out);
@@ -117,7 +117,7 @@ void Synth_t::step(float * out) {
 
 #ifdef SYNTH_TEST_
 
-float * Synth_t::get_freq_table() {
+float * MonoSynth_t::get_freq_table() {
     return frequencyTable;
 }
 
@@ -145,7 +145,7 @@ extern "C" {
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        Synth_t synth(fs);
+        MonoSynth_t synth(fs);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
         synth.set_attack(a);
@@ -170,10 +170,10 @@ extern "C" {
 
     void test_frequency_table(float freqs[], float fs) {
         // parameters:
-        Synth_t synth(fs);
+        MonoSynth_t synth(fs);
         for(unsigned int i = 0; i<notes; i++) {
             freqs[i] = synth.get_freq_table()[i];
         }
 }
 }
-#endif // SYNTH_TEST_
+#endif // MonoSynth_tEST_

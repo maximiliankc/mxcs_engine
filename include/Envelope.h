@@ -4,7 +4,7 @@
 #ifndef ENVELOPE_H_
 #define ENVELOPE_H_
 
-struct Envelope_Config_t {
+struct EnvelopeConfig_t {
     float samplingFrequency;
     float a;
     float d;
@@ -18,7 +18,7 @@ struct Envelope_Config_t {
 
     void set_adsr();
 
-    Envelope_Config_t(float samplingFrequency);
+    EnvelopeConfig_t(float samplingFrequency);
 
     void set_attack(float a);
     void set_decay(float d);
@@ -28,7 +28,7 @@ struct Envelope_Config_t {
 
 class Envelope_t {
     float amp;
-    Envelope_Config_t * config;
+    EnvelopeConfig_t * config;
 
     void run_off();
     void run_attack();
@@ -37,7 +37,7 @@ class Envelope_t {
     void run_release();
 
     public:
-    Envelope_t(Envelope_Config_t * config);
+    Envelope_t(EnvelopeConfig_t * config);
 
     void set_attack(float a);
     void set_decay(float d);
