@@ -129,27 +129,25 @@ PolySynth_t::PolySynth_t(float _sampling_frequency): Synth_t(_sampling_frequency
 
 void PolySynth_t::press(uint8_t note) {
     float f = frequencyTable[note];
-    voices[0].press(f);
+    voices[note].press(f);
 }
 
 void PolySynth_t::release(uint8_t note) {
-    voices[0].release();
+    voices[note].release();
 }
 
 void PolySynth_t::step(float * out){
-    // float voiceSamples[blockSize];
+    float voiceSamples[blockSize];
     // initialise out vector to all zeros
-    // for (uint8_t i = 0; i < blockSize; i++) {
-    //     out[i] = 0;
-    // }
-    // // add up contributions from each voice
-    // for (uint8_t i = 0; i < notes; i++) {
-    //     voices[i].step(voiceSamples);
-    //     for (uint8_t j = 0; j < blockSize; j++) {
-    //         out[j] += voiceSamples[j];
-    //     }
-    // }
-    voices[0].step(out);
+    for (uint8_t i = 0; i < blockSize; i++) {
+        out[i] = 0;
+    }
+    for (uint8_t i = 0; i < blockSize; i++) {
+        voices[i].step(voiceSamples);
+        for (uint8_t j = 0; j < blockSize; j++) {
+            out[j] += voiceSamples[j];
+        }
+    }
     run_effects(out);
 }
 
