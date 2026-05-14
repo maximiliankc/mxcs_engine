@@ -26,20 +26,20 @@ class SynthInterface(VoiceInterface):
         # a, d,
         # s, r,
         # modDepth, modFreq,
-        # generator, fs
+        # generator, fs, synthType
         # presses, pressNs, pressNotes,
         # releases, releaseNs, releaseNotes,
         # n, envOut
         self.testlib.test_synth.argtypes = [ctypes.c_float, ctypes.c_float,
-                                                ctypes.c_float, ctypes.c_float,
-                                                ctypes.c_float, ctypes.c_float,
-                                                ctypes.c_uint, ctypes.c_float,
-                                                ctypes.c_uint, uint_pointer, uint8_pointer,
-                                                ctypes.c_uint, uint_pointer, uint8_pointer,
-                                                ctypes.c_uint, float_pointer]
+                                            ctypes.c_float, ctypes.c_float,
+                                            ctypes.c_float, ctypes.c_float,
+                                            ctypes.c_uint, ctypes.c_float, ctypes.c_uint,
+                                            ctypes.c_uint, uint_pointer, uint8_pointer,
+                                            ctypes.c_uint, uint_pointer, uint8_pointer,
+                                            ctypes.c_uint, float_pointer]
         self.testlib.test_frequency_table.argtypes = [float_pointer, ctypes.c_float]
 
-    def run_synth(self, presses: list, p_notes: list, releases: list, r_notes: list, n_samples: int, fs: float) -> np.ndarray:
+    def run_synth(self, presses: list, p_notes: list, releases: list, r_notes: list, n_samples: int, fs: float, synth: int) -> np.ndarray:
         ''' Run the Synth. Output is a float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         p_uint8 = ctypes.POINTER(ctypes.c_uint8)
@@ -52,7 +52,7 @@ class SynthInterface(VoiceInterface):
         self.testlib.test_synth(self.attack_seconds, self.decay_seconds,
                                     self.sustain, self.release_seconds,
                                     self.mod_depth, self.mod_freq,
-                                    generators[self.generator], fs,
+                                    generators[self.generator], fs, synth,
                                     len(presses), presses_p, p_notes_p,
                                     len(releases), releases_p, r_notes_p,
                                     len(out), out_p)
@@ -66,11 +66,12 @@ class SynthInterface(VoiceInterface):
         return table
 
 
-class TestSynth(SynthInterface, TestVoice, TestModulator):
+class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
     ''' Test suite for synthesiser module'''
     note = 64
     test_notes = [13*n for n in range(9)] + [127]
     env_test_note = 69
+    synth_type = 0 # 0 for mono, 1 for poly
 
     @staticmethod
     def midi_to_freq(note):
@@ -87,13 +88,13 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
         notes = len(presses)*[self.note]
         self.mod_freq = 0
         self.mod_depth = 0
-        return self.run_synth(presses, notes, releases, notes, n_samples, fs)
+        return self.run_synth(presses, notes, releases, notes, n_samples, fs, self.synth_type)
 
     def run_mod(self, freq: float, ratio: float, n_samples: int, fs: float):
         self.mod_freq = freq
         self.mod_depth = ratio
         self.set_adsr(10**-6, 10**-6, 0, 10**-6, fs)
-        vector = sig.hilbert(self.run_synth([0], [64], [0], [0], n_samples, fs))
+        vector = sig.hilbert(self.run_synth([0], [64], [0], [0], n_samples, fs, self.synth_type))
         self.check_abs = True
         return np.abs(vector)
 
@@ -151,7 +152,7 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
                 self.mod_freq = mod_freq
                 self.mod_depth = mod_depth
                 presses, press_notes, releases, release_notes = generate_sequence_2(release_delay)
-                out = self.run_synth(presses, press_notes, releases, release_notes, n_samples, sampling_frequency)
+                out = self.run_synth(presses, press_notes, releases, release_notes, n_samples, sampling_frequency, self.synth_type)
                 wav.write(f'Test_Signal_{release_delay}_{mod_depth}_{mod_freq}_{gen}.wav', sampling_frequency, out)
                 out = sig.resample_poly(out, 1, 4)
                 freq, time, s_xx = sig.spectrogram(out, fs=sampling_frequency/4, nperseg=2**12, noverlap=2**10)
@@ -173,17 +174,20 @@ class TestSynth(SynthInterface, TestVoice, TestModulator):
 
     #   TODO: add integration tests for filters
 
+class TestPolySynth(TestMonoSynth):
+    ''' Tests for polysynth'''
+    synth_type = 1
 
 def main():
     ''' For Debugging/Testing '''
-    synth_test = TestSynth()
+    synth_test = TestMonoSynth()
     synth_test.setUp()
     synth_test.debug = True
     # synth_test.test_model()
-    # synth_test.test_envelope()
+    synth_test.test_envelope()
     # synth_test.test_frequency()
     # synth_test.test_frequency_table()
-    synth_test.play_notes()
+    # synth_test.play_notes()
 
 if __name__=='__main__':
     main()

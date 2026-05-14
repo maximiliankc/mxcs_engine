@@ -19,12 +19,15 @@ class Synth_t {
     float hpF;
     float hpRes;
 
-    protected:
     Modulator_t mod;
     Biquad_Filter_t lpFilter;
     Biquad_Filter_t hpFilter;
+
+    protected:
     VoiceConfig_t voiceConfig;
     float frequencyTable[notes];
+
+    void run_effects(float *out);
 
     public:
     Synth_t(float _samplingFrequency);
