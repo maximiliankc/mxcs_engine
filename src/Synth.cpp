@@ -118,6 +118,38 @@ void MonoSynth_t::step(float * out) {
     hpFilter.step(out, out);
 }
 
+PolySynth_t::PolySynth_t(float _sampling_frequency): Synth_t(_sampling_frequency) {
+    for (uint8_t i = 0; i < notes; i++) {
+        voices[i].set_config(&voiceConfig);
+    }
+}
+
+void PolySynth_t::press(uint8_t note) {
+    voices[note].press(note);
+}
+
+void PolySynth_t::release(uint8_t note) {
+    voices[note].release();
+}
+
+void PolySynth_t::step(float * out){
+    float voiceSamples[blockSize];
+    // initialise out vector to all zeros
+    for (uint8_t i = 0; i < notes; i++) {
+        out = 0;
+    }
+    // add up contributions from each voice
+    for (uint8_t i = 0; i < notes; i++) {
+        voices[i].step(voiceSamples);
+        for (uint8_t j = 0; j < blockSize; j++) {
+            out[j] += voiceSamples[j];
+        }
+    }
+    mod.step(out);
+    lpFilter.step(out, out);
+    hpFilter.step(out, out);
+}
+
 #ifdef SYNTH_TEST_
 
 float * Synth_t::get_freq_table() {

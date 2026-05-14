@@ -11,7 +11,6 @@
 #include "Filter.h"
 
 const uint8_t stackDepth = 32;
-
 // base class for actual synth implementations
 class Synth_t {
     float samplingFrequency;
@@ -60,6 +59,16 @@ class MonoSynth_t: public Synth_t {
 
     public:
     MonoSynth_t(float _samplingFrequency);
+    void press(uint8_t note);
+    void release(uint8_t note);
+    void step(float * out);
+};
+
+class PolySynth_t: public Synth_t {
+    Voice_t voices[notes];
+
+    public:
+    PolySynth_t(float _samplingFrequency);
     void press(uint8_t note);
     void release(uint8_t note);
     void step(float * out);

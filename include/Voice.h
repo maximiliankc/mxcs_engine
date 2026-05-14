@@ -34,6 +34,7 @@ class Voice_t {
     BpBlit_t bpBlitOsc;
 
     public:
+    Voice_t();
     Voice_t(VoiceConfig_t * config);
     void set_config(VoiceConfig_t * config);
     void step(float * out);

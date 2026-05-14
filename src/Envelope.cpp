@@ -46,6 +46,9 @@ void EnvelopeConfig_t::set_release(float release) {
     set_adsr();
 }
 
+Envelope_t::Envelope_t() {
+}
+
 Envelope_t::Envelope_t(EnvelopeConfig_t * _config){
     config = _config;
 }

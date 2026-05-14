@@ -29,6 +29,9 @@ void VoiceConfig_t::set_generator(Generator_e gen) {
     generator = gen;
 }
 
+Voice_t::Voice_t(){
+}
+
 Voice_t::Voice_t(VoiceConfig_t * _config): envelope(&(_config->envConfig)) {
     config = _config;
 }

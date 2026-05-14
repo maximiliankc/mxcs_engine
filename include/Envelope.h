@@ -37,6 +37,7 @@ class Envelope_t {
     void run_release();
 
     public:
+    Envelope_t();
     Envelope_t(EnvelopeConfig_t * config);
     void set_config(EnvelopeConfig_t * config);
     void set_attack(float a);
