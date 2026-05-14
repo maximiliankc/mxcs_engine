@@ -48,8 +48,10 @@ void EnvelopeConfig_t::set_release(float release) {
 
 Envelope_t::Envelope_t(EnvelopeConfig_t * _config){
     config = _config;
-    run_state = &Envelope_t::run_off;
-    amp = 0;
+}
+
+void Envelope_t::set_config(EnvelopeConfig_t * _config){
+    config = _config;
 }
 
 void Envelope_t::step(float * envelope) {
@@ -75,6 +77,9 @@ void Envelope_t::run_off() {
 }
 
 void Envelope_t::run_attack() {
+    if (config == nullptr) {
+        return;
+    }
     amp *= config->aIncrement;
     if (amp >= 1.0) {
         amp = 1.0;
@@ -83,6 +88,9 @@ void Envelope_t::run_attack() {
 }
 
 void Envelope_t::run_decay() {
+    if (config == nullptr) {
+        return;
+    }
     amp *= config->dIncrement;
     if (amp <= config->sMag) {
         amp = config->sMag;
@@ -91,10 +99,16 @@ void Envelope_t::run_decay() {
 }
 
 void Envelope_t::run_sustain() {
+    if (config == nullptr) {
+        return;
+    }
     amp = config->sMag;
 }
 
 void Envelope_t::run_release() {
+    if (config == nullptr) {
+        return;
+    }
     amp *= config->rIncrement; // linear shift for now
 }
 

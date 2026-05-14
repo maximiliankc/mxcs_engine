@@ -27,8 +27,8 @@ struct EnvelopeConfig_t {
 };
 
 class Envelope_t {
-    float amp;
-    EnvelopeConfig_t * config;
+    float amp = 0;
+    EnvelopeConfig_t * config = nullptr;
 
     void run_off();
     void run_attack();
@@ -38,12 +38,12 @@ class Envelope_t {
 
     public:
     Envelope_t(EnvelopeConfig_t * config);
-
+    void set_config(EnvelopeConfig_t * config);
     void set_attack(float a);
     void set_decay(float d);
     void set_sustain(float s);
     void set_release(float r);
-    void (Envelope_t::*run_state)(void);
+    void (Envelope_t::*run_state)(void) = &Envelope_t::run_off;
 
     public:
     void step(float * envelope);

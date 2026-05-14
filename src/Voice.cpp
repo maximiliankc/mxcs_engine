@@ -33,8 +33,16 @@ Voice_t::Voice_t(VoiceConfig_t * _config): envelope(&(_config->envConfig)) {
     config = _config;
 }
 
+void Voice_t::set_config(VoiceConfig_t * _config) {
+    config = _config;
+    envelope.set_config(&(config->envConfig));
+}
+
 
 void Voice_t::step(float * out) {
+    if (config == nullptr) {
+        return;
+    }
     float envOut[blockSize];
     switch (config->generator)
     {

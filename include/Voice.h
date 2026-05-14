@@ -27,7 +27,7 @@ struct VoiceConfig_t {
 };
 
 class Voice_t {
-    VoiceConfig_t * config;
+    VoiceConfig_t * config = nullptr;
     Envelope_t envelope;
     Oscillator_t osc;
     Blit_t blitOsc;
@@ -35,6 +35,7 @@ class Voice_t {
 
     public:
     Voice_t(VoiceConfig_t * config);
+    void set_config(VoiceConfig_t * config);
     void step(float * out);
     void press(float f);
     void release();
