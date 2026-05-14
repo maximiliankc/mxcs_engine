@@ -40,10 +40,6 @@ class Envelope_t {
     Envelope_t();
     Envelope_t(EnvelopeConfig_t * config);
     void set_config(EnvelopeConfig_t * config);
-    void set_attack(float a);
-    void set_decay(float d);
-    void set_sustain(float s);
-    void set_release(float r);
     void (Envelope_t::*run_state)(void) = &Envelope_t::run_off;
 
     public:

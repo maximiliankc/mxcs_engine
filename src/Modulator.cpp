@@ -2,7 +2,6 @@
    copyright Maximilian Cornwell 2023
 */
 #include <stdint.h>
-#include <stdio.h>
 #include "Modulator.h"
 #include "Constants.h"
 
