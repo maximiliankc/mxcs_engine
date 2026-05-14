@@ -94,7 +94,7 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
         self.mod_freq = freq
         self.mod_depth = ratio
         self.set_adsr(10**-6, 10**-6, 0, 10**-6, fs)
-        vector = sig.hilbert(self.run_synth([0], [64], [0], [0], n_samples, fs, self.synth_type))
+        vector = sig.hilbert(self.run_synth([0], [64], [], [], n_samples, fs, self.synth_type))
         self.check_abs = True
         return np.abs(vector)
 
@@ -180,11 +180,11 @@ class TestPolySynth(TestMonoSynth):
 
 def main():
     ''' For Debugging/Testing '''
-    synth_test = TestMonoSynth()
+    synth_test = TestPolySynth()
     synth_test.setUp()
     synth_test.debug = True
-    # synth_test.test_model()
-    synth_test.test_envelope()
+    synth_test.test_model()
+    # synth_test.test_envelope()
     # synth_test.test_frequency()
     # synth_test.test_frequency_table()
     # synth_test.play_notes()
