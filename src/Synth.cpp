@@ -7,14 +7,12 @@
 const float semitone = 1.0594630943592953;
 const float c_minus_1 = 8.175798915643707;
 
-MonoSynth_t::MonoSynth_t(float _samplingFrequency): voiceConfig(_samplingFrequency),
-                                            voice(&voiceConfig),
-                                            mod(_samplingFrequency),
+Synth_t::Synth_t(float _samplingFrequency): mod(_samplingFrequency),
                                             lpFilter(_samplingFrequency),
-                                            hpFilter(_samplingFrequency) {
+                                            hpFilter(_samplingFrequency),
+                                            voiceConfig(_samplingFrequency) {
     // calculate the frequency table
     samplingFrequency = _samplingFrequency;
-    currentNote = 0;
     frequencyTable[0] = c_minus_1/samplingFrequency;
     for(uint8_t i = 1; i < notes; i++) {
         frequencyTable[i] = semitone*(frequencyTable[i-1]);
@@ -28,52 +26,57 @@ MonoSynth_t::MonoSynth_t(float _samplingFrequency): voiceConfig(_samplingFrequen
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
-void MonoSynth_t::set_attack(float a) {
+void Synth_t::set_attack(float a) {
     voiceConfig.set_attack(a);
 }
 
-void MonoSynth_t::set_decay(float d) {
+void Synth_t::set_decay(float d) {
     voiceConfig.set_decay(d);
 }
 
-void MonoSynth_t::set_sustain(float s) {
+void Synth_t::set_sustain(float s) {
     voiceConfig.set_sustain(s);
 }
 
-void MonoSynth_t::set_release(float r) {
+void Synth_t::set_release(float r) {
     voiceConfig.set_release(r);
 }
 
-void MonoSynth_t::set_mod_f(float freq) {
+void Synth_t::set_mod_f(float freq) {
     mod.set_freq(freq);
 }
 
-void MonoSynth_t::set_mod_depth(float depth) {
+void Synth_t::set_mod_depth(float depth) {
     mod.modRatio = depth;
 }
 
-void MonoSynth_t::set_lpf_freq(float freq) {
+void Synth_t::set_lpf_freq(float freq) {
     lpF = freq;
     lpFilter.configure_lowpass(lpF, lpRes);
 }
 
-void MonoSynth_t::set_lpf_res(float res) {
+void Synth_t::set_lpf_res(float res) {
     lpRes = res;
     lpFilter.configure_lowpass(lpF, lpRes);
 }
 
-void MonoSynth_t::set_hpf_freq(float freq) {
+void Synth_t::set_hpf_freq(float freq) {
     hpF = freq;
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
-void MonoSynth_t::set_hpf_res(float res){
+void Synth_t::set_hpf_res(float res){
     hpRes = res;
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
-void MonoSynth_t::set_generator(Generator_e gen) {
+void Synth_t::set_generator(Generator_e gen) {
     voiceConfig.set_generator(gen);
+}
+
+MonoSynth_t::MonoSynth_t(float _sampling_frequency): Synth_t(_sampling_frequency),
+                                                     voice(&voiceConfig) {
+    currentNote = 0;
 }
 
 void MonoSynth_t::press(uint8_t note) {
@@ -117,7 +120,7 @@ void MonoSynth_t::step(float * out) {
 
 #ifdef SYNTH_TEST_
 
-float * MonoSynth_t::get_freq_table() {
+float * Synth_t::get_freq_table() {
     return frequencyTable;
 }
 
