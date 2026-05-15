@@ -113,6 +113,10 @@ void Envelope_t::run_release() {
         return;
     }
     amp *= config->rIncrement; // linear shift for now
+    if (amp <= baseLevel) {
+        amp = baseLevel;
+        run_state = &Envelope_t::run_off;
+    }
 }
 
 

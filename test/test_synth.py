@@ -152,25 +152,33 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
                 self.mod_freq = mod_freq
                 self.mod_depth = mod_depth
                 presses, press_notes, releases, release_notes = generate_sequence_2(release_delay)
+                print(presses)
+                print(press_notes)
+                print(releases)
+                print(release_notes)
+
                 out = self.run_synth(presses, press_notes, releases, release_notes, n_samples, sampling_frequency, self.synth_type)
+                max_out = np.max(np.abs(out))
+                if max_out > 1:
+                    out = out/max_out
                 wav.write(f'Test_Signal_{release_delay}_{mod_depth}_{mod_freq}_{gen}.wav', sampling_frequency, out)
-                out = sig.resample_poly(out, 1, 4)
-                freq, time, s_xx = sig.spectrogram(out, fs=sampling_frequency/4, nperseg=2**12, noverlap=2**10)
-                _, ax1 = plt.subplots()
-                ax1.pcolormesh(time, freq, s_xx)
-                ax1.set_xlabel('Time (s)')
-                ax1.set_ylabel('Frequency (Hz)')
-                ax1.set_title(f'Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
-                _, ax2 = plt.subplots()
-                time = np.arange(n_samples)/sampling_frequency
-                ax2.plot(time[:4*sampling_frequency], out[:4*sampling_frequency], label='signal')
-                ax2.plot(time[:4*sampling_frequency], np.abs(sig.hilbert(out[:4*sampling_frequency])), label='envelope')
-                ax2.set_xlabel('Time (s)')
-                ax2.set_ylabel('Magnitude')
-                ax2.set_title(f'{gen}, Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
-                ax2.grid(True)
-                ax2.legend()
-                plt.show()
+                # out = sig.resample_poly(out, 1, 4)
+                # freq, time, s_xx = sig.spectrogram(out, fs=sampling_frequency/4, nperseg=2**12, noverlap=2**10)
+                # _, ax1 = plt.subplots()
+                # ax1.pcolormesh(time, freq, s_xx)
+                # ax1.set_xlabel('Time (s)')
+                # ax1.set_ylabel('Frequency (Hz)')
+                # ax1.set_title(f'Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
+                # _, ax2 = plt.subplots()
+                # time = np.arange(n_samples)/sampling_frequency
+                # ax2.plot(time[:4*sampling_frequency], out[:4*sampling_frequency], label='signal')
+                # ax2.plot(time[:4*sampling_frequency], np.abs(sig.hilbert(out[:4*sampling_frequency])), label='envelope')
+                # ax2.set_xlabel('Time (s)')
+                # ax2.set_ylabel('Magnitude')
+                # ax2.set_title(f'{gen}, Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
+                # ax2.grid(True)
+                # ax2.legend()
+                # plt.show()
 
     #   TODO: add integration tests for filters
 
@@ -180,14 +188,14 @@ class TestPolySynth(TestMonoSynth):
 
 def main():
     ''' For Debugging/Testing '''
-    synth_test = TestPolySynth()
+    synth_test = TestMonoSynth()
     synth_test.setUp()
     synth_test.debug = True
-    synth_test.test_model()
+    # synth_test.test_model()
     # synth_test.test_envelope()
     # synth_test.test_frequency()
     # synth_test.test_frequency_table()
-    # synth_test.play_notes()
+    synth_test.play_notes()
 
 if __name__=='__main__':
     main()
