@@ -85,8 +85,8 @@ MonoSynth_t::MonoSynth_t(float _sampling_frequency): Synth_t(_sampling_frequency
 }
 
 void MonoSynth_t::press(uint8_t note) {
-    float f = frequencyTable[note];
-    voice.press(f);
+    voice.set_frequency(frequencyTable[note]);
+    voice.press();
     currentNote = note;
     enabledNotes[note] = true;
     // TODO add some protection against over-filling the stack
@@ -103,7 +103,7 @@ void MonoSynth_t::release(uint8_t note) {
             noteStackIndex--; // noteStack now points at highest note that (might) be active
             if (enabledNotes[noteStack[noteStackIndex]]) {
                 float f = frequencyTable[noteStack[noteStackIndex]];
-                voice.press(f); // should replace this with a 'change_freq' method, so envelope is unaffected
+                voice.set_frequency(f);
                 currentNote = noteStack[noteStackIndex++]; // point index back to lowest empty slow
                 searching = false;
             } // otherwise, just keep searching
@@ -124,12 +124,12 @@ void MonoSynth_t::step(float * out) {
 PolySynth_t::PolySynth_t(float _sampling_frequency): Synth_t(_sampling_frequency) {
     for (uint8_t i = 0; i < notes; i++) {
         voices[i].set_config(&voiceConfig);
+        voices[i].set_frequency(frequencyTable[i]);
     }
 }
 
 void PolySynth_t::press(uint8_t note) {
-    float f = frequencyTable[note];
-    voices[note].press(f);
+    voices[note].press();
 }
 
 void PolySynth_t::release(uint8_t note) {

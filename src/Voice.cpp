@@ -41,6 +41,12 @@ void Voice_t::set_config(VoiceConfig_t * _config) {
     envelope.set_config(&(config->envConfig));
 }
 
+void Voice_t::set_frequency(float f) {
+    osc.set_freq(f);
+    blitOsc.set_freq(f);
+    bpBlitOsc.set_freq(f);
+}
+
 bool Voice_t::is_active() {
     return envelope.is_active();
 }
@@ -72,11 +78,8 @@ void Voice_t::step(float * out) {
     }
 }
 
-void Voice_t::press(float f) {
+void Voice_t::press() {
     envelope.press();
-    osc.set_freq(f);
-    blitOsc.set_freq(f);
-    bpBlitOsc.set_freq(f);
 }
 
 void Voice_t::release() {
@@ -115,7 +118,8 @@ extern "C" {
         unsigned int releaseCount = 0;
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
-                voice.press(f);
+                voice.set_frequency(f);
+                voice.press();
                 pressCount++;
             }
             if(releaseCount < releases && i >= releaseNs[releaseCount]) {
