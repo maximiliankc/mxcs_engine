@@ -57,6 +57,10 @@ void Envelope_t::set_config(EnvelopeConfig_t * _config){
     config = _config;
 }
 
+bool Envelope_t::is_active(){
+    return active;
+}
+
 void Envelope_t::step(float * envelope) {
     for(uint8_t i = 0; i < blockSize; i++) {
         (this->*run_state)();
@@ -68,6 +72,7 @@ void Envelope_t::press() {
     if (amp < baseLevel) {
         amp = baseLevel; // -100 dB, and initial value
     }
+    active = true;
     run_state = &Envelope_t::run_attack;
 }
 
@@ -116,6 +121,7 @@ void Envelope_t::run_release() {
     if (amp <= baseLevel) {
         amp = baseLevel;
         run_state = &Envelope_t::run_off;
+        active = false;
     }
 }
 
@@ -125,7 +131,7 @@ extern "C" {
     void test_envelope(const float a, const float d, const float s, const float r,\
                     const unsigned int presses, unsigned int pressNs[],\
                     const unsigned int releases, unsigned int releaseNs[],\
-                    const unsigned int n, const float fs, float envOut[]) {
+                    const unsigned int n, const float fs, float envOut[], unsigned int active[]) {
         // parameters:  a: attack time (in samples)
         //              d: decay time (in samples)
         //              s: sustain level (amplitude between 0 and 1)
@@ -145,6 +151,7 @@ extern "C" {
         env_config.set_decay(d);
         env_config.set_sustain(s);
         env_config.set_release(r);
+        unsigned int k = 0;
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
                 env.press();
@@ -155,6 +162,7 @@ extern "C" {
                 releaseCount++;
             }
             env.step(envOut + i);
+            active[k++] = (unsigned int)env.is_active();
         }
     }
 }

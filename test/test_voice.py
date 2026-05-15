@@ -96,7 +96,7 @@ class TestVoice(VoiceInterface, unittest.TestCase):
                     voice_vector = np.abs(sig.hilbert(self.run_voice([press_time],
                                                                     [release_time],
                                                                     n_samples, fs)))
-                    env_vector = self.run_env([press_time], [release_time], n_samples, fs)
+                    env_vector, _ = self.run_env([press_time], [release_time], n_samples, fs)
                     rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
                     if self.debug:
                         _, ax1 = plt.subplots()

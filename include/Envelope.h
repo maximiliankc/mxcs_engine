@@ -27,6 +27,7 @@ struct EnvelopeConfig_t {
 };
 
 class Envelope_t {
+    bool active;
     float amp = 0;
     EnvelopeConfig_t * config = nullptr;
 
@@ -40,9 +41,9 @@ class Envelope_t {
     Envelope_t();
     Envelope_t(EnvelopeConfig_t * config);
     void set_config(EnvelopeConfig_t * config);
+    bool is_active(void);
     void (Envelope_t::*run_state)(void) = &Envelope_t::run_off;
 
-    public:
     void step(float * envelope);
     void press();
     void release();
