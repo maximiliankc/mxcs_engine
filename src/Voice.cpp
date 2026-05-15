@@ -41,6 +41,9 @@ void Voice_t::set_config(VoiceConfig_t * _config) {
     envelope.set_config(&(config->envConfig));
 }
 
+bool Voice_t::is_active() {
+    return envelope.is_active();
+}
 
 void Voice_t::step(float * out) {
     if (config == nullptr) {

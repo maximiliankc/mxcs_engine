@@ -143,9 +143,11 @@ void PolySynth_t::step(float * out){
         out[i] = 0;
     }
     for (uint8_t i = 0; i < blockSize; i++) {
-        voices[i].step(voiceSamples);
-        for (uint8_t j = 0; j < blockSize; j++) {
-            out[j] += voiceSamples[j];
+        if (voices[i].is_active()) {
+            voices[i].step(voiceSamples);
+            for (uint8_t j = 0; j < blockSize; j++) {
+                out[j] += voiceSamples[j];
+            }
         }
     }
     run_effects(out);

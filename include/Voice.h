@@ -37,6 +37,7 @@ class Voice_t {
     Voice_t();
     Voice_t(VoiceConfig_t * config);
     void set_config(VoiceConfig_t * config);
+    bool is_active();
     void step(float * out);
     void press(float f);
     void release();
