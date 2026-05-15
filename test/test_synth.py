@@ -152,11 +152,6 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
                 self.mod_freq = mod_freq
                 self.mod_depth = mod_depth
                 presses, press_notes, releases, release_notes = generate_sequence_2(release_delay)
-                print(presses)
-                print(press_notes)
-                print(releases)
-                print(release_notes)
-
                 out = self.run_synth(presses, press_notes, releases, release_notes, n_samples, sampling_frequency, self.synth_type)
                 max_out = np.max(np.abs(out))
                 if max_out > 1:
@@ -188,7 +183,7 @@ class TestPolySynth(TestMonoSynth):
 
 def main():
     ''' For Debugging/Testing '''
-    synth_test = TestMonoSynth()
+    synth_test = TestPolySynth()
     synth_test.setUp()
     synth_test.debug = True
     # synth_test.test_model()
