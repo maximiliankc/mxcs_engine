@@ -27,7 +27,7 @@ struct EnvelopeConfig_t {
 };
 
 class Envelope_t {
-    bool active;
+    bool active = false;
     float amp = 0;
     EnvelopeConfig_t * config = nullptr;
 
