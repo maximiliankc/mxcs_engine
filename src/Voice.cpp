@@ -56,25 +56,29 @@ void Voice_t::step(float * out) {
         return;
     }
     float envOut[blockSize];
+    float multiplier = 1.0;
     switch (config->generator)
     {
     case sine:
         osc.step(out);
+        multiplier = 0.0625;
         break;
 
     case blit:
         blitOsc.step(out);
+        multiplier = 0.25;
         break;
 
     case bpblit:
         bpBlitOsc.step(out);
+        multiplier = 0.25;
         break;
     }
 
     envelope.step(envOut);
     // apply envelope to osc out
     for (uint8_t i=0; i < blockSize; i++) {
-        out[i] *= envOut[i];
+        out[i] *= multiplier*envOut[i];
     }
 }
 

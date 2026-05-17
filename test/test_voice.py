@@ -20,6 +20,8 @@ upper_frequencies = {'sine': 0.5,
                      'blit': 0.4,
                      'bp_blit': 0.2}
 
+sine_multiplier = 2**-4
+
 class VoiceInterface(EnvelopeInterface, OscillatorInterface):
     ''' Interface class for voice module '''
     generator = 'sine'
@@ -96,6 +98,7 @@ class TestVoice(VoiceInterface, unittest.TestCase):
                     voice_vector = np.abs(sig.hilbert(self.run_voice([press_time],
                                                                     [release_time],
                                                                     n_samples, fs)))
+                    voice_vector = voice_vector/sine_multiplier
                     env_vector, _ = self.run_env([press_time], [release_time], n_samples, fs)
                     rms_error = (np.mean((voice_vector-env_vector)**2))**0.5
                     if self.debug:
@@ -165,7 +168,7 @@ def main():
     ''' For Debugging/Testing '''
     voice_test = TestVoice()
     voice_test.setUp()
-    # voice_test.debug = True
+    voice_test.debug = True
     voice_test.test_envelope()
     voice_test.test_frequency()
 

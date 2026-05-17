@@ -3,7 +3,7 @@
 import ctypes
 
 from test.constants import sampling_frequencies
-from test.test_voice import VoiceInterface, TestVoice, generators
+from test.test_voice import VoiceInterface, TestVoice, generators, sine_multiplier
 from test.test_modulator import TestModulator
 
 import numpy as np
@@ -96,7 +96,7 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
         self.set_adsr(10**-6, 10**-6, 0, 10**-6, fs)
         vector = sig.hilbert(self.run_synth([0], [64], [], [], n_samples, fs, self.synth_type))
         self.check_abs = True
-        return np.abs(vector)
+        return np.abs(vector)/sine_multiplier
 
     def test_frequency_table(self):
         ''' Check the accuracy of the frequeny table '''
@@ -147,6 +147,7 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
         n_samples = sampling_frequency*60
         for gen in generators:
             self.generator = gen
+            print(gen)
             for release_delay, mod_depth, mod_freq in zip([0.5, 1.5, 1], [0.5, 1, 0.25], [0.5, 3, 1]):
                 self.set_adsr(0.1, 0.1, -5, 0.1, sampling_frequency)
                 self.mod_freq = mod_freq
@@ -154,6 +155,9 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
                 presses, press_notes, releases, release_notes = generate_sequence_2(release_delay)
                 out = self.run_synth(presses, press_notes, releases, release_notes, n_samples, sampling_frequency, self.synth_type)
                 max_out = np.max(np.abs(out))
+                rms_out = np.sqrt(np.mean(out**2))
+                print(f'max out: {20*np.log10(max_out)}')
+                print(f'rms out: {20*np.log10(rms_out)}')
                 if max_out > 1:
                     out = out/max_out
                 wav.write(f'Test_Signal_{release_delay}_{mod_depth}_{mod_freq}_{gen}.wav', sampling_frequency, out)
