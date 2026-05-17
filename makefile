@@ -1,6 +1,6 @@
 IDIR = ./include
 CC=g++
-CFLAGS=-O1 -I$(IDIR) -Werror -Wall -Wpedantic -DSYNTH_TEST_
+CFLAGS=-O3 -I$(IDIR) -Werror -Wall -Wpedantic -DSYNTH_TEST_
 
 TEST_TARGET=test.so
 
