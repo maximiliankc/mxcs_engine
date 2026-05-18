@@ -106,6 +106,7 @@ void MonoSynth_t::release(uint8_t note) {
     enabledNotes[note] = false; // released note is no longer active
     if (note == currentNote) {
         // find the next frequency where a note is enabled
+        // TODO figure out behaviour if note wasn't added to stack in the first place (e.g. because the stack was full)
         bool searching = true;
         while(noteStackIndex > 0 && searching) {
             noteStackIndex--; // noteStack now points at highest note that (might) be active
