@@ -31,6 +31,7 @@ class Synth_t {
 
     public:
     Synth_t(float _samplingFrequency);
+    virtual ~Synth_t() = 0;
     void set_attack(float a);
     void set_decay(float d);
     void set_sustain(float s);

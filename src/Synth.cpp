@@ -25,6 +25,9 @@ Synth_t::Synth_t(float _samplingFrequency): mod(_samplingFrequency),
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
+Synth_t::~Synth_t() {
+}
+
 void Synth_t::run_effects(float * out) {
     mod.step(out);
     lpFilter.step(out, out);
@@ -122,7 +125,7 @@ void MonoSynth_t::step(float * out) {
 }
 
 PolySynth_t::PolySynth_t(float _sampling_frequency): Synth_t(_sampling_frequency) {
-    for (uint8_t i = 0; i < notes; i++) {
+    for (uint32_t i = 0; i < notes; i++) {
         voices[i].set_config(&voiceConfig);
         voices[i].set_frequency(frequencyTable[i]);
     }
@@ -185,12 +188,11 @@ extern "C" {
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
         Synth_t * synth_p;
+
         if (synthType == 0) {
-            MonoSynth_t monoSynth(fs);
-            synth_p = &monoSynth;
+            synth_p = new MonoSynth_t(fs);
         } else {
-            PolySynth_t polySynth(fs);
-            synth_p = &polySynth;
+            synth_p = new PolySynth_t(fs);
         }
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
@@ -212,6 +214,7 @@ extern "C" {
             }
             synth_p->step(envOut + i);
         }
+        delete synth_p;
     }
 
     void test_frequency_table(float freqs[], float fs) {
@@ -220,6 +223,6 @@ extern "C" {
         for(unsigned int i = 0; i<notes; i++) {
             freqs[i] = synth.get_freq_table()[i];
         }
-}
+    }
 }
 #endif // MonoSynth_tEST_
