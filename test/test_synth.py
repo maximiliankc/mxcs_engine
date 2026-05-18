@@ -2,7 +2,7 @@
     copyright Maximilian Cornwell 2023 '''
 import ctypes
 
-from test.constants import sampling_frequencies
+from test.constants import sampling_frequencies, n_notes
 from test.test_voice import VoiceInterface, TestVoice, generators, sine_multiplier
 from test.test_modulator import TestModulator
 
@@ -60,7 +60,7 @@ class SynthInterface(VoiceInterface):
 
     def run_frequency_table(self, fs):
         ''' Reads the calculated frequency table '''
-        table = np.zeros(128, dtype=np.single)
+        table = np.zeros(n_notes, dtype=np.single)
         table_p = table.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         self.testlib.test_frequency_table(table_p, fs)
         return table
@@ -69,7 +69,7 @@ class SynthInterface(VoiceInterface):
 class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
     ''' Test suite for synthesiser module'''
     note = 64
-    test_notes = [13*n for n in range(9)] + [127]
+    test_notes = [13*n for n in range(8)] + [n_notes-1]
     env_test_note = 69
     synth_type = 0 # 0 for mono, 1 for poly
 
@@ -101,13 +101,13 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
     def test_frequency_table(self):
         ''' Check the accuracy of the frequeny table '''
         for fs in sampling_frequencies:
-            reference = self.midi_to_freq(np.arange(128))
+            reference = self.midi_to_freq(np.arange(n_notes))
             device = self.run_frequency_table(fs)*fs
             error_cents = 1200*np.log2(reference/device)
             if self.debug:
                 _, ax1 = plt.subplots()
-                ax1.semilogy(np.arange(128), reference, label='Target')
-                ax1.semilogy(np.arange(128), device, label='Device')
+                ax1.semilogy(np.arange(n_notes), reference, label='Target')
+                ax1.semilogy(np.arange(n_notes), device, label='Device')
                 ax1.legend()
                 ax1.grid(True)
                 ax1.set_xlabel('MIDI note')
@@ -115,7 +115,7 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
                 ax1.set_title(f'Error ({fs=})')
 
                 _, ax2 = plt.subplots()
-                ax2.plot(np.arange(128), error_cents)
+                ax2.plot(np.arange(n_notes), error_cents)
                 ax2.grid(True)
                 ax2.set_xlabel('MIDI note')
                 ax2.set_ylabel('Error (cents)')
@@ -180,6 +180,7 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
                 # plt.show()
 
     #   TODO: add integration tests for filters
+    # TODO test out behaviour with multiple simultaneous presses/releases, multiple notes pressed simultaneously
 
 class TestPolySynth(TestMonoSynth):
     ''' Tests for polysynth'''

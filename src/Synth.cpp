@@ -98,6 +98,9 @@ void MonoSynth_t::press(uint8_t note) {
 }
 
 void MonoSynth_t::release(uint8_t note) {
+    if (note >= notes) {
+        return; // do nothing if unsupported note
+    }
     enabledNotes[note] = false; // released note is no longer active
     if (note == currentNote) {
         // find the next frequency where a note is enabled
@@ -132,6 +135,9 @@ PolySynth_t::PolySynth_t(float _sampling_frequency): Synth_t(_sampling_frequency
 }
 
 void PolySynth_t::press(uint8_t note) {
+    if (note >= notes) {
+        return; // do nothing if unsupported note
+    }
     voices[note].press();
 }
 
@@ -145,7 +151,7 @@ void PolySynth_t::step(float * out){
     for (uint8_t i = 0; i < blockSize; i++) {
         out[i] = 0;
     }
-    for (uint8_t i = 0; i < blockSize; i++) {
+    for (uint8_t i = 0; i < notes; i++) {
         if (voices[i].is_active()) {
             voices[i].step(voiceSamples);
             for (uint8_t j = 0; j < blockSize; j++) {
