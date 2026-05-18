@@ -46,10 +46,10 @@ void Blit_t::sync_phase(void) {
 }
 
 void BpBlit_t::set_freq(float freq) {
+    m = blit_m(2*freq) - 1;
     if (freq > 0.2) {
         freq = 0; // frequencies above 0.25 aren't supported by bpblit!
     }
-    m = blit_m(2*freq) - 1;
     lfo.set_freq(freq);
     hfo.set_freq(m*freq);
     sync_phase();
