@@ -32,6 +32,7 @@ class Synth_t {
     public:
     Synth_t(float _samplingFrequency);
     virtual ~Synth_t() = 0;
+    virtual void set_fs(float samplingFrequency);
     void set_attack(float a);
     void set_decay(float d);
     void set_sustain(float s);
@@ -73,6 +74,7 @@ class PolySynth_t: public Synth_t {
 
     public:
     PolySynth_t(float _samplingFrequency);
+    void set_fs(float samplingFrequency);
     void press(uint8_t note);
     void release(uint8_t note);
     void step(float * out);

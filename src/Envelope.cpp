@@ -11,11 +11,15 @@ const float baseLevelDB = 100;
 
 
 EnvelopeConfig_t::EnvelopeConfig_t(float _samplingFrequency) {
-    samplingFrequency = _samplingFrequency;
     a = 0.01;
     d = 0.01;
     s = 0;
     r = 0.01;
+    set_fs(_samplingFrequency);
+}
+
+void EnvelopeConfig_t::set_fs(float _samplingFrequency) {
+    samplingFrequency = _samplingFrequency;
     set_adsr();
 }
 

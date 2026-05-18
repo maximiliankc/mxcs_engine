@@ -9,6 +9,10 @@
 VoiceConfig_t::VoiceConfig_t(float samplingFrequency): envConfig(samplingFrequency) {
 }
 
+void VoiceConfig_t::set_fs(float _samplingFrequency) {
+    envConfig.set_fs(_samplingFrequency);
+}
+
 void VoiceConfig_t::set_attack(float a) {
     envConfig.set_attack(a);
 }

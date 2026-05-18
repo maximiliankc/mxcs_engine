@@ -19,7 +19,7 @@ struct EnvelopeConfig_t {
     void set_adsr();
 
     EnvelopeConfig_t(float samplingFrequency);
-
+    void set_fs(float samplingFrequency);
     void set_attack(float a);
     void set_decay(float d);
     void set_sustain(float s);

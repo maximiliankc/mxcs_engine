@@ -34,6 +34,21 @@ void Synth_t::run_effects(float * out) {
     hpFilter.step(out, out);
 }
 
+void Synth_t::set_fs(float _samplingFrequency) {
+    samplingFrequency = _samplingFrequency;
+    frequencyTable[0] = c_minus_1/samplingFrequency;
+    for(uint8_t i = 1; i < notes; i++) {
+        frequencyTable[i] = semitone*(frequencyTable[i-1]);
+    }
+    voiceConfig.set_fs(samplingFrequency);
+    mod.set_fs(samplingFrequency);
+    lpFilter.set_fs(samplingFrequency);
+    hpFilter.set_fs(samplingFrequency);
+    lpFilter.configure_lowpass(lpF, lpRes);
+    hpFilter.configure_highpass(hpF, hpRes);
+}
+
+
 void Synth_t::set_attack(float a) {
     voiceConfig.set_attack(a);
 }
@@ -130,9 +145,16 @@ void MonoSynth_t::step(float * out) {
     run_effects(out);
 }
 
-PolySynth_t::PolySynth_t(float _sampling_frequency): Synth_t(_sampling_frequency) {
+PolySynth_t::PolySynth_t(float _samplingFrequency): Synth_t(_samplingFrequency) {
     for (uint32_t i = 0; i < notes; i++) {
         voices[i].set_config(&voiceConfig);
+        voices[i].set_frequency(frequencyTable[i]);
+    }
+}
+
+void PolySynth_t::set_fs(float _samplingFrequency) {
+    Synth_t::set_fs(_samplingFrequency);
+    for (uint32_t i = 0; i < notes; i++) {
         voices[i].set_frequency(frequencyTable[i]);
     }
 }
@@ -202,12 +224,13 @@ extern "C" {
         Synth_t * synth_p;
 
         if (synthType == 0) {
-            synth_p = new MonoSynth_t(fs);
+            synth_p = new MonoSynth_t(40000);
         } else {
-            synth_p = new PolySynth_t(fs);
+            synth_p = new PolySynth_t(40000);
         }
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
+        synth_p->set_fs(fs);
         synth_p->set_attack(a);
         synth_p->set_decay(d);
         synth_p->set_sustain(s);

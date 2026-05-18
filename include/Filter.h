@@ -61,8 +61,9 @@ class Biquad_Filter_t: public IIR_Filter_t {
     public:
     Biquad_Filter_t(float samplingFrequency);
     Biquad_Filter_t(float samplingFrequency, float * b, float * a);
-    void step(float * in, float * out);
+    void set_fs(float samplingFrequency);
     void set_coeffs(float * b, float * a);
+    void step(float * in, float * out);
     void configure_lowpass(float f, float res);
     void configure_highpass(float f, float res);
 };

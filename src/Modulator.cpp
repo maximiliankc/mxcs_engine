@@ -11,6 +11,11 @@ Modulator_t::Modulator_t(float _samplingFrequency) {
     modRatio = 0;
 }
 
+void Modulator_t::set_fs(float _samplingFrequency) {
+    lfo.set_freq(0);    // set
+    samplingFrequency = _samplingFrequency;
+}
+
 void Modulator_t::set_freq(float frequency) {
     lfo.set_freq(frequency/samplingFrequency);
 }
