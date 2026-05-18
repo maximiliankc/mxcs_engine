@@ -88,11 +88,13 @@ MonoSynth_t::MonoSynth_t(float _sampling_frequency): Synth_t(_sampling_frequency
 }
 
 void MonoSynth_t::press(uint8_t note) {
+    if (note >= notes || (noteStackIndex >= stackDepth)) {
+        return; // do nothing if unsupported note or note stack full
+    }
     voice.set_frequency(frequencyTable[note]);
     voice.press();
     currentNote = note;
     enabledNotes[note] = true;
-    // TODO add some protection against over-filling the stack
     noteStack[noteStackIndex++] = note; // add handling for filling stack
                                         // note stack points to lowest empty slot
 }
@@ -142,6 +144,9 @@ void PolySynth_t::press(uint8_t note) {
 }
 
 void PolySynth_t::release(uint8_t note) {
+    if (note >= notes) {
+        return; // do nothing if unsupported note
+    }
     voices[note].release();
 }
 
