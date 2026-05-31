@@ -46,6 +46,7 @@ class Synth_t {
     void set_generator(Generator_e gen);
     virtual void press(uint8_t note) = 0;
     virtual void release(uint8_t note) = 0;
+    virtual void release_all(void) = 0;
     virtual void step(float * out) = 0;
 
     #ifdef SYNTH_TEST_
