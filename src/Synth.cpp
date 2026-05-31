@@ -3,17 +3,15 @@
 */
 #include "Synth.h"
 
-
 const float semitone = 1.0594630943592953;
 const float c_minus_1 = 8.175798915643707;
 
-Synth_t::Synth_t(float _samplingFrequency): voice(_samplingFrequency),
-                                            mod(_samplingFrequency),
+Synth_t::Synth_t(float _samplingFrequency): mod(_samplingFrequency),
                                             lpFilter(_samplingFrequency),
-                                            hpFilter(_samplingFrequency) {
+                                            hpFilter(_samplingFrequency),
+                                            voiceConfig(_samplingFrequency) {
     // calculate the frequency table
     samplingFrequency = _samplingFrequency;
-    currentNote = 0;
     frequencyTable[0] = c_minus_1/samplingFrequency;
     for(uint8_t i = 1; i < notes; i++) {
         frequencyTable[i] = semitone*(frequencyTable[i-1]);
@@ -27,20 +25,44 @@ Synth_t::Synth_t(float _samplingFrequency): voice(_samplingFrequency),
     hpFilter.configure_highpass(hpF, hpRes);
 }
 
+Synth_t::~Synth_t() {
+}
+
+void Synth_t::run_effects(float * out) {
+    mod.step(out);
+    lpFilter.step(out, out);
+    hpFilter.step(out, out);
+}
+
+void Synth_t::set_fs(float _samplingFrequency) {
+    samplingFrequency = _samplingFrequency;
+    frequencyTable[0] = c_minus_1/samplingFrequency;
+    for(uint8_t i = 1; i < notes; i++) {
+        frequencyTable[i] = semitone*(frequencyTable[i-1]);
+    }
+    voiceConfig.set_fs(samplingFrequency);
+    mod.set_fs(samplingFrequency);
+    lpFilter.set_fs(samplingFrequency);
+    hpFilter.set_fs(samplingFrequency);
+    lpFilter.configure_lowpass(lpF, lpRes);
+    hpFilter.configure_highpass(hpF, hpRes);
+}
+
+
 void Synth_t::set_attack(float a) {
-    voice.set_attack(a);
+    voiceConfig.set_attack(a);
 }
 
 void Synth_t::set_decay(float d) {
-    voice.set_decay(d);
+    voiceConfig.set_decay(d);
 }
 
 void Synth_t::set_sustain(float s) {
-    voice.set_sustain(s);
+    voiceConfig.set_sustain(s);
 }
 
 void Synth_t::set_release(float r) {
-    voice.set_release(r);
+    voiceConfig.set_release(r);
 }
 
 void Synth_t::set_mod_f(float freq) {
@@ -72,29 +94,40 @@ void Synth_t::set_hpf_res(float res){
 }
 
 void Synth_t::set_generator(Generator_e gen) {
-    voice.set_generator(gen);
+    voiceConfig.set_generator(gen);
 }
 
-void Synth_t::press(uint8_t note) {
-    float f = frequencyTable[note];
-    voice.press(f);
+MonoSynth_t::MonoSynth_t(float _sampling_frequency): Synth_t(_sampling_frequency),
+                                                     voice(&voiceConfig) {
+    currentNote = 0;
+}
+
+void MonoSynth_t::press(uint8_t note) {
+    if (note >= notes || (noteStackIndex >= stackDepth)) {
+        return; // do nothing if unsupported note or note stack full
+    }
+    voice.set_frequency(frequencyTable[note]);
+    voice.press();
     currentNote = note;
     enabledNotes[note] = true;
-    // TODO add some protection against over-filling the stack
     noteStack[noteStackIndex++] = note; // add handling for filling stack
                                         // note stack points to lowest empty slot
 }
 
-void Synth_t::release(uint8_t note) {
+void MonoSynth_t::release(uint8_t note) {
+    if (note >= notes) {
+        return; // do nothing if unsupported note
+    }
     enabledNotes[note] = false; // released note is no longer active
     if (note == currentNote) {
         // find the next frequency where a note is enabled
+        // TODO figure out behaviour if note wasn't added to stack in the first place (e.g. because the stack was full)
         bool searching = true;
         while(noteStackIndex > 0 && searching) {
             noteStackIndex--; // noteStack now points at highest note that (might) be active
             if (enabledNotes[noteStack[noteStackIndex]]) {
                 float f = frequencyTable[noteStack[noteStackIndex]];
-                voice.press(f); // should replace this with a 'change_freq' method, so envelope is unaffected
+                voice.set_frequency(f);
                 currentNote = noteStack[noteStackIndex++]; // point index back to lowest empty slow
                 searching = false;
             } // otherwise, just keep searching
@@ -107,11 +140,65 @@ void Synth_t::release(uint8_t note) {
     }
 }
 
-void Synth_t::step(float * out) {
+void MonoSynth_t::release_all() {
+    noteStackIndex = 0;
+    voice.release();
+}
+
+void MonoSynth_t::step(float * out) {
     voice.step(out);
-    mod.step(out);
-    lpFilter.step(out, out);
-    hpFilter.step(out, out);
+    run_effects(out);
+}
+
+PolySynth_t::PolySynth_t(float _samplingFrequency): Synth_t(_samplingFrequency) {
+    for (uint32_t i = 0; i < notes; i++) {
+        voices[i].set_config(&voiceConfig);
+        voices[i].set_frequency(frequencyTable[i]);
+    }
+}
+
+void PolySynth_t::set_fs(float _samplingFrequency) {
+    Synth_t::set_fs(_samplingFrequency);
+    for (uint32_t i = 0; i < notes; i++) {
+        voices[i].set_frequency(frequencyTable[i]);
+    }
+}
+
+void PolySynth_t::press(uint8_t note) {
+    if (note >= notes) {
+        return; // do nothing if unsupported note
+    }
+    voices[note].press();
+}
+
+void PolySynth_t::release(uint8_t note) {
+    if (note >= notes) {
+        return; // do nothing if unsupported note
+    }
+    voices[note].release();
+}
+
+void PolySynth_t::release_all() {
+    for (uint8_t i = 0; i < notes; i++) {
+        voices[i].release();
+    }
+}
+
+void PolySynth_t::step(float * out){
+    float voiceSamples[blockSize];
+    // initialise out vector to all zeros
+    for (uint8_t i = 0; i < blockSize; i++) {
+        out[i] = 0;
+    }
+    for (uint8_t i = 0; i < notes; i++) {
+        if (voices[i].is_active()) {
+            voices[i].step(voiceSamples);
+            for (uint8_t j = 0; j < blockSize; j++) {
+                out[j] += voiceSamples[j];
+            }
+        }
+    }
+    run_effects(out);
 }
 
 #ifdef SYNTH_TEST_
@@ -123,7 +210,7 @@ float * Synth_t::get_freq_table() {
 extern "C" {
     void test_synth(const float a, const float d, const float s, const float r,\
                     const float modDepth, const float modFreq, const unsigned int gen,\
-                    const float fs,\
+                    const float fs, const unsigned int synthType, \
                     const unsigned int presses, unsigned int pressNs[], uint8_t pressNotes[],\
                     const unsigned int releases, unsigned int releaseNs[], uint8_t releaseNotes[],\
                     const unsigned int n, float envOut[]) {
@@ -134,6 +221,7 @@ extern "C" {
         //              modDepth: modulation depth
         //              modFreq: modulation frequency
         //              fs: sampling frequency
+        //              synth_type: 0 (mono) or 1 (poly)
         //              gen: type of generator
         //              presses: number of presses
         //              pressNs: times at which to press
@@ -144,35 +232,43 @@ extern "C" {
         //              n: number of samples to iterate over.
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
-        Synth_t synth(fs);
+        Synth_t * synth_p;
+
+        if (synthType == 0) {
+            synth_p = new MonoSynth_t(40000);
+        } else {
+            synth_p = new PolySynth_t(40000);
+        }
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
-        synth.set_attack(a);
-        synth.set_decay(d);
-        synth.set_sustain(s);
-        synth.set_release(r);
-        synth.set_mod_depth(modDepth);
-        synth.set_mod_f(modFreq);
-        synth.set_generator((Generator_e)gen);
+        synth_p->set_fs(fs);
+        synth_p->set_attack(a);
+        synth_p->set_decay(d);
+        synth_p->set_sustain(s);
+        synth_p->set_release(r);
+        synth_p->set_mod_depth(modDepth);
+        synth_p->set_mod_f(modFreq);
+        synth_p->set_generator((Generator_e)gen);
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
-                synth.press(pressNotes[pressCount]);
+                synth_p->press(pressNotes[pressCount]);
                 pressCount++;
             }
             if(releaseCount < releases && i >= releaseNs[releaseCount]) {
-                synth.release(releaseNotes[releaseCount]);
+                synth_p->release(releaseNotes[releaseCount]);
                 releaseCount++;
             }
-            synth.step(envOut + i);
+            synth_p->step(envOut + i);
         }
+        delete synth_p;
     }
 
     void test_frequency_table(float freqs[], float fs) {
         // parameters:
-        Synth_t synth(fs);
+        MonoSynth_t synth(fs);
         for(unsigned int i = 0; i<notes; i++) {
             freqs[i] = synth.get_freq_table()[i];
         }
+    }
 }
-}
-#endif // SYNTH_TEST_
+#endif // MonoSynth_tEST_

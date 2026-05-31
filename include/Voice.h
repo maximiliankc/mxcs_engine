@@ -14,23 +14,34 @@ enum Generator_e {
     bpblit = 2
 };
 
-class Voice_t {
-    Envelope_t envelope;
-    Oscillator_t osc;
-    Blit_t blitOsc;
-    BpBlit_t bpBlitOsc;
+struct VoiceConfig_t {
+    EnvelopeConfig_t envConfig;
     Generator_e generator;
-    float gain = 0;
 
-    public:
-    Voice_t(float samplingFrequency);
+    VoiceConfig_t(float samplingFrequency);
+    void set_fs(float samplingFrequency);
     void set_attack(float a);
     void set_decay(float d);
     void set_sustain(float s);
     void set_release(float r);
     void set_generator(Generator_e gen);
+};
+
+class Voice_t {
+    VoiceConfig_t * config = nullptr;
+    Envelope_t envelope;
+    Oscillator_t osc;
+    Blit_t blitOsc;
+    BpBlit_t bpBlitOsc;
+
+    public:
+    Voice_t();
+    Voice_t(VoiceConfig_t * config);
+    void set_config(VoiceConfig_t * config);
+    void set_frequency(float f);
+    bool is_active();
     void step(float * out);
-    void press(float f);
+    void press();
     void release();
 };
 

@@ -4,3 +4,4 @@
 sampling_frequency = 44100
 sampling_frequencies = [44100, 48000]
 block_size = 128
+n_notes = 109

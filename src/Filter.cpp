@@ -117,10 +117,7 @@ void Filter_TDFII_t::step(float * in, float * out) {
 }
 
 Biquad_Filter_t::Biquad_Filter_t(float _samplingFrequency) {
-    samplingFrequency = _samplingFrequency;
-    float a_[3] = {1, 0, 0};
-    float b_[3] = {1, 0, 0};
-    set_coeffs(a_, b_);
+    set_fs(_samplingFrequency);
     state[0] = 0;
     state[1] = 0;
 }
@@ -130,6 +127,13 @@ Biquad_Filter_t::Biquad_Filter_t(float _samplingFrequency, float * b_, float * a
     set_coeffs(b_, a_);
     state[0] = 0;
     state[1] = 0;
+}
+
+void Biquad_Filter_t::set_fs(float _samplingFrequency) {
+    samplingFrequency = _samplingFrequency;
+    float a_[3] = {1, 0, 0};
+    float b_[3] = {1, 0, 0};
+    set_coeffs(a_, b_);
 }
 
 void Biquad_Filter_t::step(float * in, float * out) {

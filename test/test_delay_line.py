@@ -14,7 +14,7 @@ class DelayLineInterface:
         uint32_pointer = ctypes.POINTER(ctypes.c_uint32)
         float_pointer = ctypes.POINTER(ctypes.c_float)
         self.testlib.test_delay_line.argtypes = [float_pointer, float_pointer, uint32_pointer,
-                                                 ctypes.c_uint, float_pointer, ctypes.c_uint]
+                                                 ctypes.c_uint, ctypes.c_uint]
 
     def run_delay_line(self, data_in: list, delays: list, line_length: int) -> np.ndarray:
         ''' Actually run the delay line '''
@@ -26,10 +26,8 @@ class DelayLineInterface:
         p_data_out = data_out.ctypes.data_as(p_float)
         delays = np.array(delays, dtype=np.uint32)
         p_delays = delays.ctypes.data_as(p_uint32)
-        memory = np.empty(line_length, dtype=np.single)
-        p_memory = memory.ctypes.data_as(p_float)
         self.testlib.test_delay_line(p_data_in, p_data_out, p_delays,\
-                                     len(data_in), p_memory, line_length)
+                                     len(data_in), line_length)
 
         return data_out
 

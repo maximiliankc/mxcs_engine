@@ -30,21 +30,24 @@ class EnvelopeInterface:
                                                ctypes.c_float, ctypes.c_float,
                                                ctypes.c_uint, uint_pointer,
                                                ctypes.c_uint, uint_pointer,
-                                               ctypes.c_uint, ctypes.c_float, float_pointer]
+                                               ctypes.c_uint, ctypes.c_float,
+                                               float_pointer, uint_pointer]
 
-    def run_env(self, presses: list, releases: list, n_samples: int, fs: float) -> np.ndarray:
+    def run_env(self, presses: list, releases: list, n_samples: int, fs: float) -> tuple[np.ndarray,np.ndarray]:
         ''' Run the Envelope Generator. Output is attack float'''
         p_uint = ctypes.POINTER(ctypes.c_uint)
         out = np.zeros(n_samples, dtype=np.single)
         out_p = out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         presses_p = np.array(presses, dtype=np.uintc).ctypes.data_as(p_uint)
         releases_p = np.array(releases, dtype=np.uintc).ctypes.data_as(p_uint)
+        active_out = np.zeros(n_samples//block_size, dtype=np.uintc)
+        active_out_p = active_out.ctypes.data_as(ctypes.POINTER(ctypes.c_uint))
         self.testlib.test_envelope(self.attack_seconds, self.decay_seconds,
                                     self.sustain, self.release_seconds,
                                     len(presses), presses_p,
                                     len(releases), releases_p,
-                                    len(out), fs, out_p)
-        return out
+                                    len(out), fs, out_p, active_out_p)
+        return out, active_out.astype(bool)
 
     def set_adsr(self, attack: float, decay: float, sustain: float, release: float, fs: float):
         ''' Configure adsr values '''
@@ -124,6 +127,14 @@ class TestEnvelope(EnvelopeInterface, unittest.TestCase):
             r_grad = (vector[ridx + int(self.release/2)] - vector[ridx])/(int(self.release/2))
             self.assertAlmostEqual(r_grad, exp_r_grad, delta=abs(0.01*exp_r_grad))
 
+    def check_active(self, vector: np.ndarray, active: np.ndarray):
+        """ Check whether the active flag is being set properly """
+        # extract the last values of each block
+        final_values = vector[block_size-1::block_size]
+        expect_active = final_values > -100
+        match = active == expect_active
+        self.assertTrue(np.all(match), msg=f'Failures at {np.where(~match)}')
+
     def test_basic_envelope(self):
         ''' Tests attack basic single envelope '''
         for fs in sampling_frequencies:
@@ -139,7 +150,7 @@ class TestEnvelope(EnvelopeInterface, unittest.TestCase):
                     press_time = int(0.1*fs)
                     release_time = int(0.4*fs)
 
-                    vector = self.run_env([press_time], [release_time], n_samples, fs)
+                    vector, active = self.run_env([press_time], [release_time], n_samples, fs)
                     vector = 20*np.log10(vector)
                     vector[vector<-100] = -100
 
@@ -177,6 +188,10 @@ class TestEnvelope(EnvelopeInterface, unittest.TestCase):
 
                         _, ax1 = plt.subplots()
                         ax1.plot(time, vector)
+                        active_times = time[block_size-1::block_size]
+                        active_vectors = vector[block_size-1::block_size].copy()
+                        active_vectors[active] = np.nan
+                        ax1.plot(active_times, active_vectors, c='k')
                         ax1.scatter(attack_times, attack_markers)
                         ax1.scatter(decay_times, decay_markers)
                         ax1.scatter(sustain_times, sustain_markers)
@@ -202,6 +217,7 @@ class TestEnvelope(EnvelopeInterface, unittest.TestCase):
                     self.check_decay(vector, decay_idxs, sustain_idxs, press_time)
                     self.check_sustain(vector, sustain_idxs, release_idxs, press_time)
                     self.check_release(vector, release_idxs, release_time)
+                    self.check_active(vector, active)
 
     def test_double_press(self):
         ''' Check that there is an attack when a double press occurs '''
@@ -222,14 +238,14 @@ class TestEnvelope(EnvelopeInterface, unittest.TestCase):
         for second_press, test_id in zip(second_presses, test_ids):
             with self.subTest(test_id):
                 presses = [first_press, second_press]
-                vector = self.run_env(presses, releases, n_samples, sampling_frequency)
+                vector, active = self.run_env(presses, releases, n_samples, sampling_frequency)
                 if self.debug:
                     vector = 20*np.log10(vector)
                     time = np.arange(n_samples)/sampling_frequency
                     _, ax1 = plt.subplots()
-                    ax1.axvline(second_press/sampling_frequency)
-                    ax1.axvline((second_press + block_size)/sampling_frequency)
-                    ax1.axvline((second_press - block_size)/sampling_frequency)
+                    ax1.axvline(second_press/sampling_frequency, c='k', alpha=0.3)
+                    ax1.axvline((second_press + block_size)/sampling_frequency, c='k', alpha=0.3)
+                    ax1.axvline((second_press - block_size)/sampling_frequency, c='k', alpha=0.3)
                     ax1.plot(time, vector)
                     ax1.set_xlabel('Time (sustain)')
                     ax1.set_ylabel('Magnitude (dB)')
@@ -246,7 +262,7 @@ def main():
     ''' For Debugging/Testing '''
     env_test = TestEnvelope()
     env_test.setUp()
-    # env_test.debug = True
+    env_test.debug = True
     env_test.test_basic_envelope()
     env_test.test_double_press()
 

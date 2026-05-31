@@ -6,63 +6,91 @@
 #include "Voice.h"
 #include "Constants.h"
 
-Voice_t::Voice_t(float samplingFrequency): envelope(samplingFrequency) {
+VoiceConfig_t::VoiceConfig_t(float samplingFrequency): envConfig(samplingFrequency) {
 }
 
-void Voice_t::set_attack(float a) {
-    envelope.set_attack(a);
+void VoiceConfig_t::set_fs(float _samplingFrequency) {
+    envConfig.set_fs(_samplingFrequency);
 }
 
-void Voice_t::set_decay(float d) {
-    envelope.set_decay(d);
+void VoiceConfig_t::set_attack(float a) {
+    envConfig.set_attack(a);
 }
 
-void Voice_t::set_sustain(float s) {
-    envelope.set_sustain(s);
+void VoiceConfig_t::set_decay(float d) {
+    envConfig.set_decay(d);
 }
 
-void Voice_t::set_release(float r) {
-    envelope.set_release(r);
+void VoiceConfig_t::set_sustain(float s) {
+    envConfig.set_sustain(s);
 }
 
-void Voice_t::set_generator(Generator_e gen) {
+void VoiceConfig_t::set_release(float r) {
+    envConfig.set_release(r);
+}
+
+void VoiceConfig_t::set_generator(Generator_e gen) {
     generator = gen;
 }
 
+Voice_t::Voice_t(){
+}
+
+Voice_t::Voice_t(VoiceConfig_t * _config): envelope(&(_config->envConfig)) {
+    config = _config;
+}
+
+void Voice_t::set_config(VoiceConfig_t * _config) {
+    config = _config;
+    envelope.set_config(&(config->envConfig));
+}
+
+void Voice_t::set_frequency(float f) {
+    osc.set_freq(f);
+    blitOsc.set_freq(f);
+    bpBlitOsc.set_freq(f);
+}
+
+bool Voice_t::is_active() {
+    return envelope.is_active();
+}
+
 void Voice_t::step(float * out) {
+    if (config == nullptr) {
+        return;
+    }
     float envOut[blockSize];
-    switch (generator)
+    float multiplier = 1.0;
+    switch (config->generator)
     {
     case sine:
         osc.step(out);
+        multiplier = 0.0625;
         break;
 
     case blit:
         blitOsc.step(out);
+        multiplier = 0.25;
         break;
 
     case bpblit:
         bpBlitOsc.step(out);
+        multiplier = 0.25;
         break;
     }
 
     envelope.step(envOut);
     // apply envelope to osc out
     for (uint8_t i=0; i < blockSize; i++) {
-        out[i] *= envOut[i];
+        out[i] *= multiplier*envOut[i];
     }
 }
 
-void Voice_t::press(float f) {
+void Voice_t::press() {
     envelope.press();
-    osc.set_freq(f);
-    gain = 1.0;
-    blitOsc.set_freq(f);
-    bpBlitOsc.set_freq(f);
 }
 
 void Voice_t::release() {
-    gain = 0.0;
     envelope.release();
 }
 
@@ -87,17 +115,19 @@ extern "C" {
         //                  if n is not a multiple of block_size, the last fraction of a block won't be filled in
         //              envOut: generated envelope
         Generator_e generator = (Generator_e)gen;
-        Voice_t voice(fs);
-        voice.set_generator(generator);
-        voice.set_attack(a);
-        voice.set_decay(d);
-        voice.set_sustain(s);
-        voice.set_release(r);
+        VoiceConfig_t voice_config(fs);
+        Voice_t voice(&voice_config);
+        voice_config.set_generator(generator);
+        voice_config.set_attack(a);
+        voice_config.set_decay(d);
+        voice_config.set_sustain(s);
+        voice_config.set_release(r);
         unsigned int pressCount = 0;
         unsigned int releaseCount = 0;
         for(unsigned int i=0; i+blockSize <= n; i+= blockSize) {
             if(pressCount < presses && i >= pressNs[pressCount]) {
-                voice.press(f);
+                voice.set_frequency(f);
+                voice.press();
                 pressCount++;
             }
             if(releaseCount < releases && i >= releaseNs[releaseCount]) {

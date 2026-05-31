@@ -4,19 +4,32 @@
 #ifndef ENVELOPE_H_
 #define ENVELOPE_H_
 
-class Envelope_t {
+struct EnvelopeConfig_t {
     float samplingFrequency;
     float a;
     float d;
     float s;
     float r;
+
     float aIncrement;
     float dIncrement;
     float sMag;
     float rIncrement;
-    float amp;
 
     void set_adsr();
+
+    EnvelopeConfig_t(float samplingFrequency);
+    void set_fs(float samplingFrequency);
+    void set_attack(float a);
+    void set_decay(float d);
+    void set_sustain(float s);
+    void set_release(float r);
+};
+
+class Envelope_t {
+    bool active = false;
+    float amp = 0;
+    EnvelopeConfig_t * config = nullptr;
 
     void run_off();
     void run_attack();
@@ -25,15 +38,12 @@ class Envelope_t {
     void run_release();
 
     public:
-    Envelope_t(float samplingFrequency);
+    Envelope_t();
+    Envelope_t(EnvelopeConfig_t * config);
+    void set_config(EnvelopeConfig_t * config);
+    bool is_active(void);
+    void (Envelope_t::*run_state)(void) = &Envelope_t::run_off;
 
-    void set_attack(float a);
-    void set_decay(float d);
-    void set_sustain(float s);
-    void set_release(float r);
-    void (Envelope_t::*run_state)(void);
-
-    public:
     void step(float * envelope);
     void press();
     void release();

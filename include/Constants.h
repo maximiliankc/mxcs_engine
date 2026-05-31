@@ -7,6 +7,6 @@
 #include <stdint.h>
 
 const uint8_t blockSize = 128;
-const uint8_t notes = 128;
+const uint8_t notes = 109;
 
 #endif // CONSTANTS_H

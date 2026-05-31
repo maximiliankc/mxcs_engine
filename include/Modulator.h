@@ -13,6 +13,7 @@ class Modulator_t {
     float modRatio;
 
     Modulator_t(float samplingFrequency);
+    void set_fs(float samplingFrequency);
     void set_freq(float frequency);
     void step(float * signal);
 };

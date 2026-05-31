@@ -2,7 +2,6 @@
    copyright Maximilian Cornwell 2023
 */
 #include <stdint.h>
-#include <stdio.h>
 #include "Modulator.h"
 #include "Constants.h"
 
@@ -10,6 +9,11 @@
 Modulator_t::Modulator_t(float _samplingFrequency) {
     samplingFrequency = _samplingFrequency;
     modRatio = 0;
+}
+
+void Modulator_t::set_fs(float _samplingFrequency) {
+    lfo.set_freq(0);    // set
+    samplingFrequency = _samplingFrequency;
 }
 
 void Modulator_t::set_freq(float frequency) {
