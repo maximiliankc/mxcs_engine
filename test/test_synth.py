@@ -161,23 +161,23 @@ class TestMonoSynth(SynthInterface, TestVoice, TestModulator):
                 if max_out > 1:
                     out = out/max_out
                 wav.write(f'Test_Signal_{release_delay}_{mod_depth}_{mod_freq}_{gen}.wav', sampling_frequency, out)
-                # out = sig.resample_poly(out, 1, 4)
-                # freq, time, s_xx = sig.spectrogram(out, fs=sampling_frequency/4, nperseg=2**12, noverlap=2**10)
-                # _, ax1 = plt.subplots()
-                # ax1.pcolormesh(time, freq, s_xx)
-                # ax1.set_xlabel('Time (s)')
-                # ax1.set_ylabel('Frequency (Hz)')
-                # ax1.set_title(f'Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
-                # _, ax2 = plt.subplots()
-                # time = np.arange(n_samples)/sampling_frequency
-                # ax2.plot(time[:4*sampling_frequency], out[:4*sampling_frequency], label='signal')
-                # ax2.plot(time[:4*sampling_frequency], np.abs(sig.hilbert(out[:4*sampling_frequency])), label='envelope')
-                # ax2.set_xlabel('Time (s)')
-                # ax2.set_ylabel('Magnitude')
-                # ax2.set_title(f'{gen}, Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
-                # ax2.grid(True)
-                # ax2.legend()
-                # plt.show()
+                out = sig.resample_poly(out, 1, 4)
+                freq, time, s_xx = sig.spectrogram(out, fs=sampling_frequency/4, nperseg=2**12, noverlap=2**10)
+                _, ax1 = plt.subplots()
+                ax1.pcolormesh(time, freq, s_xx)
+                ax1.set_xlabel('Time (s)')
+                ax1.set_ylabel('Frequency (Hz)')
+                ax1.set_title(f'Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
+                _, ax2 = plt.subplots()
+                time = np.arange(n_samples)/sampling_frequency
+                ax2.plot(time[:4*sampling_frequency], out[:4*sampling_frequency], label='signal')
+                ax2.plot(time[:4*sampling_frequency], np.abs(sig.hilbert(out[:4*sampling_frequency])), label='envelope')
+                ax2.set_xlabel('Time (s)')
+                ax2.set_ylabel('Magnitude')
+                ax2.set_title(f'{gen}, Release delay: {release_delay}, Mod Depth: {mod_depth}, Mod Freq {mod_freq}')
+                ax2.grid(True)
+                ax2.legend()
+                plt.show()
 
     #   TODO: add integration tests for filters
     # TODO test out behaviour with multiple simultaneous presses/releases, multiple notes pressed simultaneously
