@@ -46,6 +46,7 @@ class Synth_t {
     void set_generator(Generator_e gen);
     virtual void press(uint8_t note) = 0;
     virtual void release(uint8_t note) = 0;
+    virtual void release_all() = 0;
     virtual void step(float * out) = 0;
 
     #ifdef SYNTH_TEST_
@@ -66,6 +67,7 @@ class MonoSynth_t: public Synth_t {
     MonoSynth_t(float _samplingFrequency);
     void press(uint8_t note);
     void release(uint8_t note);
+    void release_all();
     void step(float * out);
 };
 
@@ -77,6 +79,7 @@ class PolySynth_t: public Synth_t {
     void set_fs(float samplingFrequency);
     void press(uint8_t note);
     void release(uint8_t note);
+    void release_all();
     void step(float * out);
 };
 

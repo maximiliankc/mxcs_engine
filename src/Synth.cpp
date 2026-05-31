@@ -140,6 +140,11 @@ void MonoSynth_t::release(uint8_t note) {
     }
 }
 
+void MonoSynth_t::release_all() {
+    noteStackIndex = 0;
+    voice.release();
+}
+
 void MonoSynth_t::step(float * out) {
     voice.step(out);
     run_effects(out);
@@ -171,6 +176,12 @@ void PolySynth_t::release(uint8_t note) {
         return; // do nothing if unsupported note
     }
     voices[note].release();
+}
+
+void PolySynth_t::release_all() {
+    for (uint8_t i = 0; i < notes; i++) {
+        voices[i].release();
+    }
 }
 
 void PolySynth_t::step(float * out){
